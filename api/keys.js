@@ -15,7 +15,7 @@ export default function handler(req, res) {
   // ── CORS ─────────────────────────────────────────────────────────────────
   // Only allow requests that include your app token in the header.
   // This stops random bots from harvesting your keys.
-  const token = req.headers["x-toolz-token"];
+  const token = req.headers["Fd9M5rs0ydhEz8YeegDzohZH"];
   if (token !== process.env.APP_TOKEN) {
     return res.status(401).json({ error: "Unauthorized" });
   }
