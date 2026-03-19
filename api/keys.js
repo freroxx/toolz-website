@@ -1,34 +1,58 @@
-// api/keys.js
-// Vercel serverless function — runs on the server, never in the browser bundle.
-// Keys are read from Vercel Environment Variables (set in the dashboard),
-// which are server-only and never exposed to clients.
+// api/keys.js — Vercel serverless function
 //
-// Set these in: Vercel Dashboard → Your Project → Settings → Environment Variables
-// (NOT in .env committed to Git)
+// Reads API keys from Vercel server-side environment variables and returns
+// them to authenticated Toolz Android clients.
 //
-// Required env vars:
-//   GEMINI_DEFAULT, CHATGPT_DEFAULT, GROQ_DEFAULT,
-//   CLAUDE_DEFAULT, DEEPSEEK_DEFAULT, OPENROUTER_DEFAULT
-//   APP_TOKEN  ← a secret string you invent, e.g. "toolz-2026-secret"
+// ── REQUIRED Vercel Environment Variables ────────────────────────────────────
+// Vercel Dashboard → Project → Settings → Environment Variables:
+//
+//   APP_TOKEN          = Fd9M5rs0ydhEz8YeegDzohZH   ← MUST match APP_TOKEN in AiSettingsManager.kt
+//   GEMINI_DEFAULT     = AIza…
+//   CHATGPT_DEFAULT    = sk-proj-…
+//   GROQ_DEFAULT       = gsk_…
+//   CLAUDE_DEFAULT     = sk-ant-…
+//   DEEPSEEK_DEFAULT   = sk-…
+//   OPENROUTER_DEFAULT = sk-or-v1-…
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function handler(req, res) {
-  // ── CORS ─────────────────────────────────────────────────────────────────
-  // Only allow requests that include your app token in the header.
-  // This stops random bots from harvesting your keys.
-const token = req.headers["fd9m5rs0ydhez8yeegdzohzh"];
-  if (token !== process.env.APP_TOKEN) {
-    return res.status(401).json({ error: "Unauthorized" });
+  // Allow preflight
+  res.setHeader("Access-Control-Allow-Origin",  "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "x-toolz-token, Content-Type");
+
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
   }
 
-  // ── Only allow GET ────────────────────────────────────────────────────────
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // ── Return keys ────────────────────────────────────────────────────────────
-  // Keys are read from Vercel server-side env vars at request time.
-  // They are NEVER embedded in the JS bundle.
-  res.setHeader("Cache-Control", "no-store"); // don't cache — keys may rotate
+  // ── Auth ───────────────────────────────────────────────────────────────────
+  // Node.js automatically lowercases all incoming header names.
+  // Android sends "x-toolz-token: <APP_TOKEN>".
+  const expected = process.env.APP_TOKEN;
+
+  if (!expected) {
+    // Deployment is missing the APP_TOKEN env var — tell the developer clearly
+    console.error("[keys] APP_TOKEN env var is NOT set in Vercel dashboard.");
+    console.error("[keys] Go to: Vercel → Project → Settings → Environment Variables");
+    console.error("[keys] Add:  APP_TOKEN = Fd9M5rs0ydhEz8YeegDzohZH");
+    return res.status(503).json({
+      error: "Server misconfigured: APP_TOKEN missing from environment variables",
+    });
+  }
+
+  const token = req.headers["x-toolz-token"];
+  if (!token || token !== expected) {
+    console.warn("[keys] Rejected — bad or missing x-toolz-token header");
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  // ── Return keys — never cache ──────────────────────────────────────────────
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+
   return res.status(200).json({
     Gemini:     process.env.GEMINI_DEFAULT     ?? "",
     ChatGPT:    process.env.CHATGPT_DEFAULT    ?? "",
