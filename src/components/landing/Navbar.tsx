@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const navLinks = [
   { label: "Features", href: "#features" },
-  { label: "How it Works", href: "#how-it-works" },
+  { label: "Showcase", href: "#showcase" },
+  { label: "Why Toolz", href: "#how-it-works" },
 ];
 
 const Navbar = () => {

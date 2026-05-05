@@ -4,17 +4,19 @@ import toolsImg from "@/assets/tools-screenshot.png";
 
 const showcaseItems = [
   {
-    image: settingsImg,
-    title: "Fully Customizable Settings",
+    image: toolsImg,
+    title: "A Real Daily Driver",
     description:
-      "Toolz adapts to you — not the other way around. Every single feature can be toggled on or off so you only see the tools you actually use. Build your perfect toolkit with zero clutter.",
+      "Toolz is designed for people who want one fast home for the tools they actually use. A polished dashboard with quick access, pinned tools, and a universal floating status pill keeps you productive.",
+    label: "Experience",
     reverse: false,
   },
   {
-    image: toolsImg,
-    title: "30+ Tools at Your Fingertips",
+    image: settingsImg,
+    title: "Powerful & Integrated",
     description:
-      "Calculator, compass, timer, QR scanner, unit converter, pomodoro, password generator, ruler, flashlight, stopwatch, and so much more — all packed into one beautifully designed app.",
+      "From Focus Flow usage analytics to a secure Password Vault with biometric unlock, Toolz leverages Android-native integrations like Autofill, Quick Settings tiles, and App Widgets.",
+    label: "System Native",
     reverse: true,
   },
 ];
@@ -45,6 +47,9 @@ const Showcase = () => {
                   alt={item.title}
                   className="relative rounded-2xl w-[280px] md:w-[320px] shadow-2xl border border-white/5"
                   loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.src = "https://images.unsplash.com/photo-1555774698-0b77e0d5fac6?auto=format&fit=crop&q=80&w=1000";
+                  }}
                 />
               </div>
             </div>
@@ -56,7 +61,7 @@ const Showcase = () => {
                 transition={{ delay: 0.3 }}
                 className="text-xs uppercase tracking-widest text-accent font-medium"
               >
-                {i === 0 ? "Personalization" : "Utilities"}
+                {item.label}
               </motion.span>
               <h3 className="text-2xl md:text-4xl font-bold mt-3 mb-4">
                 {item.title}

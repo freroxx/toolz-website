@@ -18,7 +18,7 @@ const Hero = () => {
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
             <span className="inline-block px-4 py-1.5 rounded-full glass text-xs font-medium text-accent mb-6 tracking-wider uppercase">
-              Next-Gen Android Toolkit
+              Your device, fully orchestrated.
             </span>
           </motion.div>
 
@@ -28,8 +28,8 @@ const Hero = () => {
             transition={{ duration: 0.8, delay: 0.15, ease: "easeOut" }}
             className="text-4xl sm:text-5xl md:text-7xl font-bold leading-tight mb-6"
           >
-            Your mobile experience,{" "}
-            <span className="text-gradient">fluidly Managed</span> by AI.
+            One fast home for the <br />
+            <span className="text-gradient">tools you actually use.</span>
           </motion.h1>
 
           <motion.p
@@ -38,8 +38,7 @@ const Hero = () => {
             transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
             className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10"
           >
-            The all-in-one Android toolkit for your daily needs — 30+ tools,
-            AI-powered productivity, and a gorgeous Material 3 experience.
+            Toolz is a modern Android toolkit that brings productivity, media, PDF, sensor, privacy, and system utilities into one polished app.
           </motion.p>
 
           <motion.div
@@ -55,30 +54,51 @@ const Hero = () => {
               </a>
             </Button>
             <Button variant="glass" size="lg" asChild>
-              <a href="#how-it-works">
+              <a href="https://github.com/freroxx/toolz" target="_blank" rel="noopener noreferrer">
                 <Play className="w-5 h-5" />
-                See how it works
+                View on GitHub
               </a>
             </Button>
           </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1, delay: 0.8 }}
+            className="mt-8 flex items-center justify-center gap-4 text-sm text-muted-foreground"
+          >
+            <div className="flex items-center gap-1.5">
+              <img alt="Latest release" src="https://img.shields.io/github/v/release/freroxx/toolz?display_name=tag" className="h-5" />
+            </div>
+            <div className="w-1 h-1 rounded-full bg-border" />
+            <div className="flex items-center gap-1.5">
+              <span className="px-2 py-0.5 rounded bg-primary/10 text-primary font-medium text-[10px] uppercase">Android 12+</span>
+            </div>
+            <div className="w-1 h-1 rounded-full bg-border" />
+            <div className="flex items-center gap-1.5">
+              <span className="px-2 py-0.5 rounded bg-accent/10 text-accent font-medium text-[10px] uppercase">30+ Tools</span>
+            </div>
+          </motion.div>
         </div>
 
-        {/* Video placeholder */}
+        {/* Showcase screenshot instead of video placeholder */}
         <motion.div
           initial={{ opacity: 0, y: 60, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 1, delay: 0.6, ease: "easeOut" }}
-          className="mt-16 max-w-4xl mx-auto"
+          className="mt-16 max-w-5xl mx-auto"
         >
-          <div className="glass rounded-2xl p-1 glow-primary">
-            <div className="relative aspect-video rounded-xl bg-secondary/50 flex items-center justify-center overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5" />
-              <div className="relative flex flex-col items-center gap-4">
-                <div className="w-20 h-20 rounded-full glass flex items-center justify-center cursor-pointer hover:scale-110 transition-transform glow-primary">
-                  <Play className="w-8 h-8 text-primary ml-1" />
-                </div>
-                <span className="text-sm text-muted-foreground">App Trailer Coming Soon</span>
-              </div>
+          <div className="glass rounded-2xl p-2 glow-primary overflow-hidden">
+            <div className="relative rounded-xl bg-secondary/50 flex items-center justify-center overflow-hidden aspect-[16/9]">
+              <img 
+                src="/src/assets/tools-screenshot.png" 
+                alt="Toolz App Interface" 
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = "https://images.unsplash.com/photo-1616469829581-73993eb86b02?auto=format&fit=crop&q=80&w=2070";
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent pointer-events-none" />
             </div>
           </div>
         </motion.div>
