@@ -80,18 +80,19 @@ const features = [
 ];
 
 const cardVariants = {
-  hidden: { opacity: 0, y: 40 },
+  hidden: { opacity: 0, y: 30 },
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.08, duration: 0.5, ease: "easeOut" as const },
+    transition: { delay: i * 0.05, duration: 0.5, ease: "easeOut" as const },
   }),
 };
 
 const Features = () => {
   return (
-    <section id="features" className="relative py-28 overflow-hidden">
-      <div className="absolute top-0 left-1/3 w-[500px] h-[500px] rounded-full bg-primary/5 blur-[150px]" />
+    <section id="features" className="relative py-32 overflow-hidden">
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full bg-primary/5 blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] rounded-full bg-accent/5 blur-[150px] pointer-events-none" />
 
       <div className="container mx-auto px-4 relative z-10">
         <motion.div
@@ -99,19 +100,19 @@ const Features = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-24"
         >
-          <span className="text-xs uppercase tracking-widest text-accent font-medium">Standout Features</span>
-          <h2 className="text-3xl md:text-5xl font-bold mt-3">
-            Everything you need,{" "}
-            <span className="text-gradient">one app.</span>
+          <span className="text-xs uppercase tracking-[0.4em] text-accent font-black mb-4 block">Core Toolkit</span>
+          <h2 className="text-4xl md:text-7xl font-black mt-3 tracking-tight">
+            Everything you need, <br />
+            <span className="text-gradient">one powerhouse.</span>
           </h2>
-          <p className="text-muted-foreground mt-4 max-w-xl mx-auto">
-            Toolz packs 30+ powerful tools into a single, beautifully designed Android app built with Jetpack Compose.
+          <p className="text-muted-foreground mt-8 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+            Toolz packs 30+ precision instruments into a single, beautifully designed Android app built with <span className="text-foreground font-semibold">Jetpack Compose</span>.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {features.map((feature, i) => (
             <motion.div
               key={feature.title}
@@ -120,20 +121,20 @@ const Features = () => {
               whileInView="visible"
               viewport={{ once: true, margin: "-50px" }}
               variants={cardVariants}
-              whileHover={{ y: -6, transition: { duration: 0.2 } }}
-              className="glass rounded-2xl p-6 group cursor-default"
+              whileHover={{ y: -8, scale: 1.02, transition: { duration: 0.2 } }}
+              className="glass rounded-[2rem] p-8 group cursor-default border-white/5 hover:border-white/20 transition-all duration-300"
             >
               <div
-                className={`w-11 h-11 rounded-xl flex items-center justify-center mb-4 ${
+                className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-transform duration-500 group-hover:rotate-12 ${
                   feature.accent === "primary"
-                    ? "bg-primary/15 text-primary"
-                    : "bg-accent/15 text-accent"
+                    ? "bg-primary/10 text-primary shadow-[0_0_20px_rgba(124,58,237,0.2)]"
+                    : "bg-accent/10 text-accent shadow-[0_0_20px_rgba(14,165,233,0.2)]"
                 }`}
               >
-                <feature.icon className="w-5 h-5" />
+                <feature.icon className="w-7 h-7" />
               </div>
-              <h3 className="font-semibold text-foreground mb-2">{feature.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+              <h3 className="text-xl font-bold text-foreground mb-3 group-hover:text-gradient transition-all duration-300">{feature.title}</h3>
+              <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
             </motion.div>
           ))}
         </div>

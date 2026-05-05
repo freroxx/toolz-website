@@ -1,8 +1,26 @@
 import { Button } from "@/components/ui/button";
 import { Download, Github, ChevronRight } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from "react";
+
+const heroScreenshots = [
+  "https://i.ibb.co/SDwBvkzW/Screenshot-20260504-201707-Toolz.jpg",
+  "https://i.ibb.co/JRm38F2k/Screenshot-20260504-201637-Toolz.jpg",
+  "https://i.ibb.co/VW9YRJCS/Screenshot-20260504-201525-Toolz.jpg",
+  "https://i.ibb.co/hR44MRvC/Screenshot-20260504-201429-Toolz.jpg",
+  "https://i.ibb.co/V0rhMPbT/Screenshot-20260504-201424-Toolz.jpg",
+];
 
 const Hero = () => {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIndex((prev) => (prev + 1) % heroScreenshots.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20 pb-12">
       {/* Background effects */}
@@ -86,38 +104,36 @@ const Hero = () => {
           </motion.div>
         </div>
 
-        {/* Floating Screenshots */}
+        {/* Dynamic Rotating Screenshots */}
         <motion.div
           initial={{ opacity: 0, y: 60 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.6 }}
           className="mt-20 relative max-w-6xl mx-auto"
         >
-          <div className="relative z-10 glass rounded-[2.5rem] p-3 glow-primary shadow-2xl">
-            <div className="relative rounded-[2rem] overflow-hidden aspect-[16/9] bg-black">
-              <img 
-                src="https://i.ibb.co/LsfbwSk/Screenshot-20260504-200614-Toolz.jpg" 
-                alt="Toolz App Interface" 
-                className="w-full h-full object-cover opacity-80"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="flex gap-4 sm:gap-8">
-                  {[
-                    "https://i.ibb.co/SDwBvkzW/Screenshot-20260504-201707-Toolz.jpg",
-                    "https://i.ibb.co/JRm38F2k/Screenshot-20260504-201637-Toolz.jpg",
-                    "https://i.ibb.co/VW9YRJCS/Screenshot-20260504-201525-Toolz.jpg"
-                  ].map((src, i) => (
-                    <motion.div
-                      key={src}
-                      initial={{ y: 40, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: 0.8 + i * 0.1 }}
-                      className={`w-24 sm:w-40 md:w-56 aspect-[9/19] rounded-xl sm:rounded-3xl overflow-hidden shadow-2xl border border-white/10 ${i === 1 ? 'z-20 scale-110 -translate-y-4' : 'z-10 opacity-60'}`}
-                    >
-                      <img src={src} className="w-full h-full object-cover" />
-                    </motion.div>
-                  ))}
+          <div className="relative z-10 glass rounded-[2.5rem] p-3 glow-primary shadow-2xl overflow-hidden">
+            <div className="relative rounded-[2rem] overflow-hidden aspect-[16/9] bg-black/40">
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent z-20" />
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <div className="flex gap-4 sm:gap-8 items-center">
+                  <AnimatePresence mode="wait">
+                    {[
+                      (index - 1 + heroScreenshots.length) % heroScreenshots.length,
+                      index,
+                      (index + 1) % heroScreenshots.length
+                    ].map((idx, i) => (
+                      <motion.div
+                        key={`${idx}-${i}`}
+                        initial={{ opacity: 0, x: 20, scale: 0.8 }}
+                        animate={{ opacity: i === 1 ? 1 : 0.4, x: 0, scale: i === 1 ? 1.1 : 0.9 }}
+                        exit={{ opacity: 0, x: -20, scale: 0.8 }}
+                        transition={{ duration: 0.8, ease: "easeInOut" }}
+                        className={`w-24 sm:w-40 md:w-56 aspect-[9/19] rounded-xl sm:rounded-3xl overflow-hidden shadow-2xl border border-white/10 ${i === 1 ? 'z-30 -translate-y-4' : 'z-10'}`}
+                      >
+                        <img src={heroScreenshots[idx]} className="w-full h-full object-cover" />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
                 </div>
               </div>
             </div>
