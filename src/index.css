@@ -59,6 +59,9 @@
   .glow-primary {
     @apply shadow-[0_0_40px_-10px_rgba(124,58,237,0.4)];
   }
+  .mask-fade-edges {
+    mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+  }
 }
 
 @keyframes gradient-x {
