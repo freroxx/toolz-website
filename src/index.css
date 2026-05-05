@@ -8,45 +8,24 @@
   :root {
     --background: 228 12% 7%;
     --foreground: 210 20% 92%;
-
     --card: 228 12% 10%;
     --card-foreground: 210 20% 92%;
-
     --popover: 228 12% 10%;
     --popover-foreground: 210 20% 92%;
-
     --primary: 265 100% 47%;
     --primary-foreground: 0 0% 100%;
-
     --secondary: 228 12% 14%;
     --secondary-foreground: 210 20% 92%;
-
     --muted: 228 10% 16%;
     --muted-foreground: 215 12% 55%;
-
     --accent: 185 80% 50%;
     --accent-foreground: 228 12% 7%;
-
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-
     --border: 228 10% 18%;
     --input: 228 10% 18%;
     --ring: 265 100% 47%;
-
-    --radius: 0.75rem;
-
-    --glow-primary: 265 100% 47%;
-    --glow-accent: 185 80% 50%;
-
-    --sidebar-background: 228 12% 7%;
-    --sidebar-foreground: 210 20% 92%;
-    --sidebar-primary: 265 100% 47%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 228 12% 14%;
-    --sidebar-accent-foreground: 210 20% 92%;
-    --sidebar-border: 228 10% 18%;
-    --sidebar-ring: 265 100% 47%;
+    --radius: 1rem;
   }
 }
 
@@ -55,7 +34,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground font-sans antialiased selection:bg-primary/30;
     font-family: 'Inter', sans-serif;
   }
   html {
@@ -63,26 +42,51 @@
   }
 }
 
-@layer utilities {
+@layer components {
   .glass {
-    @apply bg-card/40 backdrop-blur-xl border border-border/50;
+    @apply bg-white/[0.03] backdrop-blur-md border border-white/[0.08] shadow-[0_8px_32px_0_rgba(0,0,0,0.3)];
   }
   .glass-strong {
-    @apply bg-card/60 backdrop-blur-2xl border border-border/60;
-  }
-  .glow-primary {
-    box-shadow: 0 0 40px -10px hsl(var(--primary) / 0.4);
-  }
-  .glow-accent {
-    box-shadow: 0 0 40px -10px hsl(var(--accent) / 0.4);
+    @apply bg-black/60 backdrop-blur-xl border-b border-white/10;
   }
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-[hsl(265,100%,67%)] to-[hsl(185,80%,50%)];
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[hsl(265,100%,67%)] via-[hsl(185,80%,50%)] to-[hsl(265,100%,67%)] bg-[length:200%_auto] animate-gradient-x;
   }
   .bg-grid {
-    background-image: 
-      linear-gradient(hsl(var(--border) / 0.3) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--border) / 0.3) 1px, transparent 1px);
-    background-size: 60px 60px;
+    background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.05) 1px, transparent 0);
+    background-size: 40px 40px;
   }
+  .glow-primary {
+    @apply shadow-[0_0_40px_-10px_rgba(124,58,237,0.4)];
+  }
+}
+
+@keyframes gradient-x {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-gradient-x {
+  animation: gradient-x 6s ease infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 8s ease-in-out infinite;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-background;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/40 transition-colors;
 }
