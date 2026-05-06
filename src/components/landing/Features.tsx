@@ -1,142 +1,115 @@
 import { motion } from "framer-motion";
 import {
   Shield, Bell, Lock, FileText, Music, FileVideo, 
-  Layout, Zap, Cpu, Scan, Focus, Fingerprint
+  Layout, Zap, Cpu, Scan, Focus, Fingerprint, Activity, Terminal
 } from "lucide-react";
 
-const features = [
-  {
-    icon: Focus,
-    title: "Focus Flow",
-    description: "Track app usage, score productivity, and enforce app limits with accessibility-powered hard locks.",
-    accent: "primary",
-  },
-  {
-    icon: Lock,
-    title: "Password Vault",
-    description: "Encrypted SQLCipher-backed database with biometric unlock, Autofill, and vault health checks.",
-    accent: "accent",
-  },
-  {
-    icon: Bell,
-    title: "Notification Vault",
-    description: "Capture selected notifications into a searchable local archive with app-level controls.",
-    accent: "primary",
-  },
-  {
-    icon: FileText,
-    title: "PDF Reader & OCR",
-    description: "Scan documents with OCR, extract text, and support AI-assisted summaries.",
-    accent: "accent",
-  },
-  {
-    icon: FileVideo,
-    title: "File Converter",
-    description: "FFmpeg-backed processing for video, audio, image, and PDF conversion workflows.",
-    accent: "primary",
-  },
-  {
-    icon: Music,
-    title: "Music Player",
-    description: "Local playback with lyrics, Media3 controls, and a catalog download flow.",
-    accent: "accent",
-  },
-  {
-    icon: Layout,
-    title: "Widgets & Tiles",
-    description: "Homescreen widgets and quick settings tiles for flashlight, notes, steps, and more.",
-    accent: "primary",
-  },
-  {
-    icon: Zap,
-    title: "Smart Flow & AI",
-    description: "AI Assistant with configurable providers and smart dashboard search matching your intent.",
-    accent: "accent",
-  },
-  {
-    icon: Scan,
-    title: "Sensors & Vision",
-    description: "Scanner, Light Meter, Compass, Bubble Level, Speedometer, and Altimeter.",
-    accent: "primary",
-  },
-  {
-    icon: Fingerprint,
-    title: "Privacy First",
-    description: "Strong local capabilities for vaults, clipboard history, and measurement tools.",
-    accent: "accent",
-  },
-  {
-    icon: Cpu,
-    title: "System Utilities",
-    description: "Device Info, Battery Info, File Cleaner, and random generation tools.",
-    accent: "primary",
-  },
-  {
-    icon: Shield,
-    title: "30+ Precision Instruments",
-    description: "A single Compose-first experience combining all the tools you need daily.",
-    accent: "accent",
-  },
-];
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.05, duration: 0.5, ease: "easeOut" as const },
-  }),
-};
+const BentoCard = ({ title, description, icon: Icon, className = "", accent = "primary" }: any) => (
+  <motion.div
+    whileHover={{ y: -5, scale: 1.01 }}
+    className={`glass group relative overflow-hidden rounded-[2.5rem] p-8 border-white/5 hover:border-white/20 transition-all duration-500 ${className}`}
+  >
+    <div className={`absolute top-0 right-0 w-32 h-32 blur-[60px] -mr-16 -mt-16 opacity-20 group-hover:opacity-40 transition-opacity duration-500 ${accent === 'primary' ? 'bg-primary' : 'bg-accent'}`} />
+    
+    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 ${
+      accent === "primary"
+        ? "bg-primary/10 text-primary shadow-[0_0_30px_rgba(124,58,237,0.1)]"
+        : "bg-accent/10 text-accent shadow-[0_0_30px_rgba(14,165,233,0.1)]"
+    }`}>
+      <Icon className="w-7 h-7" />
+    </div>
+    
+    <h3 className="text-2xl font-black text-foreground mb-3 tracking-tight group-hover:text-gradient transition-all duration-300">
+      {title}
+    </h3>
+    <p className="text-muted-foreground leading-relaxed text-sm md:text-base font-medium">
+      {description}
+    </p>
+  </motion.div>
+);
 
 const Features = () => {
   return (
     <section id="features" className="relative py-32 overflow-hidden">
-      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full bg-primary/5 blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] rounded-full bg-accent/5 blur-[150px] pointer-events-none" />
-
       <div className="container mx-auto px-4 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-24"
-        >
-          <span className="text-xs uppercase tracking-[0.4em] text-accent font-black mb-4 block">Core Toolkit</span>
-          <h2 className="text-4xl md:text-7xl font-black mt-3 tracking-tight">
-            Everything you need, <br />
-            <span className="text-gradient">one powerhouse.</span>
+        <div className="max-w-4xl mb-24">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="flex items-center gap-3 mb-6"
+          >
+            <div className="h-px w-12 bg-primary" />
+            <span className="text-xs uppercase tracking-[0.4em] text-primary font-black">Precision Instruments</span>
+          </motion.div>
+          <h2 className="text-5xl md:text-8xl font-black tracking-tighter leading-[0.9] mb-8">
+            Hand-crafted <br />
+            <span className="text-gradient">Utility.</span>
           </h2>
-          <p className="text-muted-foreground mt-8 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-            Toolz packs 30+ precision instruments into a single, beautifully designed Android app built with <span className="text-foreground font-semibold">Jetpack Compose</span>.
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl font-medium leading-relaxed">
+            Toolz isn't just a collection of scripts. It's a cohesive system of 30+ tools built for stability and speed.
           </p>
-        </motion.div>
+        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {features.map((feature, i) => (
-            <motion.div
-              key={feature.title}
-              custom={i}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-50px" }}
-              variants={cardVariants}
-              whileHover={{ y: -8, scale: 1.02, transition: { duration: 0.2 } }}
-              className="glass rounded-[2rem] p-8 group cursor-default border-white/5 hover:border-white/20 transition-all duration-300"
-            >
-              <div
-                className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-transform duration-500 group-hover:rotate-12 ${
-                  feature.accent === "primary"
-                    ? "bg-primary/10 text-primary shadow-[0_0_20px_rgba(124,58,237,0.2)]"
-                    : "bg-accent/10 text-accent shadow-[0_0_20px_rgba(14,165,233,0.2)]"
-                }`}
-              >
-                <feature.icon className="w-7 h-7" />
-              </div>
-              <h3 className="text-xl font-bold text-foreground mb-3 group-hover:text-gradient transition-all duration-300">{feature.title}</h3>
-              <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
-            </motion.div>
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          {/* Main Feature - Large */}
+          <BentoCard 
+            className="md:col-span-8 md:row-span-2"
+            icon={Focus}
+            title="Focus Flow"
+            accent="primary"
+            description="A deep-system integration that tracks app usage and scores productivity. Use accessibility-powered hard locks to reclaim your attention when you need it most. No fluff, just pure focus."
+          />
+          
+          {/* Security - Medium */}
+          <BentoCard 
+            className="md:col-span-4"
+            icon={Lock}
+            title="Privacy Vault"
+            accent="accent"
+            description="Encrypted SQLCipher storage for passwords and notifications. Local-first, biometric-locked."
+          />
+
+          {/* Media - Medium */}
+          <BentoCard 
+            className="md:col-span-4"
+            icon={Music}
+            title="Media Engine"
+            accent="primary"
+            description="Media3-backed playback with local indexing and catalog management."
+          />
+
+          {/* Utils - Small Grid */}
+          <BentoCard 
+            className="md:col-span-4"
+            icon={FileVideo}
+            title="FFmpeg Core"
+            accent="accent"
+            description="Professional grade file conversion on-device."
+          />
+          <BentoCard 
+            className="md:col-span-4"
+            icon={Scan}
+            title="Smart Vision"
+            accent="primary"
+            description="OCR and scanner tools that actually work."
+          />
+          <BentoCard 
+            className="md:col-span-4"
+            icon={Activity}
+            title="Sensors"
+            accent="accent"
+            description="Real-time data from every sensor your device has."
+          />
+          
+          {/* System - Large Horizontal */}
+          <BentoCard 
+            className="md:col-span-8"
+            icon={Terminal}
+            title="System Native"
+            accent="primary"
+            description="Built with Jetpack Compose and Hilt, Toolz integrates with Autofill, Quick Settings, and App Widgets to feel like a part of your OS, not an outsider."
+          />
         </div>
       </div>
     </section>

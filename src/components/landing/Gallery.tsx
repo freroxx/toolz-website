@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X, LayoutGrid } from "lucide-react";
 
 const screenshots = [
   "https://i.ibb.co/SDwBvkzW/Screenshot-20260504-201707-Toolz.jpg",
@@ -42,14 +42,13 @@ const screenshots = [
 const Gallery = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  // Split screenshots into 4 columns for the wheel effect
   const column1 = [...screenshots].slice(0, 9);
   const column2 = [...screenshots].slice(9, 18);
   const column3 = [...screenshots].slice(18, 27);
   const column4 = [...screenshots].slice(27);
 
   const ScrollingColumn = ({ items, speed, reverse = false }: { items: string[], speed: number, reverse?: boolean }) => (
-    <div className="flex flex-col gap-6 relative h-[800px] overflow-hidden">
+    <div className="flex flex-col gap-8 relative h-[900px] overflow-hidden">
       <motion.div
         animate={{
           y: reverse ? ["-50%", "0%"] : ["0%", "-50%"],
@@ -59,22 +58,22 @@ const Gallery = () => {
           repeat: Infinity,
           ease: "linear",
         }}
-        className="flex flex-col gap-6"
+        className="flex flex-col gap-8"
       >
         {[...items, ...items].map((src, i) => (
           <motion.div
             key={`${src}-${i}`}
-            whileHover={{ scale: 1.05, zIndex: 10 }}
+            whileHover={{ scale: 1.05, rotate: reverse ? -1 : 1 }}
             onClick={() => setSelectedImage(src)}
-            className="relative aspect-[9/19] w-full rounded-2xl overflow-hidden cursor-zoom-in border border-white/10 shadow-2xl glass group shrink-0"
+            className="relative aspect-[9/19] w-full rounded-[2rem] overflow-hidden cursor-zoom-in border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.4)] glass group shrink-0"
           >
             <img
               src={src}
-              alt="Toolz Screenshot"
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              alt="Toolz Detail"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-colors duration-300" />
+            <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors duration-300" />
           </motion.div>
         ))}
       </motion.div>
@@ -82,39 +81,42 @@ const Gallery = () => {
   );
 
   return (
-    <section id="gallery" className="relative py-28 overflow-hidden bg-secondary/20">
-      <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-background to-transparent z-20" />
-      <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-background to-transparent z-20" />
+    <section id="gallery" className="relative py-32 overflow-hidden bg-secondary/10">
+      <div className="absolute top-0 left-0 w-full h-48 bg-gradient-to-b from-background to-transparent z-20" />
+      <div className="absolute bottom-0 left-0 w-full h-48 bg-gradient-to-t from-background to-transparent z-20" />
       
       <div className="container mx-auto px-4 relative z-10">
-        <div className="flex flex-col lg:flex-row gap-16 items-center">
+        <div className="flex flex-col lg:flex-row gap-20 items-center">
           <motion.div
-            initial={{ opacity: 0, x: -40 }}
+            initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="lg:w-1/3 text-center lg:text-left"
+            className="lg:w-2/5 text-center lg:text-left"
           >
-            <span className="text-xs uppercase tracking-[0.3em] text-accent font-bold mb-4 block">Visual Library</span>
-            <h2 className="text-4xl md:text-6xl font-black mt-3 leading-tight">
-              Infinite <br />
-              <span className="text-gradient">Experience.</span>
+            <div className="flex items-center gap-3 justify-center lg:justify-start mb-6">
+              <LayoutGrid className="w-5 h-5 text-accent" />
+              <span className="text-xs uppercase tracking-[0.4em] text-accent font-black block">Visual Proof</span>
+            </div>
+            <h2 className="text-5xl md:text-8xl font-black mt-3 leading-[0.9] tracking-tighter mb-8">
+              Every Pixel <br />
+              <span className="text-gradient">Refined.</span>
             </h2>
-            <p className="text-muted-foreground mt-6 text-lg leading-relaxed">
-              Every tool is crafted with precision. Swipe through our vertical showcase to see the depth of Toolz.
+            <p className="text-xl text-muted-foreground mt-6 leading-relaxed font-medium">
+              We don't do generic. Every interface in Toolz is built with a focus on hierarchy, accessibility, and modern aesthetics.
             </p>
-            <div className="mt-10 flex justify-center lg:justify-start gap-4">
-              <div className="px-6 py-3 rounded-full glass border-primary/20 text-sm font-medium">
-                34+ High-Res Previews
+            <div className="mt-12 flex flex-wrap justify-center lg:justify-start gap-4">
+              <div className="px-8 py-4 rounded-2xl glass border-primary/20 text-sm font-black uppercase tracking-widest">
+                34 High-Res Previews
               </div>
             </div>
           </motion.div>
 
-          <div className="lg:w-2/3 grid grid-cols-2 sm:grid-cols-4 gap-6 h-[800px] overflow-hidden mask-fade-edges">
-            <ScrollingColumn items={column1} speed={40} />
-            <ScrollingColumn items={column2} speed={50} reverse />
-            <ScrollingColumn items={column3} speed={45} />
-            <ScrollingColumn items={column4} speed={55} reverse />
+          <div className="lg:w-3/5 grid grid-cols-2 sm:grid-cols-4 gap-8 h-[900px] overflow-hidden mask-fade-edges opacity-80 hover:opacity-100 transition-opacity duration-700">
+            <ScrollingColumn items={column1} speed={45} />
+            <ScrollingColumn items={column2} speed={55} reverse />
+            <ScrollingColumn items={column3} speed={50} />
+            <ScrollingColumn items={column4} speed={60} reverse />
           </div>
         </div>
       </div>
@@ -124,25 +126,25 @@ const Gallery = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/95 backdrop-blur-md"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/95 backdrop-blur-xl"
           onClick={() => setSelectedImage(null)}
         >
           <button 
-            className="absolute top-6 right-6 p-2 rounded-full glass hover:bg-white/10 transition-colors"
+            className="absolute top-8 right-8 p-3 rounded-full glass-strong hover:bg-white/10 transition-colors"
             onClick={() => setSelectedImage(null)}
           >
             <X className="w-6 h-6" />
           </button>
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
+            initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="relative max-w-full max-h-[90vh] aspect-[9/19]"
+            className="relative max-w-full max-h-[85vh] aspect-[9/19]"
             onClick={(e) => e.stopPropagation()}
           >
             <img
               src={selectedImage}
-              alt="Toolz Screenshot Full"
-              className="w-full h-full object-contain rounded-2xl shadow-2xl"
+              alt="Toolz Full View"
+              className="w-full h-full object-contain rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.8)] border border-white/10"
             />
           </motion.div>
         </motion.div>

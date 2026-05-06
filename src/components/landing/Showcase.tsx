@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
+import { Zap, Shield, Sparkles } from "lucide-react";
 
 const allScreenshots = [
   "https://i.ibb.co/SDwBvkzW/Screenshot-20260504-201707-Toolz.jpg",
@@ -40,15 +41,17 @@ const allScreenshots = [
 
 const showcaseGroups = [
   {
-    title: "A Real Daily Driver",
+    title: "Daily Utility, Perfected.",
     label: "Experience",
-    description: "Toolz is designed for people who want one fast home for the tools they actually use. A polished dashboard with quick access and pinned tools.",
+    icon: Zap,
+    description: "Toolz isn't just an app; it's a productivity hub. From the smart dashboard to pinned quick-actions, every interaction is designed to save you seconds.",
     images: allScreenshots.slice(0, 17)
   },
   {
-    title: "Powerful & Integrated",
-    label: "System Native",
-    description: "From Focus Flow usage analytics to a secure Password Vault with biometric unlock, Toolz leverages Android-native integrations seamlessly.",
+    title: "Deep System Harmony.",
+    label: "Integrations",
+    icon: Shield,
+    description: "Experience true Android integration. Biometric security, native Autofill services, and accessibility-powered focus locks that actually work.",
     images: allScreenshots.slice(17)
   }
 ];
@@ -64,76 +67,79 @@ const Showcase = () => {
   }, []);
 
   return (
-    <section id="showcase" className="relative py-28 overflow-hidden">
-      <div className="absolute top-1/3 left-0 w-[400px] h-[400px] rounded-full bg-primary/5 blur-[150px]" />
-      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-accent/5 blur-[150px]" />
-
-      <div className="container mx-auto px-4 relative z-10 space-y-32">
+    <section id="showcase" className="relative py-32 overflow-hidden bg-background">
+      <div className="container mx-auto px-4 relative z-10 space-y-48">
         {showcaseGroups.map((group, i) => (
-          <motion.div
+          <div
             key={group.title}
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.7, delay: 0.1 }}
             className={`flex flex-col ${
               i % 2 !== 0 ? "md:flex-row-reverse" : "md:flex-row"
-            } items-center gap-12 md:gap-24`}
+            } items-center gap-16 md:gap-32`}
           >
             <div className="flex-1 flex justify-center">
               <div className="relative group">
-                <div className="absolute -inset-4 rounded-[3rem] bg-gradient-to-tr from-primary/20 to-accent/20 blur-2xl opacity-50 group-hover:opacity-100 transition-opacity duration-700" />
-                <div className="relative glass rounded-[2.5rem] p-3 border-white/10 shadow-2xl w-[280px] md:w-[320px]">
-                  <div className="relative aspect-[9/19] rounded-[2rem] overflow-hidden bg-black/20">
+                {/* Hand-crafted decorative frame */}
+                <div className="absolute -inset-8 rounded-[4rem] bg-gradient-to-tr from-primary/10 to-accent/10 blur-3xl opacity-50" />
+                <div className="relative glass rounded-[3.5rem] p-4 border-white/10 shadow-[0_50px_100px_rgba(0,0,0,0.5)] w-[300px] md:w-[360px]">
+                  <div className="relative aspect-[9/19] rounded-[2.8rem] overflow-hidden bg-black/40">
                     <AnimatePresence mode="wait">
                       <motion.img
                         key={group.images[imageIndexes[i]]}
                         src={group.images[imageIndexes[i]]}
-                        alt={group.title}
-                        initial={{ opacity: 0, scale: 1.1 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        transition={{ duration: 0.6, ease: "easeInOut" }}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.6, ease: "circOut" }}
                         className="absolute inset-0 w-full h-full object-cover"
                       />
                     </AnimatePresence>
                   </div>
                 </div>
-                {/* Decorative floating dots */}
-                <div className="absolute -top-4 -right-4 w-12 h-12 glass rounded-full flex items-center justify-center animate-bounce shadow-lg">
-                  <div className="w-2 h-2 rounded-full bg-primary" />
-                </div>
+                {/* Bespoke floating badge */}
+                <motion.div 
+                  animate={{ rotate: [0, 10, 0] }}
+                  transition={{ duration: 6, repeat: Infinity }}
+                  className="absolute -bottom-6 -right-6 w-20 h-20 glass rounded-3xl flex items-center justify-center shadow-2xl border-white/20"
+                >
+                  <Sparkles className="w-8 h-8 text-accent" />
+                </motion.div>
               </div>
             </div>
             
             <div className="flex-1 text-center md:text-left">
               <motion.div
-                initial={{ opacity: 0, x: i % 2 !== 0 ? 20 : -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: 0.3 }}
+                transition={{ duration: 0.8 }}
               >
-                <span className="inline-block px-4 py-1 rounded-full glass text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-6 border-accent/20">
-                  {group.label}
-                </span>
-                <h3 className="text-4xl md:text-6xl font-black mt-3 mb-6 tracking-tight">
+                <div className="flex items-center gap-4 justify-center md:justify-start mb-8">
+                  <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10">
+                    <group.icon className="w-6 h-6 text-primary" />
+                  </div>
+                  <span className="text-xs font-black uppercase tracking-[0.4em] text-accent">
+                    {group.label}
+                  </span>
+                </div>
+                
+                <h3 className="text-5xl md:text-7xl font-black mb-8 tracking-tighter leading-tight">
                   {group.title}
                 </h3>
-                <p className="text-muted-foreground text-lg md:text-xl leading-relaxed max-w-md mx-auto md:mx-0">
+                <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed max-w-lg mx-auto md:mx-0 font-medium">
                   {group.description}
                 </p>
                 
-                <div className="mt-8 flex justify-center md:justify-start gap-1 flex-wrap">
+                <div className="mt-12 flex justify-center md:justify-start gap-1.5 flex-wrap max-w-xs">
                   {group.images.map((_, idx) => (
                     <div 
                       key={idx}
-                      className={`h-1 rounded-full transition-all duration-500 ${idx === imageIndexes[i] ? 'w-4 bg-primary' : 'w-1 bg-white/10'}`}
+                      className={`h-1 rounded-full transition-all duration-700 ${idx === imageIndexes[i] ? 'w-6 bg-primary' : 'w-1 bg-white/10'}`}
                     />
                   ))}
                 </div>
               </motion.div>
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
     </section>
