@@ -1,5 +1,4 @@
-import { Button } from "@/components/ui/button";
-import { Download, Github, ChevronRight, Sparkles } from "lucide-react";
+import { Download, Github, Terminal, ChevronRight, Activity } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 
@@ -51,106 +50,112 @@ const Hero = () => {
   }, []);
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-24 pb-20">
-      {/* Hand-crafted background gradients */}
-      <div className="absolute inset-0 bg-grid opacity-20" />
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/20 blur-[140px] animate-pulse-glow" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-accent/15 blur-[140px] animate-pulse-glow" style={{ animationDelay: "2s" }} />
-
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-32 pb-24 bg-blueprint">
+      {/* Mechanical Grid Background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black" />
+      
       <div className="container mx-auto px-4 relative z-10">
         <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
           <div className="flex-1 text-center lg:text-left">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border-white/10 mb-8"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="inline-flex items-center gap-4 mb-10"
             >
-              <Sparkles className="w-4 h-4 text-accent animate-pulse" />
-              <span className="text-[10px] sm:text-xs font-black text-white/80 tracking-[0.2em] uppercase">
-                The device orchestrator
-              </span>
+              <div className="w-2 h-2 bg-primary animate-pulse" />
+              <span className="text-technical text-primary">System_Active: Orchestration_Enabled</span>
             </motion.div>
 
             <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.1 }}
-              className="text-6xl sm:text-7xl md:text-[7rem] font-black leading-[0.85] mb-10 tracking-tighter"
-            >
-              Less Noise. <br />
-              <span className="text-gradient">More Toolz.</span>
-            </motion.h1>
-
-            <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto lg:mx-0 mb-12 leading-relaxed font-medium"
+              transition={{ duration: 0.6 }}
+              className="text-6xl sm:text-7xl md:text-[8rem] font-black leading-[0.8] mb-12 tracking-tighter uppercase"
             >
-              A high-precision Android toolkit designed for people who value <span className="text-foreground font-bold italic">speed over clutter</span>. 30+ tools, one seamless experience.
-            </motion.p>
+              Zero <br />
+              <span className="text-primary italic">Clutter.</span>
+            </motion.h1>
+
+            <div className="flex flex-col gap-8 mb-16 max-w-2xl mx-auto lg:mx-0">
+              <p className="text-xl md:text-2xl text-white/70 leading-relaxed font-mono">
+                Toolz is a high-precision Android utility suite. Built for speed. Engineered for privacy. 30+ tools, zero bloat.
+              </p>
+              
+              <div className="flex flex-wrap gap-6 text-technical text-white/40">
+                <div className="flex items-center gap-2">
+                  <Activity className="w-4 h-4" />
+                  <span>30+ Tools</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Terminal className="w-4 h-4" />
+                  <span>Kotlin Native</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-primary" />
+                  <span>Android 12-15</span>
+                </div>
+              </div>
+            </div>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-              className="flex flex-col sm:flex-row gap-5 justify-center lg:justify-start items-center"
+              transition={{ delay: 0.3 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
             >
-              <Button variant="hero" size="xl" className="w-full sm:w-auto rounded-[1.5rem] group shadow-2xl shadow-primary/30 h-16" asChild>
-                <a href="https://github.com/freroxx/toolz/releases" target="_blank" rel="noopener noreferrer">
-                  <Download className="w-5 h-5 group-hover:translate-y-0.5 transition-transform" />
-                  Get Toolz v1.0.7
-                  <ChevronRight className="w-4 h-4 opacity-50 group-hover:translate-x-0.5 transition-transform" />
-                </a>
-              </Button>
-              <Button variant="glass" size="xl" className="w-full sm:w-auto rounded-[1.5rem] border-white/10 h-16 px-12" asChild>
-                <a href="https://github.com/freroxx/toolz" target="_blank" rel="noopener noreferrer">
-                  <Github className="w-5 h-5" />
-                  Source
-                </a>
-              </Button>
+              <a href="https://github.com/freroxx/toolz/releases" className="btn-technical group">
+                <span className="flex items-center gap-2">
+                  <Download className="w-4 h-4" />
+                  Fetch_Latest_APK
+                </span>
+              </a>
+              <a href="https://github.com/freroxx/toolz" className="btn-outline-technical">
+                <span className="flex items-center gap-2">
+                  <Github className="w-4 h-4" />
+                  View_Source
+                </span>
+              </a>
             </motion.div>
           </div>
 
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, rotate: 5 }}
-            animate={{ opacity: 1, scale: 1, rotate: 0 }}
-            transition={{ duration: 1, delay: 0.4 }}
-            className="flex-1 relative w-full max-w-[500px]"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex-1 relative w-full max-w-[450px]"
           >
-            <div className="relative z-10 glass rounded-[3rem] p-4 glow-primary shadow-[0_40px_100px_rgba(0,0,0,0.6)] border-white/10">
-              <div className="relative rounded-[2.2rem] overflow-hidden aspect-[9/19] bg-black/80">
+            {/* Mechanical Frame */}
+            <div className="relative z-10 bg-black border-4 border-white/10 p-2 shadow-[0_0_50px_rgba(0,0,0,1)]">
+              {/* Corner Accents */}
+              <div className="absolute -top-2 -left-2 w-8 h-8 border-t-4 border-l-4 border-primary" />
+              <div className="absolute -bottom-2 -right-2 w-8 h-8 border-b-4 border-r-4 border-primary" />
+              
+              <div className="relative aspect-[9/19] overflow-hidden bg-zinc-900">
                 <AnimatePresence mode="wait">
                   <motion.img
                     key={allScreenshots[index]}
                     src={allScreenshots[index]}
-                    initial={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }}
-                    animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-                    exit={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }}
-                    transition={{ duration: 0.8, ease: "circOut" }}
-                    className="absolute inset-0 w-full h-full object-cover"
+                    initial={{ opacity: 0, scale: 1.05 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.5, ease: "linear" }}
+                    className="absolute inset-0 w-full h-full object-cover grayscale-[0.2] hover:grayscale-0 transition-all duration-500"
                   />
                 </AnimatePresence>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+                
+                {/* HUD Overlay */}
+                <div className="absolute inset-0 border border-primary/20 pointer-events-none" />
+                <div className="absolute top-4 left-4 text-[8px] font-mono text-primary opacity-50 uppercase">
+                  UI_Buffer_Active
+                </div>
+                <div className="absolute bottom-4 right-4 text-[8px] font-mono text-primary opacity-50 uppercase">
+                  Frame_ID: {index + 1} / 34
+                </div>
               </div>
             </div>
-            {/* Hand-crafted floating UI elements */}
-            <motion.div 
-              animate={{ y: [0, -15, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -top-12 -right-8 z-20 glass-strong p-5 rounded-2xl shadow-2xl border-white/10 hidden md:block"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <div className="text-[10px] font-black uppercase tracking-widest text-white/50">Performance</div>
-                  <div className="text-sm font-bold">100% Native</div>
-                </div>
-              </div>
-            </motion.div>
+            
+            {/* Background decorative technical elements */}
+            <div className="absolute -top-10 -right-10 w-40 h-40 border border-white/5 rotate-45" />
+            <div className="absolute -bottom-10 -left-10 w-40 h-40 border border-white/5 -rotate-12" />
           </motion.div>
         </div>
       </div>

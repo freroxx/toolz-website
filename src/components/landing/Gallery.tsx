@@ -48,7 +48,7 @@ const Gallery = () => {
   const column4 = [...screenshots].slice(27);
 
   const ScrollingColumn = ({ items, speed, reverse = false }: { items: string[], speed: number, reverse?: boolean }) => (
-    <div className="flex flex-col gap-8 relative h-[900px] overflow-hidden">
+    <div className="flex flex-col gap-4 relative h-[800px] overflow-hidden">
       <motion.div
         animate={{
           y: reverse ? ["-50%", "0%"] : ["0%", "-50%"],
@@ -58,96 +58,77 @@ const Gallery = () => {
           repeat: Infinity,
           ease: "linear",
         }}
-        className="flex flex-col gap-8"
+        className="flex flex-col gap-4"
       >
         {[...items, ...items].map((src, i) => (
-          <motion.div
+          <div
             key={`${src}-${i}`}
-            whileHover={{ scale: 1.05, rotate: reverse ? -1 : 1 }}
             onClick={() => setSelectedImage(src)}
-            className="relative aspect-[9/19] w-full rounded-[2rem] overflow-hidden cursor-zoom-in border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.4)] glass group shrink-0"
+            className="relative aspect-[9/19] w-full bg-black border border-white/10 cursor-zoom-in group shrink-0"
           >
             <img
               src={src}
-              alt="Toolz Detail"
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              alt="Toolz_Buffer"
+              className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors duration-300" />
-          </motion.div>
+            <div className="absolute inset-0 border-2 border-primary/0 group-hover:border-primary/50 transition-all" />
+          </div>
         ))}
       </motion.div>
     </div>
   );
 
   return (
-    <section id="gallery" className="relative py-32 overflow-hidden bg-secondary/10">
-      <div className="absolute top-0 left-0 w-full h-48 bg-gradient-to-b from-background to-transparent z-20" />
-      <div className="absolute bottom-0 left-0 w-full h-48 bg-gradient-to-t from-background to-transparent z-20" />
-      
+    <section id="gallery" className="relative py-32 bg-black border-y border-white/5">
       <div className="container mx-auto px-4 relative z-10">
         <div className="flex flex-col lg:flex-row gap-20 items-center">
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="lg:w-2/5 text-center lg:text-left"
-          >
-            <div className="flex items-center gap-3 justify-center lg:justify-start mb-6">
-              <LayoutGrid className="w-5 h-5 text-accent" />
-              <span className="text-xs uppercase tracking-[0.4em] text-accent font-black block">Visual Proof</span>
+          <div className="lg:w-2/5">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-px bg-primary" />
+              <span className="text-technical text-primary">Visual_Assets</span>
             </div>
-            <h2 className="text-5xl md:text-8xl font-black mt-3 leading-[0.9] tracking-tighter mb-8">
-              Every Pixel <br />
-              <span className="text-gradient">Refined.</span>
+            <h2 className="text-5xl md:text-8xl font-black uppercase tracking-tighter leading-none mb-10">
+              Interface <br />
+              Audit<span className="text-primary">.</span>
             </h2>
-            <p className="text-xl text-muted-foreground mt-6 leading-relaxed font-medium">
-              We don't do generic. Every interface in Toolz is built with a focus on hierarchy, accessibility, and modern aesthetics.
+            <p className="text-xl font-mono text-white/50 leading-relaxed">
+              Every pixel of the Toolz UI is optimized for technical clarity and operational efficiency.
             </p>
-            <div className="mt-12 flex flex-wrap justify-center lg:justify-start gap-4">
-              <div className="px-8 py-4 rounded-2xl glass border-primary/20 text-sm font-black uppercase tracking-widest">
-                34 High-Res Previews
-              </div>
-            </div>
-          </motion.div>
+          </div>
 
-          <div className="lg:w-3/5 grid grid-cols-2 sm:grid-cols-4 gap-8 h-[900px] overflow-hidden mask-fade-edges opacity-80 hover:opacity-100 transition-opacity duration-700">
-            <ScrollingColumn items={column1} speed={45} />
-            <ScrollingColumn items={column2} speed={55} reverse />
-            <ScrollingColumn items={column3} speed={50} />
-            <ScrollingColumn items={column4} speed={60} reverse />
+          <div className="lg:w-3/5 grid grid-cols-2 sm:grid-cols-4 gap-4 h-[800px] overflow-hidden mask-fade-edges grayscale hover:grayscale-0 transition-all duration-700">
+            <ScrollingColumn items={column1} speed={40} />
+            <ScrollingColumn items={column2} speed={50} reverse />
+            <ScrollingColumn items={column3} speed={45} />
+            <ScrollingColumn items={column4} speed={55} reverse />
           </div>
         </div>
       </div>
 
       {/* Lightbox */}
       {selectedImage && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/95 backdrop-blur-xl"
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95"
           onClick={() => setSelectedImage(null)}
         >
           <button 
-            className="absolute top-8 right-8 p-3 rounded-full glass-strong hover:bg-white/10 transition-colors"
+            className="absolute top-8 right-8 p-4 border border-white/10 text-primary hover:bg-primary hover:text-black transition-all"
             onClick={() => setSelectedImage(null)}
           >
             <X className="w-6 h-6" />
           </button>
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="relative max-w-full max-h-[85vh] aspect-[9/19]"
+          <div
+            className="relative max-w-full max-h-[85vh] aspect-[9/19] border-2 border-white/10 p-2 bg-black"
             onClick={(e) => e.stopPropagation()}
           >
             <img
               src={selectedImage}
-              alt="Toolz Full View"
-              className="w-full h-full object-contain rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.8)] border border-white/10"
+              alt="Toolz_Full_Buffer"
+              className="w-full h-full object-contain"
             />
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       )}
     </section>
   );

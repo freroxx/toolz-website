@@ -4,84 +4,68 @@ import { Zap, Shield, Cpu, Code } from "lucide-react";
 const reasons = [
   {
     icon: Zap,
-    title: "Zero Bloat.",
-    description: "Built for speed. No trackers, no ads, no background drain. Just the tools you need, instantly.",
-    color: "from-primary/20 to-primary/5",
+    title: "Core_Zero",
+    description: "No background services. No trackers. Zero battery drain when not in use.",
   },
   {
     icon: Shield,
-    title: "Local First.",
-    description: "Your data never leaves your device. Encryption is handled on-device with SQLCipher.",
-    color: "from-accent/20 to-accent/5",
+    title: "Secure_Node",
+    description: "On-device SQLCipher encryption. Your data never touches a server.",
   },
   {
     icon: Cpu,
-    title: "Native Power.",
-    description: "Leverages the full power of Android's Media3, Jetpack Compose, and Hilt architectures.",
-    color: "from-primary/20 to-primary/5",
+    title: "Engine_v2",
+    description: "High-fidelity Media3 and Jetpack Compose 1.7 implementation.",
   },
   {
     icon: Code,
-    title: "Open Core.",
-    description: "Transparent, auditable, and community-driven. Built by developers, for everyone.",
-    color: "from-accent/20 to-accent/5",
+    title: "Open_Logic",
+    description: "Fully auditable source code. Built for the community by developers.",
   },
 ];
 
 const HowItWorks = () => {
   return (
-    <section id="how-it-works" className="relative py-32 overflow-hidden">
+    <section id="how-it-works" className="relative py-32 bg-zinc-950">
       <div className="container mx-auto px-4 relative z-10">
-        <div className="flex flex-col lg:flex-row items-center gap-20">
+        <div className="flex flex-col lg:flex-row items-center gap-24">
           <div className="lg:w-1/2">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="flex items-center gap-3 mb-6"
-            >
-              <div className="h-px w-12 bg-accent" />
-              <span className="text-xs uppercase tracking-[0.4em] text-accent font-black">Philosophy</span>
-            </motion.div>
-            <h2 className="text-5xl md:text-8xl font-black tracking-tighter leading-[0.9] mb-10">
-              Why <br />
-              <span className="text-gradient">Toolz?</span>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-px bg-primary" />
+              <span className="text-technical text-primary">Protocol_Logic</span>
+            </div>
+            <h2 className="text-5xl md:text-8xl font-black uppercase tracking-tighter leading-none mb-12">
+              The <br />
+              <span className="text-primary italic">Standard.</span>
             </h2>
-            <p className="text-xl md:text-2xl text-muted-foreground font-medium leading-relaxed max-w-xl">
-              Most toolkits are cluttered and slow. We went the other way—building a high-performance engine that respects your time and privacy.
+            <p className="text-xl font-mono text-white/50 leading-relaxed max-w-xl mb-12">
+              Toolz isn't just a collection of apps. It's a high-performance framework that redefines what a mobile utility can be.
             </p>
             
-            <div className="mt-12 p-8 glass rounded-[2.5rem] border-white/10 relative overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-              <div className="relative z-10">
-                <div className="text-sm font-black uppercase tracking-widest text-primary mb-2">Build Status</div>
-                <div className="text-3xl font-black mb-4 tracking-tight">Production Ready.</div>
-                <p className="text-muted-foreground font-medium">
-                  Currently at v1.0.7 with stable support for Android 12 through 15. Continuous updates and community-driven feature requests.
-                </p>
-              </div>
+            <div className="border border-white/10 p-8 relative group">
+              <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-primary" />
+              <div className="text-technical text-primary mb-4">Build_Log</div>
+              <div className="text-2xl font-black uppercase mb-4 tracking-tight text-white/80">Production_Ready</div>
+              <p className="text-sm font-mono text-white/40">
+                Optimized for Android 12 through 15. Continuous integration testing on physical hardware for maximum stability.
+              </p>
             </div>
           </div>
 
-          <div className="lg:w-1/2 grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="lg:w-1/2 grid grid-cols-1 sm:grid-cols-2 gap-px bg-white/5 border border-white/5">
             {reasons.map((reason, i) => (
-              <motion.div
+              <div
                 key={reason.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                whileHover={{ y: -5 }}
-                className={`p-8 rounded-[2.5rem] glass border-white/5 hover:border-white/20 transition-all duration-500 bg-gradient-to-br ${reason.color}`}
+                className="p-10 bg-black group hover:bg-zinc-900 transition-all duration-300"
               >
-                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center mb-6">
-                  <reason.icon className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 border border-white/10 flex items-center justify-center mb-8 text-white/40 group-hover:text-primary group-hover:border-primary transition-all">
+                  <reason.icon className="w-5 h-5" />
                 </div>
-                <h3 className="text-2xl font-black mb-3 tracking-tight">{reason.title}</h3>
-                <p className="text-muted-foreground font-medium leading-relaxed text-sm">
+                <h3 className="text-xl font-black uppercase mb-4 tracking-tight group-hover:text-primary transition-colors">{reason.title}</h3>
+                <p className="text-sm font-mono text-white/40 leading-relaxed">
                   {reason.description}
                 </p>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
