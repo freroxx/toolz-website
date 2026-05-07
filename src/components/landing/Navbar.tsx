@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
-import { Menu, X, Github, Terminal } from "lucide-react";
+import { Menu, X, Github, Terminal, Download, Cpu } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const navLinks = [
   { label: "Tools", href: "#features" },
   { label: "Showcase", href: "#showcase" },
   { label: "Gallery", href: "#gallery" },
-  { label: "Log", href: "#how-it-works" },
   { label: "Node", href: "#discord" },
 ];
 
@@ -22,7 +21,7 @@ const Navbar = () => {
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      scrolled ? "bg-black/90 border-b border-white/10 py-3" : "bg-transparent py-6"
+      scrolled ? "bg-black/95 border-b border-primary/20 py-3" : "bg-transparent py-6"
     }`}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between">
@@ -34,41 +33,39 @@ const Navbar = () => {
               <span className="text-lg font-black tracking-tighter uppercase leading-none">
                 Toolz<span className="text-primary">_</span>
               </span>
-              <span className="text-technical text-white/40 leading-none mt-1">v1.0.7</span>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
+                <span className="text-technical text-white/40 leading-none uppercase">v1.0.7_STABLE</span>
+              </div>
             </div>
           </a>
 
+          {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
-                className="px-6 py-2 text-technical text-white/50 hover:text-primary hover:bg-white/5 transition-all"
+                className="px-6 py-2 text-technical text-white/50 hover:text-primary hover:bg-primary/5 transition-all relative group"
               >
-                [{link.label}]
+                <span className="relative z-10">[{link.label}]</span>
+                <div className="absolute inset-0 border-x border-primary/0 group-hover:border-primary/20 transition-all" />
               </a>
             ))}
           </div>
 
           <div className="hidden md:flex items-center gap-6">
-            <a 
-              href="https://github.com/freroxx/toolz" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-white/40 hover:text-white transition-colors"
-            >
+            <a href="https://github.com/freroxx/toolz" className="text-white/40 hover:text-white transition-colors">
               <Github className="w-5 h-5" />
             </a>
-            <a 
-              href="https://github.com/freroxx/toolz/releases" 
-              className="font-mono uppercase text-[10px] font-black border border-primary px-4 py-2 text-primary hover:bg-primary hover:text-black transition-all"
-            >
+            <a href="https://github.com/freroxx/toolz/releases" className="btn-technical h-10 px-6">
               Init_Download
             </a>
           </div>
 
+          {/* Mobile Trigger */}
           <button 
-            className="md:hidden p-2 text-primary border border-primary/20" 
+            className="md:hidden w-12 h-12 flex items-center justify-center text-primary border border-primary/20 bg-black" 
             onClick={() => setMobileOpen(!mobileOpen)}
           >
             {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -76,33 +73,61 @@ const Navbar = () => {
         </div>
       </div>
 
+      {/* Mobile Mechanical Menu */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="md:hidden absolute top-full left-0 right-0 bg-black border-b border-white/10"
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="fixed inset-0 z-50 md:hidden bg-black flex flex-col"
           >
-            <div className="flex flex-col p-6">
-              {navLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className="py-4 text-technical text-white/60 hover:text-primary"
-                  onClick={() => setMobileOpen(false)}
-                >
-                  {link.label}
-                </a>
-              ))}
-              <div className="pt-6 flex flex-col gap-4">
-                <a 
-                  href="https://github.com/freroxx/toolz/releases" 
-                  className="btn-technical text-center"
-                >
+            <div className="p-6 border-b border-white/10 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 border border-primary flex items-center justify-center text-primary font-mono font-black italic">T</div>
+                <span className="text-technical text-primary">SYS_MENU_ACTIVE</span>
+              </div>
+              <button onClick={() => setMobileOpen(false)} className="w-10 h-10 border border-white/10 flex items-center justify-center text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6 bg-blueprint">
+              <div className="flex flex-col gap-2">
+                {navLinks.map((link, i) => (
+                  <motion.a
+                    key={link.href}
+                    href={link.href}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    className="group py-6 border-b border-white/5 flex items-center justify-between"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <span className="text-3xl font-black uppercase tracking-tighter text-white/40 group-hover:text-primary transition-colors">
+                      {link.label}
+                    </span>
+                    <Terminal className="w-6 h-6 text-white/10 group-hover:text-primary transition-colors" />
+                  </motion.a>
+                ))}
+              </div>
+              
+              <div className="mt-12 flex flex-col gap-4">
+                <a href="https://github.com/freroxx/toolz/releases" className="btn-technical h-16 text-lg">
+                  <Download className="w-5 h-5" />
                   Download_APK
                 </a>
+                <a href="https://github.com/freroxx/toolz" className="btn-outline-technical h-16 text-lg">
+                  <Github className="w-5 h-5" />
+                  Source_Repo
+                </a>
               </div>
+            </div>
+            
+            <div className="p-6 border-t border-white/10 bg-zinc-950 flex items-center justify-between text-technical text-white/20">
+              <span>AUTH: v1.0.7_STABLE</span>
+              <Cpu className="w-4 h-4" />
             </div>
           </motion.div>
         )}

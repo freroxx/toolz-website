@@ -1,6 +1,6 @@
-import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
-import { Terminal, Shield, Activity } from "lucide-react";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { useRef, useState, useEffect } from "react";
+import { Terminal, Shield, Activity, Cpu, Zap } from "lucide-react";
 
 const allScreenshots = [
   "https://i.ibb.co/SDwBvkzW/Screenshot-20260504-201707-Toolz.jpg",
@@ -39,106 +39,119 @@ const allScreenshots = [
   "https://i.ibb.co/p64Prvg5/Screenshot-20260504-200347-Toolz.jpg",
 ];
 
-const showcaseGroups = [
-  {
-    title: "Operational_Interface",
-    label: "Telemetry",
-    icon: Activity,
-    description: "Real-time system orchestration. A unified dashboard designed for maximum data density and minimal latency.",
-    images: allScreenshots.slice(0, 17)
-  },
-  {
-    title: "Hardened_Security",
-    label: "Encryption",
-    icon: Shield,
-    description: "Device-local SQLCipher integration. Biometric verification for all secure vaults and notification archives.",
-    images: allScreenshots.slice(17)
-  }
-];
+const ShowcaseItem = ({ group, index, total }: any) => {
+  const container = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: container,
+    offset: ["start end", "end start"]
+  });
 
-const Showcase = () => {
-  const [imageIndexes, setImageIndexes] = useState([0, 0]);
+  const y = useTransform(scrollYProgress, [0, 1], [100, -100]);
+  const opacity = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
+  const scale = useTransform(scrollYProgress, [0, 0.2], [0.8, 1]);
 
+  const [imgIndex, setImgIndex] = useState(0);
   useEffect(() => {
     const timer = setInterval(() => {
-      setImageIndexes(prev => prev.map((idx, i) => (idx + 1) % showcaseGroups[i].images.length));
+      setImgIndex(prev => (prev + 1) % group.images.length);
     }, 3000);
     return () => clearInterval(timer);
-  }, []);
+  }, [group.images.length]);
 
   return (
-    <section id="showcase" className="relative py-32 bg-zinc-950 overflow-hidden">
-      <div className="container mx-auto px-4 relative z-10 space-y-48">
-        {showcaseGroups.map((group, i) => (
-          <div
-            key={group.title}
-            className={`flex flex-col ${
-              i % 2 !== 0 ? "md:flex-row-reverse" : "md:flex-row"
-            } items-center gap-16 md:gap-32`}
-          >
-            <div className="flex-1 flex justify-center">
-              <div className="relative">
-                {/* Mechanical Frame */}
-                <div className="relative bg-black border-2 border-white/10 p-2 shadow-2xl w-[280px] md:w-[320px]">
-                  <div className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-primary" />
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-primary" />
-                  
-                  <div className="relative aspect-[9/19] overflow-hidden bg-zinc-900">
-                    <AnimatePresence mode="wait">
-                      <motion.img
-                        key={group.images[imageIndexes[i]]}
-                        src={group.images[imageIndexes[i]]}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="absolute inset-0 w-full h-full object-cover grayscale-[0.3]"
-                      />
-                    </AnimatePresence>
-                  </div>
-                </div>
-                
-                {/* Technical Label */}
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-primary px-3 py-1 text-[8px] font-mono font-black text-black uppercase tracking-widest">
-                  Buffer_Stream: {imageIndexes[i] + 1}
-                </div>
+    <motion.div 
+      ref={container}
+      style={{ opacity, scale }}
+      className="flex flex-col lg:flex-row items-center gap-12 lg:gap-24 min-h-[70vh] py-20"
+    >
+      <div className="flex-1 order-2 lg:order-1">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-12 h-12 border border-primary flex items-center justify-center text-primary">
+            <group.icon className="w-6 h-6" />
+          </div>
+          <span className="text-technical text-primary">SYS_NODE_0{index + 1}</span>
+        </div>
+        <h3 className="text-huge font-black uppercase mb-8">
+          {group.title}<span className="text-primary">_</span>
+        </h3>
+        <p className="text-xl font-mono text-white/50 leading-relaxed max-w-xl">
+          {group.description}
+        </p>
+        
+        <div className="mt-12 grid grid-cols-2 gap-4">
+          {group.specs.map((spec: string, i: number) => (
+            <div key={i} className="flex items-center gap-2 text-technical text-white/30">
+              <div className="w-1 h-1 bg-primary" />
+              {spec}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex-1 order-1 lg:order-2 w-full max-w-[400px]">
+        <motion.div style={{ y }} className="relative">
+          <div className="bg-black border-4 border-white/10 p-2 shadow-2xl relative">
+            <div className="absolute -top-2 -right-2 w-12 h-12 border-t-4 border-r-4 border-primary" />
+            <div className="relative aspect-[9/19] overflow-hidden bg-zinc-900">
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={group.images[imgIndex]}
+                  src={group.images[imgIndex]}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.4 }}
+                  className="absolute inset-0 w-full h-full object-cover grayscale-[0.2]"
+                />
+              </AnimatePresence>
+              <div className="absolute top-4 right-4 bg-primary/20 backdrop-blur px-2 py-1 text-[8px] font-mono text-primary">
+                STREAM_ACTIVE: {imgIndex + 1}
               </div>
             </div>
-            
-            <div className="flex-1 text-center md:text-left">
-              <motion.div
-                initial={{ opacity: 0, x: i % 2 !== 0 ? 20 : -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-              >
-                <div className="flex items-center gap-4 justify-center md:justify-start mb-8">
-                  <div className="w-10 h-10 border border-primary/20 flex items-center justify-center text-primary">
-                    <group.icon className="w-5 h-5" />
-                  </div>
-                  <span className="text-technical text-primary">
-                    Module_{group.label}
-                  </span>
-                </div>
-                
-                <h3 className="text-4xl md:text-6xl font-black uppercase tracking-tighter mb-8 leading-none">
-                  {group.title}<span className="text-primary">_</span>
-                </h3>
-                <p className="text-lg md:text-xl font-mono text-white/50 leading-relaxed max-w-lg mx-auto md:mx-0">
-                  {group.description}
-                </p>
-                
-                <div className="mt-12 flex justify-center md:justify-start gap-1">
-                  {group.images.map((_, idx) => (
-                    <div 
-                      key={idx}
-                      className={`h-1 transition-all duration-300 ${idx === imageIndexes[i] ? 'w-6 bg-primary' : 'w-1 bg-white/10'}`}
-                    />
-                  ))}
-                </div>
-              </motion.div>
-            </div>
           </div>
-        ))}
+          {/* Decorative Technical elements */}
+          <div className="absolute -bottom-8 -left-8 text-[10px] font-mono text-white/10 uppercase vertical-text hidden lg:block">
+            Buffer_Verification_Protocol_Active
+          </div>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+};
+
+const Showcase = () => {
+  const groups = [
+    {
+      title: "Tactical_Control",
+      icon: Activity,
+      description: "A high-density dashboard engineered for instant operational response. Every tool is one tap away.",
+      specs: ["LOW_LATENCY", "COMPOSE_UI", "HILT_DI", "FLUID_STATE"],
+      images: allScreenshots.slice(0, 12)
+    },
+    {
+      title: "Hardened_Vault",
+      icon: Shield,
+      description: "Zero-knowledge encryption for your most sensitive data. SQLCipher implementation with biometric gating.",
+      specs: ["AES_256_GCM", "BIOMETRIC_V2", "LOCAL_ONLY", "AUDITABLE"],
+      images: allScreenshots.slice(12, 24)
+    },
+    {
+      title: "Media_Engine",
+      icon: Cpu,
+      description: "Professional-grade FFmpeg processing and high-fidelity Media3 playback for any operational format.",
+      specs: ["FFMPEG_6.0", "MEDIA3_STABLE", "VLC_BACKEND", "METADATA_EXT"],
+      images: allScreenshots.slice(24)
+    }
+  ];
+
+  return (
+    <section id="showcase" className="relative py-32 bg-black overflow-hidden">
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="flex flex-col gap-32">
+          {groups.map((group, i) => (
+            <ShowcaseItem key={i} group={group} index={i} total={groups.length} />
+          ))}
+        </div>
       </div>
     </section>
   );

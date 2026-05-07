@@ -1,4 +1,4 @@
-import { Download, Github, Terminal, ChevronRight, Activity } from "lucide-react";
+import { Download, Github, Terminal, Activity, Cpu } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 
@@ -51,7 +51,7 @@ const Hero = () => {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-32 pb-24 bg-blueprint">
-      {/* Mechanical Grid Background */}
+      <div className="scanline" />
       <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black" />
       
       <div className="container mx-auto px-4 relative z-10">
@@ -60,20 +60,19 @@ const Hero = () => {
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="inline-flex items-center gap-4 mb-10"
+              className="inline-flex items-center gap-4 mb-10 border border-primary/20 bg-primary/5 px-4 py-2"
             >
               <div className="w-2 h-2 bg-primary animate-pulse" />
-              <span className="text-technical text-primary">System_Active: Orchestration_Enabled</span>
+              <span className="text-technical text-primary">Status: Orchestration_Live</span>
             </motion.div>
 
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="text-6xl sm:text-7xl md:text-[8rem] font-black leading-[0.8] mb-12 tracking-tighter uppercase"
+              className="text-huge font-black uppercase mb-12"
             >
-              Zero <br />
-              <span className="text-primary italic">Clutter.</span>
+              Less <br />
+              <span className="text-primary italic">Noise.</span>
             </motion.h1>
 
             <div className="flex flex-col gap-8 mb-16 max-w-2xl mx-auto lg:mx-0">
@@ -81,7 +80,7 @@ const Hero = () => {
                 Toolz is a high-precision Android utility suite. Built for speed. Engineered for privacy. 30+ tools, zero bloat.
               </p>
               
-              <div className="flex flex-wrap gap-6 text-technical text-white/40">
+              <div className="flex flex-wrap justify-center lg:justify-start gap-6 text-technical text-white/30">
                 <div className="flex items-center gap-2">
                   <Activity className="w-4 h-4" />
                   <span>30+ Tools</span>
@@ -91,8 +90,8 @@ const Hero = () => {
                   <span>Kotlin Native</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-primary" />
-                  <span>Android 12-15</span>
+                  <Cpu className="w-4 h-4" />
+                  <span>ARM64_V8A</span>
                 </div>
               </div>
             </div>
@@ -103,17 +102,11 @@ const Hero = () => {
               transition={{ delay: 0.3 }}
               className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
             >
-              <a href="https://github.com/freroxx/toolz/releases" className="btn-technical group">
-                <span className="flex items-center gap-2">
-                  <Download className="w-4 h-4" />
-                  Fetch_Latest_APK
-                </span>
+              <a href="https://github.com/freroxx/toolz/releases" className="btn-technical h-16 px-10">
+                Fetch_Latest_APK
               </a>
-              <a href="https://github.com/freroxx/toolz" className="btn-outline-technical">
-                <span className="flex items-center gap-2">
-                  <Github className="w-4 h-4" />
-                  View_Source
-                </span>
+              <a href="https://github.com/freroxx/toolz" className="btn-outline-technical h-16 px-10">
+                View_Source
               </a>
             </motion.div>
           </div>
@@ -121,41 +114,38 @@ const Hero = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex-1 relative w-full max-w-[450px]"
+            className="flex-1 relative w-full max-w-[400px]"
           >
-            {/* Mechanical Frame */}
-            <div className="relative z-10 bg-black border-4 border-white/10 p-2 shadow-[0_0_50px_rgba(0,0,0,1)]">
-              {/* Corner Accents */}
-              <div className="absolute -top-2 -left-2 w-8 h-8 border-t-4 border-l-4 border-primary" />
-              <div className="absolute -bottom-2 -right-2 w-8 h-8 border-b-4 border-r-4 border-primary" />
+            <div className="relative z-10 bg-black border-4 border-white/10 p-2 shadow-2xl">
+              <div className="absolute -top-2 -left-2 w-10 h-10 border-t-4 border-l-4 border-primary" />
+              <div className="absolute -bottom-2 -right-2 w-10 h-10 border-b-4 border-r-4 border-primary" />
               
               <div className="relative aspect-[9/19] overflow-hidden bg-zinc-900">
                 <AnimatePresence mode="wait">
                   <motion.img
                     key={allScreenshots[index]}
                     src={allScreenshots[index]}
-                    initial={{ opacity: 0, scale: 1.05 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.5, ease: "linear" }}
-                    className="absolute inset-0 w-full h-full object-cover grayscale-[0.2] hover:grayscale-0 transition-all duration-500"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="absolute inset-0 w-full h-full object-cover grayscale-[0.2]"
                   />
                 </AnimatePresence>
                 
-                {/* HUD Overlay */}
                 <div className="absolute inset-0 border border-primary/20 pointer-events-none" />
-                <div className="absolute top-4 left-4 text-[8px] font-mono text-primary opacity-50 uppercase">
+                <div className="absolute top-4 left-4 text-[8px] font-mono text-primary uppercase">
                   UI_Buffer_Active
                 </div>
-                <div className="absolute bottom-4 right-4 text-[8px] font-mono text-primary opacity-50 uppercase">
-                  Frame_ID: {index + 1} / 34
+                <div className="absolute bottom-4 right-4 text-[8px] font-mono text-primary uppercase">
+                  Frame: {index + 1} / 34
                 </div>
               </div>
             </div>
             
             {/* Background decorative technical elements */}
-            <div className="absolute -top-10 -right-10 w-40 h-40 border border-white/5 rotate-45" />
-            <div className="absolute -bottom-10 -left-10 w-40 h-40 border border-white/5 -rotate-12" />
+            <div className="absolute -top-10 -right-10 w-40 h-40 border border-white/5 rotate-45 hidden lg:block" />
+            <div className="absolute -bottom-10 -left-10 w-40 h-40 border border-white/5 -rotate-12 hidden lg:block" />
           </motion.div>
         </div>
       </div>
