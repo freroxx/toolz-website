@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { Menu, X, Github, Terminal, Download, Cpu } from "lucide-react";
+import { Menu, X, Github, Terminal, Download, Cpu, Heart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const navLinks = [
-  { label: "Tools", href: "#features" },
-  { label: "Showcase", href: "#showcase" },
-  { label: "Gallery", href: "#gallery" },
+  { label: "Modules", href: "#features" },
+  { label: "Interface", href: "#showcase" },
+  { label: "Audit", href: "#gallery" },
   { label: "Node", href: "#discord" },
 ];
 
@@ -30,12 +30,12 @@ const Navbar = () => {
               T
             </div>
             <div className="flex flex-col">
-              <span className="text-lg font-black tracking-tighter uppercase leading-none">
+              <span className="text-lg font-black tracking-tighter uppercase leading-none group-hover:animate-glitch">
                 Toolz<span className="text-primary">_</span>
               </span>
               <div className="flex items-center gap-2 mt-1">
                 <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
-                <span className="text-technical text-white/40 leading-none uppercase">v1.0.7_STABLE</span>
+                <span className="text-technical text-white/40 leading-none uppercase">v1.0.7_BETA</span>
               </div>
             </div>
           </a>
@@ -55,11 +55,12 @@ const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center gap-6">
-            <a href="https://github.com/freroxx/toolz" className="text-white/40 hover:text-white transition-colors">
-              <Github className="w-5 h-5" />
-            </a>
+            <div className="flex items-center gap-2 text-[10px] font-mono text-white/20">
+              <Heart className="w-3 h-3 text-red-500/30" />
+              <span>BY_FREROX</span>
+            </div>
             <a href="https://github.com/freroxx/toolz/releases" className="btn-technical h-10 px-6">
-              Init_Download
+              Init_Fetch
             </a>
           </div>
 
@@ -86,7 +87,7 @@ const Navbar = () => {
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 border border-primary flex items-center justify-center text-primary font-mono font-black italic">T</div>
-                <span className="text-technical text-primary">SYS_MENU_ACTIVE</span>
+                <span className="text-technical text-primary">SYS_DRAWER_OPEN</span>
               </div>
               <button onClick={() => setMobileOpen(false)} className="w-10 h-10 border border-white/10 flex items-center justify-center text-white">
                 <X className="w-5 h-5" />
@@ -116,18 +117,21 @@ const Navbar = () => {
               <div className="mt-12 flex flex-col gap-4">
                 <a href="https://github.com/freroxx/toolz/releases" className="btn-technical h-16 text-lg">
                   <Download className="w-5 h-5" />
-                  Download_APK
+                  Download_Beta
                 </a>
-                <a href="https://github.com/freroxx/toolz" className="btn-outline-technical h-16 text-lg">
-                  <Github className="w-5 h-5" />
-                  Source_Repo
-                </a>
+                <div className="flex items-center justify-center gap-2 text-technical text-white/20 mt-4">
+                  <Heart className="w-4 h-4 text-red-500/40" />
+                  <span>MADE_WITH_LOVE_BY_FREROX</span>
+                </div>
               </div>
             </div>
             
             <div className="p-6 border-t border-white/10 bg-zinc-950 flex items-center justify-between text-technical text-white/20">
-              <span>AUTH: v1.0.7_STABLE</span>
-              <Cpu className="w-4 h-4" />
+              <span>STATUS: 1.0.7_BETA</span>
+              <div className="flex items-center gap-2">
+                <span className="text-primary">100% FREE</span>
+                <Cpu className="w-4 h-4" />
+              </div>
             </div>
           </motion.div>
         )}

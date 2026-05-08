@@ -1,6 +1,6 @@
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
-import { useRef, useState, useEffect } from "react";
-import { Terminal, Shield, Activity, Cpu, Zap } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from "react";
+import { Terminal, Shield, Activity, Cpu, Zap, Box, Layers, Code } from "lucide-react";
 
 const allScreenshots = [
   "https://i.ibb.co/SDwBvkzW/Screenshot-20260504-201707-Toolz.jpg",
@@ -39,118 +39,148 @@ const allScreenshots = [
   "https://i.ibb.co/p64Prvg5/Screenshot-20260504-200347-Toolz.jpg",
 ];
 
-const ShowcaseItem = ({ group, index, total }: any) => {
-  const container = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: container,
-    offset: ["start end", "end start"]
-  });
+const modules = [
+  {
+    id: "MOD_01",
+    title: "Tactical_UI",
+    icon: Activity,
+    description: "Highly customizable dashboard with 30+ tools. 100% Free, forever.",
+    images: allScreenshots.slice(0, 11)
+  },
+  {
+    id: "MOD_02",
+    title: "Hardened_Vault",
+    icon: Shield,
+    description: "Military-grade SQLCipher encryption. Your data stays local.",
+    images: allScreenshots.slice(11, 22)
+  },
+  {
+    id: "MOD_03",
+    title: "Media_Engine",
+    icon: Cpu,
+    description: "Professional FFmpeg processing and high-fidelity Media3 playback.",
+    images: allScreenshots.slice(22)
+  }
+];
 
-  const y = useTransform(scrollYProgress, [0, 1], [100, -100]);
-  const opacity = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
-  const scale = useTransform(scrollYProgress, [0, 0.2], [0.8, 1]);
-
+const Showcase = () => {
+  const [activeMod, setActiveMod] = useState(0);
   const [imgIndex, setImgIndex] = useState(0);
+
   useEffect(() => {
     const timer = setInterval(() => {
-      setImgIndex(prev => (prev + 1) % group.images.length);
+      setImgIndex(prev => (prev + 1) % modules[activeMod].images.length);
     }, 3000);
     return () => clearInterval(timer);
-  }, [group.images.length]);
+  }, [activeMod]);
 
   return (
-    <motion.div 
-      ref={container}
-      style={{ opacity, scale }}
-      className="flex flex-col lg:flex-row items-center gap-12 lg:gap-24 min-h-[70vh] py-20"
-    >
-      <div className="flex-1 order-2 lg:order-1">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="w-12 h-12 border border-primary flex items-center justify-center text-primary">
-            <group.icon className="w-6 h-6" />
-          </div>
-          <span className="text-technical text-primary">SYS_NODE_0{index + 1}</span>
-        </div>
-        <h3 className="text-huge font-black uppercase mb-8">
-          {group.title}<span className="text-primary">_</span>
-        </h3>
-        <p className="text-xl font-mono text-white/50 leading-relaxed max-w-xl">
-          {group.description}
-        </p>
-        
-        <div className="mt-12 grid grid-cols-2 gap-4">
-          {group.specs.map((spec: string, i: number) => (
-            <div key={i} className="flex items-center gap-2 text-technical text-white/30">
-              <div className="w-1 h-1 bg-primary" />
-              {spec}
+    <section id="showcase" className="relative py-32 bg-black border-y border-white/5 overflow-hidden">
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="flex flex-col lg:flex-row gap-12 lg:gap-24">
+          {/* Module Selector */}
+          <div className="lg:w-1/3 flex flex-col gap-4">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-12 h-px bg-primary" />
+              <span className="text-technical text-primary">System_Modules</span>
             </div>
-          ))}
-        </div>
-      </div>
+            
+            {modules.map((mod, i) => (
+              <button
+                key={mod.id}
+                onClick={() => {
+                  setActiveMod(i);
+                  setImgIndex(0);
+                }}
+                className={`text-left p-6 border-2 transition-all duration-300 group relative overflow-hidden ${
+                  activeMod === i ? "border-primary bg-primary/5" : "border-white/5 bg-transparent hover:border-white/20"
+                }`}
+              >
+                {activeMod === i && (
+                  <motion.div layoutId="activeMod" className="absolute inset-0 bg-primary/10 -z-10" />
+                )}
+                <div className="flex items-center justify-between mb-4">
+                  <mod.icon className={`w-6 h-6 ${activeMod === i ? "text-primary" : "text-white/20"}`} />
+                  <span className="text-[8px] font-mono text-white/20">{mod.id}</span>
+                </div>
+                <h3 className={`text-xl font-black uppercase tracking-tighter ${activeMod === i ? "text-primary" : "text-white/40"}`}>
+                  {mod.title}
+                </h3>
+                <p className={`text-xs font-mono mt-2 leading-relaxed ${activeMod === i ? "text-white/70" : "text-white/20"}`}>
+                  {mod.description}
+                </p>
+              </button>
+            ))}
 
-      <div className="flex-1 order-1 lg:order-2 w-full max-w-[400px]">
-        <motion.div style={{ y }} className="relative">
-          <div className="bg-black border-4 border-white/10 p-2 shadow-2xl relative">
-            <div className="absolute -top-2 -right-2 w-12 h-12 border-t-4 border-r-4 border-primary" />
-            <div className="relative aspect-[9/19] overflow-hidden bg-zinc-900">
-              <AnimatePresence mode="wait">
-                <motion.img
-                  key={group.images[imgIndex]}
-                  src={group.images[imgIndex]}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.4 }}
-                  className="absolute inset-0 w-full h-full object-cover grayscale-[0.2]"
-                />
-              </AnimatePresence>
-              <div className="absolute top-4 right-4 bg-primary/20 backdrop-blur px-2 py-1 text-[8px] font-mono text-primary">
-                STREAM_ACTIVE: {imgIndex + 1}
+            <div className="mt-8 p-6 border border-white/10 bg-zinc-950 flex flex-col gap-4">
+              <div className="flex items-center justify-between text-technical text-white/20">
+                <span>Made with love by frerox</span>
+                <Code className="w-3 h-3" />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-technical text-primary">100% FREE</span>
+                <span className="text-[8px] font-mono text-white/20">NO_ADS_NO_TRACKERS</span>
               </div>
             </div>
           </div>
-          {/* Decorative Technical elements */}
-          <div className="absolute -bottom-8 -left-8 text-[10px] font-mono text-white/10 uppercase vertical-text hidden lg:block">
-            Buffer_Verification_Protocol_Active
+
+          {/* Module Viewer */}
+          <div className="lg:w-2/3">
+            <div className="relative bg-black border-4 border-white/10 p-2 shadow-2xl group">
+              {/* Corner Accents */}
+              <div className="absolute -top-2 -left-2 w-12 h-12 border-t-4 border-l-4 border-primary" />
+              <div className="absolute -bottom-2 -right-2 w-12 h-12 border-b-4 border-r-4 border-primary" />
+              
+              <div className="relative aspect-[16/9] lg:aspect-[21/9] overflow-hidden bg-zinc-900 flex items-center justify-center gap-4 p-8">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={`${activeMod}-${imgIndex}`}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 1.05 }}
+                    transition={{ duration: 0.4 }}
+                    className="flex items-center justify-center gap-4 lg:gap-8 w-full"
+                  >
+                    {[
+                      (imgIndex - 1 + modules[activeMod].images.length) % modules[activeMod].images.length,
+                      imgIndex,
+                      (imgIndex + 1) % modules[activeMod].images.length
+                    ].map((idx, i) => (
+                      <div 
+                        key={`${idx}-${i}`}
+                        className={`relative aspect-[9/19] h-full transition-all duration-500 ${
+                          i === 1 ? "z-20 scale-110 grayscale-0 border-2 border-primary" : "z-10 scale-90 grayscale opacity-30 border border-white/10"
+                        } hidden ${i === 1 ? "block" : "sm:block"}`}
+                      >
+                        <img src={modules[activeMod].images[idx]} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </motion.div>
+                </AnimatePresence>
+
+                {/* Technical Overlays */}
+                <div className="absolute inset-0 pointer-events-none border border-primary/10" />
+                <div className="absolute top-4 left-4 flex flex-col gap-1">
+                  <span className="text-[8px] font-mono text-primary uppercase">Active_Module: {modules[activeMod].title}</span>
+                  <span className="text-[8px] font-mono text-white/20 uppercase">Buffer_Index: {imgIndex + 1}</span>
+                </div>
+                <div className="absolute bottom-4 right-4 flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
+                  <span className="text-[8px] font-mono text-primary uppercase tracking-widest">Live_Stream_Enabled</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Progress Indicator */}
+            <div className="mt-8 flex items-center gap-2">
+              {modules[activeMod].images.map((_, i) => (
+                <div 
+                  key={i} 
+                  className={`h-1 flex-1 transition-all duration-300 ${i === imgIndex ? "bg-primary" : "bg-white/5"}`}
+                />
+              ))}
+            </div>
           </div>
-        </motion.div>
-      </div>
-    </motion.div>
-  );
-};
-
-const Showcase = () => {
-  const groups = [
-    {
-      title: "Tactical_Control",
-      icon: Activity,
-      description: "A high-density dashboard engineered for instant operational response. Every tool is one tap away.",
-      specs: ["LOW_LATENCY", "COMPOSE_UI", "HILT_DI", "FLUID_STATE"],
-      images: allScreenshots.slice(0, 12)
-    },
-    {
-      title: "Hardened_Vault",
-      icon: Shield,
-      description: "Zero-knowledge encryption for your most sensitive data. SQLCipher implementation with biometric gating.",
-      specs: ["AES_256_GCM", "BIOMETRIC_V2", "LOCAL_ONLY", "AUDITABLE"],
-      images: allScreenshots.slice(12, 24)
-    },
-    {
-      title: "Media_Engine",
-      icon: Cpu,
-      description: "Professional-grade FFmpeg processing and high-fidelity Media3 playback for any operational format.",
-      specs: ["FFMPEG_6.0", "MEDIA3_STABLE", "VLC_BACKEND", "METADATA_EXT"],
-      images: allScreenshots.slice(24)
-    }
-  ];
-
-  return (
-    <section id="showcase" className="relative py-32 bg-black overflow-hidden">
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="flex flex-col gap-32">
-          {groups.map((group, i) => (
-            <ShowcaseItem key={i} group={group} index={i} total={groups.length} />
-          ))}
         </div>
       </div>
     </section>

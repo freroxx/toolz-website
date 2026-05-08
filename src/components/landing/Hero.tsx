@@ -1,4 +1,4 @@
-import { Download, Github, Terminal, Activity, Cpu } from "lucide-react";
+import { Download, Github, Terminal, Activity, Cpu, Heart, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 
@@ -35,7 +35,7 @@ const allScreenshots = [
   "https://i.ibb.co/qLVPxjDN/Screenshot-20260504-200445-Toolz.jpg",
   "https://i.ibb.co/84T4zVkQ/Screenshot-20260504-200427-Toolz.jpg",
   "https://i.ibb.co/DN433s5/Screenshot-20260504-200416-Toolz.jpg",
-  "https://i.ibb.co/9HWFbpD7/Screenshot-20260504-200355-Toolz.jpg",
+  "https://i.ibb.co/9HWFbpD7/Screenshot-20230504-200355-Toolz.jpg",
   "https://i.ibb.co/p64Prvg5/Screenshot-20260504-200347-Toolz.jpg",
 ];
 
@@ -63,35 +63,35 @@ const Hero = () => {
               className="inline-flex items-center gap-4 mb-10 border border-primary/20 bg-primary/5 px-4 py-2"
             >
               <div className="w-2 h-2 bg-primary animate-pulse" />
-              <span className="text-technical text-primary">Status: Orchestration_Live</span>
+              <span className="text-technical text-primary">Status: Beta_Operational // Android_12_15</span>
             </motion.div>
 
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-huge font-black uppercase mb-12"
+              className="text-huge font-black uppercase mb-12 group cursor-default"
             >
-              Less <br />
-              <span className="text-primary italic">Noise.</span>
+              <span className="inline-block group-hover:animate-glitch">Zero</span> <br />
+              <span className="text-primary italic group-hover:animate-glitch">Bloat.</span>
             </motion.h1>
 
             <div className="flex flex-col gap-8 mb-16 max-w-2xl mx-auto lg:mx-0">
               <p className="text-xl md:text-2xl text-white/70 leading-relaxed font-mono">
-                Toolz is a high-precision Android utility suite. Built for speed. Engineered for privacy. 30+ tools, zero bloat.
+                Toolz is a high-precision Android utility suite. <span className="text-primary font-black">100% FREE</span> and <span className="text-white font-black">Highly Customizable</span>. Engineered for privacy.
               </p>
               
               <div className="flex flex-wrap justify-center lg:justify-start gap-6 text-technical text-white/30">
                 <div className="flex items-center gap-2">
                   <Activity className="w-4 h-4" />
-                  <span>30+ Tools</span>
+                  <span>30+ Modules</span>
+                </div>
+                <div className="flex items-center gap-2 text-primary">
+                  <Zap className="w-4 h-4" />
+                  <span>Open_Source</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Terminal className="w-4 h-4" />
-                  <span>Kotlin Native</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Cpu className="w-4 h-4" />
-                  <span>ARM64_V8A</span>
+                  <Heart className="w-4 h-4 text-red-500/50" />
+                  <span>Made_By_Frerox</span>
                 </div>
               </div>
             </div>
@@ -102,8 +102,9 @@ const Hero = () => {
               transition={{ delay: 0.3 }}
               className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
             >
-              <a href="https://github.com/freroxx/toolz/releases" className="btn-technical h-16 px-10">
-                Fetch_Latest_APK
+              <a href="https://github.com/freroxx/toolz/releases" className="btn-technical h-16 px-10 group">
+                <span className="relative z-10">Fetch_Beta_APK</span>
+                <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
               </a>
               <a href="https://github.com/freroxx/toolz" className="btn-outline-technical h-16 px-10">
                 View_Source
@@ -116,36 +117,32 @@ const Hero = () => {
             animate={{ opacity: 1, scale: 1 }}
             className="flex-1 relative w-full max-w-[400px]"
           >
-            <div className="relative z-10 bg-black border-4 border-white/10 p-2 shadow-2xl">
-              <div className="absolute -top-2 -left-2 w-10 h-10 border-t-4 border-l-4 border-primary" />
-              <div className="absolute -bottom-2 -right-2 w-10 h-10 border-b-4 border-r-4 border-primary" />
+            <div className="relative z-10 bg-black border-4 border-white/10 p-2 shadow-2xl group cursor-crosshair">
+              <div className="absolute -top-2 -left-2 w-10 h-10 border-t-4 border-l-4 border-primary group-hover:w-full group-hover:h-full transition-all duration-500" />
+              <div className="absolute -bottom-2 -right-2 w-10 h-10 border-b-4 border-r-4 border-primary group-hover:w-full group-hover:h-full transition-all duration-500" />
               
               <div className="relative aspect-[9/19] overflow-hidden bg-zinc-900">
                 <AnimatePresence mode="wait">
                   <motion.img
                     key={allScreenshots[index]}
                     src={allScreenshots[index]}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
+                    initial={{ opacity: 0, filter: "brightness(0) grayscale(1)" }}
+                    animate={{ opacity: 1, filter: "brightness(1) grayscale(0.2)" }}
+                    exit={{ opacity: 0, filter: "brightness(2) grayscale(1)" }}
                     transition={{ duration: 0.4 }}
-                    className="absolute inset-0 w-full h-full object-cover grayscale-[0.2]"
+                    className="absolute inset-0 w-full h-full object-cover"
                   />
                 </AnimatePresence>
                 
                 <div className="absolute inset-0 border border-primary/20 pointer-events-none" />
-                <div className="absolute top-4 left-4 text-[8px] font-mono text-primary uppercase">
+                <div className="absolute top-4 left-4 text-[8px] font-mono text-primary uppercase animate-pulse">
                   UI_Buffer_Active
                 </div>
                 <div className="absolute bottom-4 right-4 text-[8px] font-mono text-primary uppercase">
-                  Frame: {index + 1} / 34
+                  Frame: {index + 1} // v1.0.7b
                 </div>
               </div>
             </div>
-            
-            {/* Background decorative technical elements */}
-            <div className="absolute -top-10 -right-10 w-40 h-40 border border-white/5 rotate-45 hidden lg:block" />
-            <div className="absolute -bottom-10 -left-10 w-40 h-40 border border-white/5 -rotate-12 hidden lg:block" />
           </motion.div>
         </div>
       </div>
