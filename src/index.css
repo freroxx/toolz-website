@@ -32,8 +32,7 @@
     @apply font-mono uppercase tracking-[0.2em] text-[10px] font-black;
   }
   .bg-blueprint {
-    background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-image: radial-gradient(circle at 1px 1px, rgba(142, 70, 50, 0.1) 1px, transparent 0);
     background-size: 30px 30px;
   }
   .scanline {
@@ -47,10 +46,10 @@
     animation: scanline 10s linear infinite;
   }
   .btn-technical {
-    @apply font-mono uppercase tracking-widest text-xs font-black border-2 border-primary px-8 py-4 bg-primary text-black hover:bg-black hover:text-primary transition-all duration-300 active:scale-95 flex items-center justify-center gap-2;
+    @apply font-mono uppercase tracking-widest text-xs font-black border-2 border-primary px-8 py-4 bg-primary text-black hover:bg-black hover:text-primary transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 relative overflow-hidden;
   }
   .btn-outline-technical {
-    @apply font-mono uppercase tracking-widest text-xs font-black border-2 border-white/20 px-8 py-4 hover:border-primary hover:text-primary transition-all duration-300 active:scale-95 flex items-center justify-center gap-2;
+    @apply font-mono uppercase tracking-widest text-xs font-black border-2 border-white/20 px-8 py-4 hover:border-primary hover:text-primary transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 relative overflow-hidden;
   }
 }
 
@@ -59,13 +58,21 @@
   100% { bottom: -100%; }
 }
 
-.reveal-text {
-  background: linear-gradient(to right, #fff 50%, rgba(255,255,255,0.1) 50%);
-  background-size: 200% 100%;
-  background-position-x: 100%;
-  color: transparent;
-  background-clip: text;
-  -webkit-background-clip: text;
+@keyframes glitch {
+  0% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
+  100% { transform: translate(0); }
+}
+
+.animate-glitch {
+  animation: glitch 0.3s cubic-bezier(.25,.46,.45,.94) both infinite;
+  animation-play-state: paused;
+}
+.group:hover .animate-glitch {
+  animation-play-state: running;
 }
 
 /* Mobile optimizations */
@@ -82,4 +89,8 @@
 
 .mask-fade-vertical {
   mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+}
+
+.text-glow-primary {
+  text-shadow: 0 0 10px rgba(142, 70, 50, 0.5);
 }
