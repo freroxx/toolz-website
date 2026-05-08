@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
-import { Terminal, Shield, Activity, Cpu, Zap, Box, Layers, Code } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Shield, Activity, Cpu, Code, ChevronRight, MousePointer2 } from "lucide-react";
 
 const allScreenshots = [
   "https://i.ibb.co/SDwBvkzW/Screenshot-20260504-201707-Toolz.jpg",
@@ -66,13 +66,18 @@ const modules = [
 const Showcase = () => {
   const [activeMod, setActiveMod] = useState(0);
   const [imgIndex, setImgIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const nextImage = useCallback(() => {
+    setImgIndex(prev => (prev + 1) % modules[activeMod].images.length);
+  }, [activeMod]);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setImgIndex(prev => (prev + 1) % modules[activeMod].images.length);
+      if (!isHovered) nextImage();
     }, 3000);
     return () => clearInterval(timer);
-  }, [activeMod]);
+  }, [activeMod, isHovered, nextImage]);
 
   return (
     <section id="showcase" className="relative py-32 bg-black border-y border-white/5 overflow-hidden">
@@ -92,7 +97,7 @@ const Showcase = () => {
                   setActiveMod(i);
                   setImgIndex(0);
                 }}
-                className={`text-left p-6 border-2 transition-all duration-300 group relative overflow-hidden ${
+                className={`text-left p-6 border-2 transition-all duration-300 group relative overflow-hidden hover:translate-x-2 ${
                   activeMod === i ? "border-primary bg-primary/5" : "border-white/5 bg-transparent hover:border-white/20"
                 }`}
               >
@@ -100,25 +105,25 @@ const Showcase = () => {
                   <motion.div layoutId="activeMod" className="absolute inset-0 bg-primary/10 -z-10" />
                 )}
                 <div className="flex items-center justify-between mb-4">
-                  <mod.icon className={`w-6 h-6 ${activeMod === i ? "text-primary" : "text-white/20"}`} />
-                  <span className="text-[8px] font-mono text-white/20">{mod.id}</span>
+                  <mod.icon className={`w-6 h-6 transition-transform group-hover:rotate-12 ${activeMod === i ? "text-primary" : "text-white/20"}`} />
+                  <span className="text-[8px] font-mono text-white/20 group-hover:text-primary/40 transition-colors">{mod.id}</span>
                 </div>
-                <h3 className={`text-xl font-black uppercase tracking-tighter ${activeMod === i ? "text-primary" : "text-white/40"}`}>
+                <h3 className={`text-xl font-black uppercase tracking-tighter transition-colors ${activeMod === i ? "text-primary" : "text-white/40 group-hover:text-white"}`}>
                   {mod.title}
                 </h3>
-                <p className={`text-xs font-mono mt-2 leading-relaxed ${activeMod === i ? "text-white/70" : "text-white/20"}`}>
+                <p className={`text-xs font-mono mt-2 leading-relaxed transition-colors ${activeMod === i ? "text-white/70" : "text-white/20 group-hover:text-white/40"}`}>
                   {mod.description}
                 </p>
               </button>
             ))}
 
-            <div className="mt-8 p-6 border border-white/10 bg-zinc-950 flex flex-col gap-4">
+            <div className="mt-8 p-6 border border-white/10 bg-zinc-950 flex flex-col gap-4 hover:border-primary/20 transition-colors">
               <div className="flex items-center justify-between text-technical text-white/20">
                 <span>Made with love by frerox</span>
                 <Code className="w-3 h-3" />
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-technical text-primary">100% FREE</span>
+                <span className="text-technical text-primary animate-pulse">100% FREE</span>
                 <span className="text-[8px] font-mono text-white/20">NO_ADS_NO_TRACKERS</span>
               </div>
             </div>
@@ -126,57 +131,64 @@ const Showcase = () => {
 
           {/* Module Viewer */}
           <div className="lg:w-2/3">
-            <div className="relative bg-black border-4 border-white/10 p-2 shadow-2xl group">
+            <div 
+              className="relative bg-black border-4 border-white/10 p-2 shadow-2xl group cursor-pointer overflow-hidden"
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              onClick={nextImage}
+            >
               {/* Corner Accents */}
-              <div className="absolute -top-2 -left-2 w-12 h-12 border-t-4 border-l-4 border-primary" />
-              <div className="absolute -bottom-2 -right-2 w-12 h-12 border-b-4 border-r-4 border-primary" />
+              <div className="absolute -top-2 -left-2 w-12 h-12 border-t-4 border-l-4 border-primary group-hover:w-full group-hover:h-full transition-all duration-500 opacity-50" />
+              <div className="absolute -bottom-2 -right-2 w-12 h-12 border-b-4 border-r-4 border-primary group-hover:w-full group-hover:h-full transition-all duration-500 opacity-50" />
               
-              <div className="relative aspect-[16/9] lg:aspect-[21/9] overflow-hidden bg-zinc-900 flex items-center justify-center gap-4 p-8">
+              <div className="relative aspect-[9/16] overflow-hidden bg-zinc-900 flex items-center justify-center">
                 <AnimatePresence mode="wait">
-                  <motion.div
+                  <motion.img
                     key={`${activeMod}-${imgIndex}`}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 1.05 }}
-                    transition={{ duration: 0.4 }}
-                    className="flex items-center justify-center gap-4 lg:gap-8 w-full"
-                  >
-                    {[
-                      (imgIndex - 1 + modules[activeMod].images.length) % modules[activeMod].images.length,
-                      imgIndex,
-                      (imgIndex + 1) % modules[activeMod].images.length
-                    ].map((idx, i) => (
-                      <div 
-                        key={`${idx}-${i}`}
-                        className={`relative aspect-[9/19] h-full transition-all duration-500 ${
-                          i === 1 ? "z-20 scale-110 grayscale-0 border-2 border-primary" : "z-10 scale-90 grayscale opacity-30 border border-white/10"
-                        } hidden ${i === 1 ? "block" : "sm:block"}`}
-                      >
-                        <img src={modules[activeMod].images[idx]} className="w-full h-full object-cover" />
-                      </div>
-                    ))}
-                  </motion.div>
+                    src={modules[activeMod].images[imgIndex]}
+                    initial={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }}
+                    animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                    exit={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }}
+                    transition={{ duration: 0.4, ease: "circOut" }}
+                    className="absolute inset-0 w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-700"
+                  />
                 </AnimatePresence>
+
+                {/* Interactive Feedback Overlay */}
+                <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors duration-300" />
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="bg-black/80 border border-primary/50 px-4 py-2 flex items-center gap-2 backdrop-blur-md">
+                    <MousePointer2 className="w-4 h-4 text-primary animate-bounce" />
+                    <span className="text-technical text-primary">Click_To_Skip</span>
+                  </div>
+                </div>
 
                 {/* Technical Overlays */}
                 <div className="absolute inset-0 pointer-events-none border border-primary/10" />
-                <div className="absolute top-4 left-4 flex flex-col gap-1">
-                  <span className="text-[8px] font-mono text-primary uppercase">Active_Module: {modules[activeMod].title}</span>
-                  <span className="text-[8px] font-mono text-white/20 uppercase">Buffer_Index: {imgIndex + 1}</span>
+                <div className="absolute top-6 left-6 flex flex-col gap-1">
+                  <span className="text-[10px] font-mono text-primary font-black uppercase tracking-widest">Active_Module: {modules[activeMod].title}</span>
+                  <span className="text-[8px] font-mono text-white/20 uppercase">Buffer_ID: {imgIndex + 1} // TOTAL: {modules[activeMod].images.length}</span>
                 </div>
-                <div className="absolute bottom-4 right-4 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
-                  <span className="text-[8px] font-mono text-primary uppercase tracking-widest">Live_Stream_Enabled</span>
+                <div className="absolute bottom-6 right-6 flex items-center gap-3">
+                  <div className="flex flex-col items-end">
+                    <span className="text-[8px] font-mono text-white/40 uppercase">System_State</span>
+                    <span className="text-[10px] font-mono text-primary uppercase font-black">Operational</span>
+                  </div>
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse shadow-[0_0_10px_rgba(142,70,50,0.8)]" />
                 </div>
               </div>
             </div>
 
-            {/* Progress Indicator */}
-            <div className="mt-8 flex items-center gap-2">
+            {/* Progress Indicator with Clickable Dots */}
+            <div className="mt-8 flex items-center gap-1.5">
               {modules[activeMod].images.map((_, i) => (
-                <div 
+                <button 
                   key={i} 
-                  className={`h-1 flex-1 transition-all duration-300 ${i === imgIndex ? "bg-primary" : "bg-white/5"}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setImgIndex(i);
+                  }}
+                  className={`h-1 flex-1 transition-all duration-300 hover:bg-primary/40 ${i === imgIndex ? "bg-primary" : "bg-white/5"}`}
                 />
               ))}
             </div>
