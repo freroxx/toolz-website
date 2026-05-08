@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useCallback } from "react";
-import { Shield, Activity, Cpu, Code, ChevronRight, MousePointer2 } from "lucide-react";
+import { Shield, Activity, Cpu, Code, MousePointer2 } from "lucide-react";
 
 const allScreenshots = [
   "https://i.ibb.co/SDwBvkzW/Screenshot-20260504-201707-Toolz.jpg",
@@ -82,9 +82,9 @@ const Showcase = () => {
   return (
     <section id="showcase" className="relative py-32 bg-black border-y border-white/5 overflow-hidden">
       <div className="container mx-auto px-4 relative z-10">
-        <div className="flex flex-col lg:flex-row gap-12 lg:gap-24">
+        <div className="flex flex-col lg:flex-row gap-12 lg:gap-24 items-start">
           {/* Module Selector */}
-          <div className="lg:w-1/3 flex flex-col gap-4">
+          <div className="lg:w-1/3 flex flex-col gap-4 sticky top-32">
             <div className="flex items-center gap-4 mb-8">
               <div className="w-12 h-px bg-primary" />
               <span className="text-technical text-primary">System_Modules</span>
@@ -130,9 +130,9 @@ const Showcase = () => {
           </div>
 
           {/* Module Viewer */}
-          <div className="lg:w-2/3">
+          <div className="lg:w-2/3 flex flex-col items-center">
             <div 
-              className="relative bg-black border-4 border-white/10 p-2 shadow-2xl group cursor-pointer overflow-hidden"
+              className="relative bg-black border-4 border-white/10 p-2 shadow-2xl group cursor-pointer overflow-hidden w-full max-w-[360px]"
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
               onClick={nextImage}
@@ -180,7 +180,7 @@ const Showcase = () => {
             </div>
 
             {/* Progress Indicator with Clickable Dots */}
-            <div className="mt-8 flex items-center gap-1.5">
+            <div className="mt-8 flex items-center gap-1.5 w-full max-w-[360px]">
               {modules[activeMod].images.map((_, i) => (
                 <button 
                   key={i} 
