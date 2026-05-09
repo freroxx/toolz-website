@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Menu, X, Github, Terminal, Download, Cpu, Heart } from "lucide-react";
+import { Menu, X, Terminal, Download, Cpu, Heart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const navLinks = [
@@ -25,12 +25,12 @@ const Navbar = () => {
     }`}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between">
-          <a href="#" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 border-2 border-primary flex items-center justify-center text-primary font-mono font-black text-xl group-hover:bg-primary group-hover:text-black transition-all duration-300">
-              T
+          <a href="#" className="flex items-center gap-4 group">
+            <div className="relative w-10 h-10 flex items-center justify-center overflow-hidden">
+              <img src="/logo.png" alt="Toolz Logo" className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300" />
             </div>
             <div className="flex flex-col">
-              <span className="text-lg font-black tracking-tighter uppercase leading-none group-hover:animate-glitch">
+              <span className="text-xl font-black tracking-tighter uppercase leading-none group-hover:animate-glitch">
                 Toolz<span className="text-primary">_</span>
               </span>
               <div className="flex items-center gap-2 mt-1">
@@ -86,7 +86,7 @@ const Navbar = () => {
           >
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 border border-primary flex items-center justify-center text-primary font-mono font-black italic">T</div>
+                <img src="/logo.png" alt="Toolz Logo" className="w-8 h-8 object-contain" />
                 <span className="text-technical text-primary">SYS_DRAWER_OPEN</span>
               </div>
               <button onClick={() => setMobileOpen(false)} className="w-10 h-10 border border-white/10 flex items-center justify-center text-white">

@@ -1,4 +1,4 @@
-import { Github, MessageSquare, Heart, Terminal, Code } from "lucide-react";
+import { Github, MessageSquare, Heart } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -6,10 +6,8 @@ const Footer = () => {
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-start gap-16 mb-24">
           <div className="max-w-sm">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 border-2 border-primary flex items-center justify-center text-primary font-mono font-black italic">
-                T
-              </div>
+            <div className="flex items-center gap-4 mb-8">
+              <img src="/logo.png" alt="Toolz Logo" className="w-10 h-10 object-contain" />
               <span className="text-2xl font-black tracking-tighter uppercase">
                 Toolz<span className="text-primary">_</span>
               </span>
