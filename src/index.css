@@ -20,6 +20,7 @@
   body {
     @apply bg-background text-foreground font-sans antialiased overflow-x-hidden;
     font-family: 'Inter', sans-serif;
+    background-color: #050505;
   }
   .font-mono { font-family: 'JetBrains Mono', monospace; }
 }
@@ -31,10 +32,25 @@
   .text-technical {
     @apply font-mono uppercase tracking-[0.2em] text-[10px] font-black;
   }
+  
   .bg-blueprint {
-    background-image: radial-gradient(circle at 1px 1px, rgba(142, 70, 50, 0.1) 1px, transparent 0);
-    background-size: 30px 30px;
+    background-color: #050505;
+    background-image: 
+      linear-gradient(rgba(142, 70, 50, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(142, 70, 50, 0.03) 1px, transparent 1px),
+      radial-gradient(circle at 1px 1px, rgba(142, 70, 50, 0.05) 1px, transparent 0);
+    background-size: 40px 40px, 40px 40px, 20px 20px;
+    position: relative;
   }
+
+  .bg-blueprint::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, transparent 0%, #050505 80%);
+    pointer-events: none;
+  }
+
   .scanline {
     width: 100%;
     height: 100px;
