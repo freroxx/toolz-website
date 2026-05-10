@@ -68,7 +68,7 @@ const Hero = () => {
               className="inline-flex items-center gap-4 mb-10 border border-primary/20 bg-primary/5 px-4 py-2 hover:border-primary transition-colors cursor-default"
             >
               <div className="w-2 h-2 bg-primary animate-pulse" />
-              <span className="text-technical text-primary">Status: Beta_Operational // Android_12_15</span>
+              <span className="text-technical text-primary uppercase">BETA // ANDROID_12+</span>
             </motion.div>
 
             <motion.h1
@@ -145,7 +145,6 @@ const Hero = () => {
                   />
                 </AnimatePresence>
                 
-                {/* Click to skip indicator */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/20 backdrop-blur-[2px]">
                   <div className="bg-black/80 border border-primary/50 px-4 py-2 flex items-center gap-2">
                     <MousePointer2 className="w-4 h-4 text-primary animate-bounce" />
