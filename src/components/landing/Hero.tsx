@@ -157,7 +157,7 @@ const Hero = () => {
                   UI_Buffer_Active
                 </div>
                 <div className="absolute bottom-4 right-4 text-[8px] font-mono text-primary uppercase">
-                  Frame: {index + 1} // v1.0.7b
+                  Frame: {index + 1} // v1.0.8b
                 </div>
               </div>
             </div>
