@@ -1,0 +1,17 @@
+{
+  "functions": {
+    "src/app/api/specs/route.ts": {
+      "runtime": "vercel-nodejs@20"
+    }
+  },
+  "routes": [
+    {
+      "src": "/api/specs",
+      "dest": "src/app/api/specs/route.ts"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ]
+}
