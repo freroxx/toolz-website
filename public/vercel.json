@@ -1,17 +1,9 @@
 {
-  "functions": {
-    "src/app/api/specs/route.ts": {
-      "runtime": "vercel-nodejs@20"
-    }
-  },
-  "routes": [
+  "cleanUrls": true,
+  "rewrites": [
     {
-      "src": "/api/specs",
-      "dest": "src/app/api/specs/route.ts"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
+      "source": "/api/specs",
+      "destination": "/api/specs"
     }
   ]
 }
