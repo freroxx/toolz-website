@@ -18,8 +18,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 2. Initialize Upstash Client
     const redis = Redis.fromEnv();
 
-    // 3. Fetch device database file from GitHub
-    const url = 'https://raw.githubusercontent.com/PolymerJames/android-device-list/master/devices.json';
+    // 3. Fetch from the robust open-source device repository alternate
+    const url = 'https://raw.githubusercontent.com/pbakondy/android-device-list/master/devices.json';
     const response = await fetch(url);
     
     if (!response.ok) {
@@ -28,40 +28,52 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const rawDevices = await response.json();
     let processedCount = 0;
+    let chunkCount = 0;
     
     // 4. Batch items via multi-command pipeline
-    const pipeline = redis.pipeline();
+    let pipeline = redis.pipeline();
 
     for (const item of rawDevices) {
-      const manufacturer = String(item.manufacturer || '').trim();
-      const marketName = String(item.market_name || item.name || '').trim();
+      // Cross-compatible property reading for any data schema shifts
+      const manufacturer = String(item.brand || item.manufacturer || '').trim();
+      const marketName = String(item.name || item.market_name || '').trim();
+      const model = String(item.model || '').trim();
       
       if (!marketName) continue;
 
-      // Construct clean, descriptive target text (e.g., "Oppo A36")
+      // Construct descriptive value (e.g., "Oppo A36")
       const cleanValue = marketName.toLowerCase().startsWith(manufacturer.toLowerCase())
         ? marketName
         : `${manufacturer} ${marketName}`;
 
-      // Strategy A: Index by Google Play hardware model (e.g., device:pesm10)
-      if (item.model) {
-        const modelKey = `device:${String(item.model).trim().toLowerCase()}`;
-        pipeline.set(modelKey, cleanValue);
+      // Strategy A: Index by hardware model identifier (e.g., pesm10)
+      if (model) {
+        pipeline.set(`device:${model.toLowerCase()}`, cleanValue);
         processedCount++;
+        chunkCount++;
       }
 
-      // Strategy B: Index by commercial marketing name (e.g., device:a36 or device:oppo a36)
-      const marketKey = `device:${marketName.toLowerCase()}`;
-      pipeline.set(marketKey, cleanValue);
+      // Strategy B: Index by commercial marketing name (e.g., a36)
+      pipeline.set(`device:${marketName.toLowerCase()}`, cleanValue);
       processedCount++;
+      chunkCount++;
+
+      // ⚡ Chunk executions in batches of 2000 to keep memory low and prevent Vercel timeouts
+      if (chunkCount >= 2000) {
+        await pipeline.exec();
+        pipeline = redis.pipeline(); // reset pipeline container
+        chunkCount = 0;
+      }
     }
 
-    // Run atomically over the server connection
-    await pipeline.exec();
+    // Execute any remaining tail records
+    if (chunkCount > 0) {
+      await pipeline.exec();
+    }
 
     return res.status(200).json({ 
       success: true, 
-      message: `Successfully synchronized ${processedCount} translation keys into Upstash Redis.` 
+      message: `Successfully synchronized ${processedCount} operational keys into Upstash Redis.` 
     });
 
   } catch (error: any) {
