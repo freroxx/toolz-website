@@ -1,13 +1,62 @@
 import { NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
-// @ts-ignore
-import gsmarena from 'gsmarena-api';
+import * as cheerio from 'cheerio';
 
 const CACHE_FRESH_SEC = 15 * 24 * 60 * 60; 
 const CACHE_STALE_SEC = 30 * 24 * 60 * 60;
 const CACHE_HEADER = `public, max-age=0, s-maxage=${CACHE_FRESH_SEC}, stale-while-revalidate=${CACHE_STALE_SEC}`;
 
-// --- SMART STRATEGIES FALLBACK MATRIX ---
+// --- PURE FETCH ENGINE FOR GSMARENA ---
+async function scrapeGsmArenaSearch(query: string): Promise<string | null> {
+  try {
+    const searchUrl = `https://www.gsmarena.com/res.php3?sSearch=${encodeURIComponent(query)}`;
+    const response = await fetch(searchUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+    });
+    
+    if (!response.ok) return null;
+    const html = await response.text();
+    const $ = cheerio.load(html);
+    
+    // Find the first device link inside the makers list grid layout
+    const firstDeviceLink = $('.makers ul li a').first().attr('href');
+    return firstDeviceLink ? `https://www.gsmarena.com/${firstDeviceLink}` : null;
+  } catch {
+    return null;
+  }
+}
+
+async function scrapeDeviceSpecs(deviceUrl: string) {
+  const response = await fetch(deviceUrl, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+  });
+  
+  if (!response.ok) throw new Error("Failed to pull specs HTML sheet");
+  const html = await response.text();
+  const $ = cheerio.load(html);
+  
+  const title = $('.specs-phone-name-title').text().trim();
+  const mainImg = $('.specs-photo-main img').attr('src') || "";
+  const specs: Record<string, Record<string, string>> = {};
+
+  // Parse the specifications table grids cleanly
+  $('#specs-list table').each((_, table) => {
+    const category = $(table).find('th').text().trim();
+    if (!category) return;
+    
+    specs[category] = {};
+    $(table).find('tr').each((_, tr) => {
+      const key = $(tr).find('.ttl').text().trim().replace(/&nbsp;/g, '');
+      const value = $(tr).find('.nfo').text().trim();
+      if (key || value) {
+        specs[category][key || "Info"] = value;
+      }
+    });
+  });
+
+  return { title, mainImg, specifications: specs };
+}
+
 function generateSmartStrategies(rawQuery: string): string[] {
   let clean = rawQuery.trim();
   clean = clean
@@ -22,19 +71,17 @@ function generateSmartStrategies(rawQuery: string): string[] {
 
   if (words.length >= 3) strategies.push(`${words[0]} ${words[1]} ${words[2]}`);
   if (words.length > 1) strategies.push(words.slice(1).join(' '));
-  if (words.length > 2) strategies.push(`${words[0]} ${words[words.length - 1]}`);
   if (words.length >= 2) strategies.push(`${words[0]} ${words[1]}`);
 
   return [...new Set(strategies)].filter(q => q && q.length >= 2);
 }
 
-// --- APP ROUTER GET HANDLER ---
+// --- MAIN HANDLER ---
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const rawQuery = searchParams.get('model');
 
-    // Guard against blank input params
     if (!rawQuery || rawQuery.trim() === '') {
       return NextResponse.json({ error: "Missing 'model' parameter." }, { status: 400 });
     }
@@ -43,7 +90,6 @@ export async function GET(request: Request) {
     let translatedQuery: string | null = null;
     let isDatabaseMatch = false;
 
-    // ⚡ SAFE INTERCEPTOR: Read Google Device translation layer from Upstash Redis
     try {
       const redis = Redis.fromEnv();
       const cachedValue = await redis.get(`device:${cleanInput.toLowerCase()}`);
@@ -51,65 +97,38 @@ export async function GET(request: Request) {
         translatedQuery = String(cachedValue).trim();
         isDatabaseMatch = true;
       }
-    } catch (redisError) {
-      // Safe fallback if Upstash environment variables aren't linked or have network blips
-      console.error("[Toolz Backend Backend Warning] Upstash connection skipped:", redisError);
+    } catch (e) {
+      console.error("Redis lookup bypass:", e);
     }
 
-    // Build the query loop sequence
-    let strategies: string[] = [];
-    if (translatedQuery && translatedQuery.length > 1) {
-      strategies = [translatedQuery, ...generateSmartStrategies(cleanInput)];
-    } else {
-      strategies = generateSmartStrategies(cleanInput);
-    }
+    let strategies = translatedQuery 
+      ? [translatedQuery, ...generateSmartStrategies(cleanInput)] 
+      : generateSmartStrategies(cleanInput);
 
-    let searchResults: any[] = [];
+    let targetDeviceUrl: string | null = null;
     let successfulQuery = "";
 
-    // Execution search pass
+    // Sequential Fallback Loop Pass via HTTP fetch requests
     for (const query of strategies) {
-      const results = await gsmarena.search.search(query);
-      if (results && Array.isArray(results) && results.length > 0) {
-        searchResults = results;
+      const matchedUrl = await scrapeGsmArenaSearch(query);
+      if (matchedUrl) {
+        targetDeviceUrl = matchedUrl;
         successfulQuery = query;
-        break; 
+        break;
       }
     }
 
-    // Ultimate Brand Failsafe
-    if (searchResults.length === 0) {
-      const words = cleanInput.split(/\s+/);
-      if (words.length > 0) {
-        const emergencyResults = await gsmarena.search.search(words[0]);
-        if (emergencyResults && emergencyResults.length > 0) {
-          searchResults = emergencyResults;
-          successfulQuery = `${words[0]} [Emergency Brand Fallback]`;
-        }
-      }
-    }
-
-    // If both exact lookup and emergency scraping completely strike out
-    if (searchResults.length === 0) {
+    if (!targetDeviceUrl) {
       return NextResponse.json(
         { error: `Hardware profile execution exhausted for lookup input: '${cleanInput}'` },
-        { 
-          status: 404, 
-          headers: { 'Cache-Control': 'public, max-age=0, no-cache, no-store, must-revalidate' } 
-        }
+        { status: 404, headers: { 'Cache-Control': 'public, max-age=0, no-cache, no-store, must-revalidate' } }
       );
     }
 
-    // Fetch full catalog specification payload data sheet
-    const targetDeviceId = searchResults[0].id;
-    const deviceDetails = await gsmarena.catalog.getDevice(targetDeviceId);
+    // Scrape details from the targeted page URL match
+    const deviceDetails = await scrapeDeviceSpecs(targetDeviceUrl);
+    const trackingTag = isDatabaseMatch ? `[Google Play Direct Match] ${successfulQuery}` : successfulQuery;
 
-    // Build monitoring logging tag prefix
-    const trackingTag = isDatabaseMatch 
-      ? `[Google Play Direct Match] ${successfulQuery}` 
-      : successfulQuery;
-
-    // Return specs with extreme edge caching rules active
     return NextResponse.json(deviceDetails, {
       status: 200,
       headers: {
@@ -120,14 +139,8 @@ export async function GET(request: Request) {
 
   } catch (error: any) {
     return NextResponse.json(
-      { 
-        error: "Internal server error parsing target hardware specs.", 
-        details: error?.message || "Unknown context mapping failure" 
-      },
-      { 
-        status: 500, 
-        headers: { 'Cache-Control': 'public, max-age=0, no-cache, no-store, must-revalidate' } 
-      }
+      { error: "Internal server error analyzing phone specs.", details: error?.message },
+      { status: 500, headers: { 'Cache-Control': 'public, max-age=0, no-cache, no-store, must-revalidate' } }
     );
   }
 }
