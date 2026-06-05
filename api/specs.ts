@@ -2,11 +2,10 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Redis } from '@upstash/redis';
 import * as cheerio from 'cheerio';
 
-// 🔄 Centralized connection mechanism with a Cloudflare bypass mechanism
+// Centralized fetch tool with integrated proxy support
 async function fetchHtml(targetUrl: string): Promise<string | null> {
   const apiKey = process.env.SCRAPER_API_KEY;
   
-  // Routes through ScraperAPI if present, otherwise attempts a direct fallback fetch
   const url = apiKey 
     ? `https://api.scraperapi.com/?api_key=${apiKey}&url=${encodeURIComponent(targetUrl)}`
     : targetUrl;
@@ -30,12 +29,20 @@ async function fetchHtml(targetUrl: string): Promise<string | null> {
   }
 }
 
+// 🛠️ FIX: Uses the correct GSMArena QuickSearch endpoint parameters
 async function scrapeGsmArenaSearch(query: string): Promise<string | null> {
-  const searchUrl = `https://www.gsmarena.com/res.php3?sSearch=${encodeURIComponent(query)}`;
+  const searchUrl = `https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName=${encodeURIComponent(query)}`;
   const html = await fetchHtml(searchUrl);
   if (!html) return null;
 
   const $ = cheerio.load(html);
+  
+  // Guardrail: If GSMArena auto-redirects straight to the product spec page,
+  // the table will already be here. Return the URL directly.
+  if ($('#specs-list').length > 0) {
+    return searchUrl;
+  }
+
   const firstDeviceLink = $('.makers ul li a').first().attr('href');
   
   return firstDeviceLink ? `https://www.gsmarena.com/${firstDeviceLink}` : null;
@@ -75,7 +82,6 @@ function generateSmartStrategies(input: string): string[] {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Setup standard cross-origin security headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -91,7 +97,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const cleanInput = rawQuery.trim();
   let translatedQuery: string | null = null;
 
-  // 1. Pull the commercial name directly out of your 75k synced Redis database
+  // 1. Grab commercial mapping from the Redis database 
   try {
     if (process.env.UPSTASH_REDIS_REST_URL) {
       const redis = Redis.fromEnv();
@@ -104,14 +110,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error("Redis lookup error:", e);
   }
 
-  // 2. Build prioritized list of fallback query strategies
+  // 2. Queue lookups (Translated title first, raw title second)
   const strategies = translatedQuery 
     ? [translatedQuery, ...generateSmartStrategies(cleanInput)] 
     : generateSmartStrategies(cleanInput);
 
   let targetDeviceUrl: string | null = null;
 
-  // 3. Resolve the matching profile URL
+  // 3. Resolve the page location
   for (const query of strategies) {
     const matchedUrl = await scrapeGsmArenaSearch(query);
     if (matchedUrl) {
@@ -123,13 +129,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!targetDeviceUrl) {
     return res.status(404).json({ 
       error: `Hardware profile execution exhausted for lookup input: '${cleanInput}'`,
-      hint: !process.env.SCRAPER_API_KEY 
-        ? "Your Redis translation worked, but GSMArena blocked Vercel from searching. Add SCRAPER_API_KEY to your Vercel variables to bypass Cloudflare." 
-        : "The device could not be found via search metrics."
+      hint: "The device could not be resolved. Verify your search query spelling or check proxy health status parameters."
     });
   }
 
-  // 4. Scrape the specifications from the resolved device page
+  // 4. Scrape the table metrics
   const technicalSpecs = await scrapeDeviceSpecs(targetDeviceUrl);
 
   if (!technicalSpecs) {
