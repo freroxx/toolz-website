@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Redis } from '@upstash/redis';
 import * as cheerio from 'cheerio';
 
@@ -77,13 +77,18 @@ function generateSmartStrategies(rawQuery: string): string[] {
 }
 
 // --- MAIN HANDLER ---
-export async function GET(request: Request) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Enforce GET requests only
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
   try {
-    const { searchParams } = new URL(request.url);
-    const rawQuery = searchParams.get('model');
+    // Vercel standardizes query params into `req.query`
+    const rawQuery = Array.isArray(req.query.model) ? req.query.model[0] : req.query.model;
 
     if (!rawQuery || rawQuery.trim() === '') {
-      return NextResponse.json({ error: "Missing 'model' parameter." }, { status: 400 });
+      return res.status(400).json({ error: "Missing 'model' parameter." });
     }
 
     const cleanInput = rawQuery.trim();
@@ -108,7 +113,6 @@ export async function GET(request: Request) {
     let targetDeviceUrl: string | null = null;
     let successfulQuery = "";
 
-    // Sequential Fallback Loop Pass via HTTP fetch requests
     for (const query of strategies) {
       const matchedUrl = await scrapeGsmArenaSearch(query);
       if (matchedUrl) {
@@ -119,28 +123,22 @@ export async function GET(request: Request) {
     }
 
     if (!targetDeviceUrl) {
-      return NextResponse.json(
-        { error: `Hardware profile execution exhausted for lookup input: '${cleanInput}'` },
-        { status: 404, headers: { 'Cache-Control': 'public, max-age=0, no-cache, no-store, must-revalidate' } }
-      );
+      res.setHeader('Cache-Control', 'public, max-age=0, no-cache, no-store, must-revalidate');
+      return res.status(404).json({ error: `Hardware profile execution exhausted for lookup input: '${cleanInput}'` });
     }
 
-    // Scrape details from the targeted page URL match
     const deviceDetails = await scrapeDeviceSpecs(targetDeviceUrl);
     const trackingTag = isDatabaseMatch ? `[Google Play Direct Match] ${successfulQuery}` : successfulQuery;
 
-    return NextResponse.json(deviceDetails, {
-      status: 200,
-      headers: {
-        'Cache-Control': CACHE_HEADER,
-        'X-Matched-Query': encodeURIComponent(trackingTag)
-      }
-    });
+    res.setHeader('Cache-Control', CACHE_HEADER);
+    res.setHeader('X-Matched-Query', encodeURIComponent(trackingTag));
+    return res.status(200).json(deviceDetails);
 
   } catch (error: any) {
-    return NextResponse.json(
-      { error: "Internal server error analyzing phone specs.", details: error?.message },
-      { status: 500, headers: { 'Cache-Control': 'public, max-age=0, no-cache, no-store, must-revalidate' } }
-    );
+    res.setHeader('Cache-Control', 'public, max-age=0, no-cache, no-store, must-revalidate');
+    return res.status(500).json({ 
+      error: "Internal server error analyzing phone specs.", 
+      details: error?.message 
+    });
   }
 }
