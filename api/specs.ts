@@ -2,143 +2,144 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Redis } from '@upstash/redis';
 import * as cheerio from 'cheerio';
 
-const CACHE_FRESH_SEC = 15 * 24 * 60 * 60; 
-const CACHE_STALE_SEC = 30 * 24 * 60 * 60;
-const CACHE_HEADER = `public, max-age=0, s-maxage=${CACHE_FRESH_SEC}, stale-while-revalidate=${CACHE_STALE_SEC}`;
+// 🔄 Centralized connection mechanism with a Cloudflare bypass mechanism
+async function fetchHtml(targetUrl: string): Promise<string | null> {
+  const apiKey = process.env.SCRAPER_API_KEY;
+  
+  // Routes through ScraperAPI if present, otherwise attempts a direct fallback fetch
+  const url = apiKey 
+    ? `https://api.scraperapi.com/?api_key=${apiKey}&url=${encodeURIComponent(targetUrl)}`
+    : targetUrl;
 
-// --- PURE FETCH ENGINE FOR GSMARENA ---
-async function scrapeGsmArenaSearch(query: string): Promise<string | null> {
   try {
-    const searchUrl = `https://www.gsmarena.com/res.php3?sSearch=${encodeURIComponent(query)}`;
-    const response = await fetch(searchUrl, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9'
+      }
     });
-    
-    if (!response.ok) return null;
-    const html = await response.text();
-    const $ = cheerio.load(html);
-    
-    // Find the first device link inside the makers list grid layout
-    const firstDeviceLink = $('.makers ul li a').first().attr('href');
-    return firstDeviceLink ? `https://www.gsmarena.com/${firstDeviceLink}` : null;
-  } catch {
+
+    if (!response.ok) {
+      console.error(`Fetch failed with status ${response.status} for ${targetUrl}`);
+      return null;
+    }
+    return await response.text();
+  } catch (error) {
+    console.error(`Network error fetching ${targetUrl}:`, error);
     return null;
   }
 }
 
-async function scrapeDeviceSpecs(deviceUrl: string) {
-  const response = await fetch(deviceUrl, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
-  });
-  
-  if (!response.ok) throw new Error("Failed to pull specs HTML sheet");
-  const html = await response.text();
+async function scrapeGsmArenaSearch(query: string): Promise<string | null> {
+  const searchUrl = `https://www.gsmarena.com/res.php3?sSearch=${encodeURIComponent(query)}`;
+  const html = await fetchHtml(searchUrl);
+  if (!html) return null;
+
   const $ = cheerio.load(html);
+  const firstDeviceLink = $('.makers ul li a').first().attr('href');
   
-  const title = $('.specs-phone-name-title').text().trim();
-  const mainImg = $('.specs-photo-main img').attr('src') || "";
+  return firstDeviceLink ? `https://www.gsmarena.com/${firstDeviceLink}` : null;
+}
+
+async function scrapeDeviceSpecs(url: string) {
+  const html = await fetchHtml(url);
+  if (!html) return null;
+
+  const $ = cheerio.load(html);
   const specs: Record<string, Record<string, string>> = {};
 
-  // Parse the specifications table grids cleanly
   $('#specs-list table').each((_, table) => {
-    const category = $(table).find('th').text().trim();
-    if (!category) return;
-    
-    specs[category] = {};
+    const sectionName = $(table).find('th').text().trim();
+    if (!sectionName) return;
+
+    specs[sectionName] = {};
     $(table).find('tr').each((_, tr) => {
-      const key = $(tr).find('.ttl').text().trim().replace(/&nbsp;/g, '');
+      const key = $(tr).find('.ttl').text().trim();
       const value = $(tr).find('.nfo').text().trim();
-      if (key || value) {
-        specs[category][key || "Info"] = value;
+      if (key && value) {
+        specs[sectionName][key] = value;
       }
     });
   });
 
-  return { title, mainImg, specifications: specs };
+  return Object.keys(specs).length > 0 ? specs : null;
 }
 
-function generateSmartStrategies(rawQuery: string): string[] {
-  let clean = rawQuery.trim();
-  clean = clean
-    .replace(/\b(Galaxy Note)\s*(\d+)/gi, 'Note $2')
-    .replace(/\b(Galaxy S)\s*(\d+)/gi, 'S$2')
-    .replace(/\b(Galaxy A)\s*(\d+)/gi, 'A$2')
-    .replace(/ (unlocked|carrier|5g|lte|wifi|4g|dual sim|global|ds|edit|pro\+|plus)/gi, '')
-    .trim();
-
-  const words = clean.split(/\s+|_|-/);
-  const strategies = [rawQuery.trim(), clean];
-
-  if (words.length >= 3) strategies.push(`${words[0]} ${words[1]} ${words[2]}`);
-  if (words.length > 1) strategies.push(words.slice(1).join(' '));
-  if (words.length >= 2) strategies.push(`${words[0]} ${words[1]}`);
-
-  return [...new Set(strategies)].filter(q => q && q.length >= 2);
+function generateSmartStrategies(input: string): string[] {
+  const clean = input.toLowerCase().trim();
+  const parts = clean.split(/\s+/);
+  if (parts.length > 1) {
+    return [clean, parts[parts.length - 1], parts.slice(0, -1).join(' ')];
+  }
+  return [clean];
 }
 
-// --- MAIN HANDLER ---
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Enforce GET requests only
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
+  // Setup standard cross-origin security headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method Not Allowed' });
+
+  const rawQuery = req.query.model;
+  if (!rawQuery || typeof rawQuery !== 'string') {
+    return res.status(400).json({ error: "Missing or invalid 'model' query parameter" });
   }
 
+  const cleanInput = rawQuery.trim();
+  let translatedQuery: string | null = null;
+
+  // 1. Pull the commercial name directly out of your 75k synced Redis database
   try {
-    // Vercel standardizes query params into `req.query`
-    const rawQuery = Array.isArray(req.query.model) ? req.query.model[0] : req.query.model;
-
-    if (!rawQuery || rawQuery.trim() === '') {
-      return res.status(400).json({ error: "Missing 'model' parameter." });
-    }
-
-    const cleanInput = rawQuery.trim();
-    let translatedQuery: string | null = null;
-    let isDatabaseMatch = false;
-
-    try {
+    if (process.env.UPSTASH_REDIS_REST_URL) {
       const redis = Redis.fromEnv();
       const cachedValue = await redis.get(`device:${cleanInput.toLowerCase()}`);
       if (cachedValue) {
         translatedQuery = String(cachedValue).trim();
-        isDatabaseMatch = true;
-      }
-    } catch (e) {
-      console.error("Redis lookup bypass:", e);
-    }
-
-    let strategies = translatedQuery 
-      ? [translatedQuery, ...generateSmartStrategies(cleanInput)] 
-      : generateSmartStrategies(cleanInput);
-
-    let targetDeviceUrl: string | null = null;
-    let successfulQuery = "";
-
-    for (const query of strategies) {
-      const matchedUrl = await scrapeGsmArenaSearch(query);
-      if (matchedUrl) {
-        targetDeviceUrl = matchedUrl;
-        successfulQuery = query;
-        break;
       }
     }
+  } catch (e) {
+    console.error("Redis lookup error:", e);
+  }
 
-    if (!targetDeviceUrl) {
-      res.setHeader('Cache-Control', 'public, max-age=0, no-cache, no-store, must-revalidate');
-      return res.status(404).json({ error: `Hardware profile execution exhausted for lookup input: '${cleanInput}'` });
+  // 2. Build prioritized list of fallback query strategies
+  const strategies = translatedQuery 
+    ? [translatedQuery, ...generateSmartStrategies(cleanInput)] 
+    : generateSmartStrategies(cleanInput);
+
+  let targetDeviceUrl: string | null = null;
+
+  // 3. Resolve the matching profile URL
+  for (const query of strategies) {
+    const matchedUrl = await scrapeGsmArenaSearch(query);
+    if (matchedUrl) {
+      targetDeviceUrl = matchedUrl;
+      break;
     }
+  }
 
-    const deviceDetails = await scrapeDeviceSpecs(targetDeviceUrl);
-    const trackingTag = isDatabaseMatch ? `[Google Play Direct Match] ${successfulQuery}` : successfulQuery;
-
-    res.setHeader('Cache-Control', CACHE_HEADER);
-    res.setHeader('X-Matched-Query', encodeURIComponent(trackingTag));
-    return res.status(200).json(deviceDetails);
-
-  } catch (error: any) {
-    res.setHeader('Cache-Control', 'public, max-age=0, no-cache, no-store, must-revalidate');
-    return res.status(500).json({ 
-      error: "Internal server error analyzing phone specs.", 
-      details: error?.message 
+  if (!targetDeviceUrl) {
+    return res.status(404).json({ 
+      error: `Hardware profile execution exhausted for lookup input: '${cleanInput}'`,
+      hint: !process.env.SCRAPER_API_KEY 
+        ? "Your Redis translation worked, but GSMArena blocked Vercel from searching. Add SCRAPER_API_KEY to your Vercel variables to bypass Cloudflare." 
+        : "The device could not be found via search metrics."
     });
   }
+
+  // 4. Scrape the specifications from the resolved device page
+  const technicalSpecs = await scrapeDeviceSpecs(targetDeviceUrl);
+
+  if (!technicalSpecs) {
+    return res.status(502).json({ error: "Failed to extract web structural blocks from target profile." });
+  }
+
+  return res.status(200).json({
+    search_query: cleanInput,
+    matched_device: translatedQuery || cleanInput,
+    source_url: targetDeviceUrl,
+    specifications: technicalSpecs
+  });
 }
