@@ -6,8 +6,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
+  // 🛑 Explicitly catch missing environment variables before executing
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return res.status(500).json({ 
+      error: "Missing Upstash Redis Credentials", 
+      details: "Please add UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN to your Vercel Environment Variables settings." 
+    });
+  }
+
   try {
-    // 1. Validate Cron Security Secret
     const authHeader = req.headers.authorization;
     const isLocal = process.env.NODE_ENV === 'development';
     
@@ -15,10 +22,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(401).json({ error: "Unauthorized cron execution" });
     }
 
-    // 2. Initialize Upstash Client
     const redis = Redis.fromEnv();
 
-    // 3. Fetch from the robust open-source device repository alternate
     const url = 'https://raw.githubusercontent.com/pbakondy/android-device-list/master/devices.json';
     const response = await fetch(url);
     
@@ -30,43 +35,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let processedCount = 0;
     let chunkCount = 0;
     
-    // 4. Batch items via multi-command pipeline
     let pipeline = redis.pipeline();
 
     for (const item of rawDevices) {
-      // Cross-compatible property reading for any data schema shifts
       const manufacturer = String(item.brand || item.manufacturer || '').trim();
       const marketName = String(item.name || item.market_name || '').trim();
       const model = String(item.model || '').trim();
       
       if (!marketName) continue;
 
-      // Construct descriptive value (e.g., "Oppo A36")
       const cleanValue = marketName.toLowerCase().startsWith(manufacturer.toLowerCase())
         ? marketName
         : `${manufacturer} ${marketName}`;
 
-      // Strategy A: Index by hardware model identifier (e.g., pesm10)
       if (model) {
         pipeline.set(`device:${model.toLowerCase()}`, cleanValue);
         processedCount++;
         chunkCount++;
       }
 
-      // Strategy B: Index by commercial marketing name (e.g., a36)
       pipeline.set(`device:${marketName.toLowerCase()}`, cleanValue);
       processedCount++;
       chunkCount++;
 
-      // ⚡ Chunk executions in batches of 2000 to keep memory low and prevent Vercel timeouts
       if (chunkCount >= 2000) {
         await pipeline.exec();
-        pipeline = redis.pipeline(); // reset pipeline container
+        pipeline = redis.pipeline();
         chunkCount = 0;
       }
     }
 
-    // Execute any remaining tail records
     if (chunkCount > 0) {
       await pipeline.exec();
     }
