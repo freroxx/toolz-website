@@ -2,7 +2,6 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Redis } from '@upstash/redis';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Enforce GET requests only
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
@@ -34,20 +33,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const pipeline = redis.pipeline();
 
     for (const item of rawDevices) {
-      if (!item.model) continue;
-
-      const key = `device:${String(item.model).trim().toLowerCase()}`;
-      const manufacturer = String(item.manufacturer).trim();
-      const marketName = String(item.market_name || item.name).trim();
+      const manufacturer = String(item.manufacturer || '').trim();
+      const marketName = String(item.market_name || item.name || '').trim();
       
+      if (!marketName) continue;
+
+      // Construct clean, descriptive target text (e.g., "Oppo A36")
       const cleanValue = marketName.toLowerCase().startsWith(manufacturer.toLowerCase())
         ? marketName
         : `${manufacturer} ${marketName}`;
 
-      if (cleanValue) {
-        pipeline.set(key, cleanValue);
+      // Strategy A: Index by Google Play hardware model (e.g., device:pesm10)
+      if (item.model) {
+        const modelKey = `device:${String(item.model).trim().toLowerCase()}`;
+        pipeline.set(modelKey, cleanValue);
         processedCount++;
       }
+
+      // Strategy B: Index by commercial marketing name (e.g., device:a36 or device:oppo a36)
+      const marketKey = `device:${marketName.toLowerCase()}`;
+      pipeline.set(marketKey, cleanValue);
+      processedCount++;
     }
 
     // Run atomically over the server connection
@@ -55,7 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({ 
       success: true, 
-      message: `Successfully synchronized ${processedCount} Android devices into Upstash Redis.` 
+      message: `Successfully synchronized ${processedCount} translation keys into Upstash Redis.` 
     });
 
   } catch (error: any) {
