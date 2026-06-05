@@ -1,5 +1,6 @@
 // @ts-ignore
 import gsmarena from 'gsmarena-api';
+import { kv } from '@vercel/kv';
 
 interface GsmArenaSearchMatch {
   id: string;
@@ -11,12 +12,9 @@ const CACHE_FRESH_SEC = 15 * 24 * 60 * 60;
 const CACHE_STALE_SEC = 30 * 24 * 60 * 60;
 const CACHE_HEADER = `public, max-age=0, s-maxage=${CACHE_FRESH_SEC}, stale-while-revalidate=${CACHE_STALE_SEC}`;
 
-// --- ADVANCED SMART FALLBACK GENERATOR ---
 function generateSmartStrategies(rawQuery: string): string[] {
   let clean = rawQuery.trim();
 
-  // 1. Convert localized factory/carrier patterns to general series names
-  // Handles common anomalies found in Android Build properties
   clean = clean
     .replace(/\b(Galaxy Note)\s*(\d+)/gi, 'Note $2')
     .replace(/\b(Galaxy S)\s*(\d+)/gi, 'S$2')
@@ -24,38 +22,29 @@ function generateSmartStrategies(rawQuery: string): string[] {
     .replace(/ (unlocked|carrier|5g|lte|wifi|4g|dual sim|global|ds|edit|pro\+|plus)/gi, '')
     .trim();
 
-  const words = clean.split(/\s+|_|-/); // Split by space, underscore, or dashes
+  const words = clean.split(/\s+|_|-/);
 
   const strategies: string[] = [
-    rawQuery.trim(),                            // Tier 1: Raw untouched string
-    clean,                                      // Tier 2: Normalized baseline string
+    rawQuery.trim(),
+    clean,
   ];
 
-  // Tier 3: Isolate the commercial family code + version number
   if (words.length >= 3) {
     strategies.push(`${words[0]} ${words[1]} ${words[2]}`);
   }
-
-  // Tier 4: Drop the manufacturer brand name completely (e.g., "Pixel 7 Pro" instead of "Google Pixel 7 Pro")
   if (words.length > 1) {
     strategies.push(words.slice(1).join(' '));
   }
-
-  // Tier 5: Purely grab the first and last structural tokens
   if (words.length > 2) {
     strategies.push(`${words[0]} ${words[words.length - 1]}`);
   }
-
-  // Tier 6: Core Brand + Initial Family Model (e.g., "Samsung S23")
   if (words.length >= 2) {
     strategies.push(`${words[0]} ${words[1]}`);
   }
 
-  // Deduplicate entries and remove tiny/empty token lookups
   return [...new Set(strategies)].filter(q => q && q.length >= 2);
 }
 
-// --- MAIN HANDLER ---
 export default async function handler(req: any, res: any) {
   try {
     const rawQuery = req.query.model;
@@ -64,7 +53,29 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: "Missing 'model' parameter." });
     }
 
-    const strategies = generateSmartStrategies(rawQuery);
+    const cleanInput = rawQuery.trim();
+    let translatedQuery: string | null = null;
+
+    // ⚡ STEP 1 INTERCEPTOR: Quick query against the Google Play Device database
+    try {
+      const kvKey = `device:${cleanInput.toLowerCase()}`;
+      translatedQuery = await kv.get<string>(kvKey);
+    } catch (kvError) {
+      console.error("KV Lookup bypassed due to error:", kvError);
+    }
+
+    // Determine our base search strategies array
+    let strategies: string[];
+    let validationLogPrefix = "";
+
+    if (translatedQuery) {
+      // Google list found a precise commercial match! Prioritize it first.
+      strategies = [translatedQuery, ...generateSmartStrategies(cleanInput)];
+      validationLogPrefix = "[Google Play Direct Match] ";
+    } else {
+      strategies = generateSmartStrategies(cleanInput);
+    }
+
     let searchResults: GsmArenaSearchMatch[] = [];
     let successfulQuery = "";
 
@@ -78,12 +89,10 @@ export default async function handler(req: any, res: any) {
       }
     }
 
-    // 🛑 ULTIMATE FAILSAFE: If everything above returned zero hits
+    // Ultimate Failsafe
     if (searchResults.length === 0) {
-      const words = rawQuery.trim().split(/\s+/);
+      const words = cleanInput.split(/\s+/);
       if (words.length > 0) {
-        // Attempt a broader query using ONLY the brand manufacturer name (e.g., "Nothing" or "OnePlus")
-        // This avoids a total 404 block and gives the app a list of matching company phones
         const emergencyResults = await gsmarena.search.search(words[0]);
         if (emergencyResults && emergencyResults.length > 0) {
           searchResults = emergencyResults;
@@ -92,11 +101,10 @@ export default async function handler(req: any, res: any) {
       }
     }
 
-    // Handle completely blank database state
     if (searchResults.length === 0) {
       res.setHeader('Cache-Control', 'public, max-age=0, no-cache, no-store, must-revalidate');
       return res.status(404).json({ 
-        error: `Hardware lookup permanently exhausted for input: '${rawQuery}'` 
+        error: `Hardware lookup permanently exhausted for input: '${cleanInput}'` 
       });
     }
 
@@ -106,7 +114,7 @@ export default async function handler(req: any, res: any) {
 
     // Apply cache rules and tracking headers
     res.setHeader('Cache-Control', CACHE_HEADER);
-    res.setHeader('X-Matched-Query', encodeURIComponent(successfulQuery));
+    res.setHeader('X-Matched-Query', encodeURIComponent(`${validationLogPrefix}${successfulQuery}`));
 
     return res.status(200).json(deviceDetails);
 
