@@ -5,11 +5,5 @@
       "path": "/api/cron/sync-devices",
       "schedule": "0 0 1,15 * *"
     }
-  ],
-  "rewrites": [
-    {
-      "source": "/api/specs",
-      "destination": "/api/specs"
-    }
   ]
 }
