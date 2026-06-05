@@ -1,13 +1,11 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
 
-// Vercel Cron Config: Run at midnight on the 1st and 15th of every month
 export const config = {
   cron: "0 0 1,15 * *",
 };
 
 export async function GET(req: any) {
   try {
-    // Optional basic auth check for Cron security
     const authHeader = req.headers.get('authorization');
     const isLocal = process.env.NODE_ENV === 'development';
     
@@ -15,7 +13,9 @@ export async function GET(req: any) {
       return new Response(JSON.stringify({ error: "Unauthorized cron execution" }), { status: 401 });
     }
 
-    // Fetching clean community-processed Google Play Device list from GitHub
+    // Connect automatically using Upstash environment variables
+    const redis = Redis.fromEnv();
+
     const url = 'https://raw.githubusercontent.com/PolymerJames/android-device-list/master/devices.json';
     const response = await fetch(url);
     
@@ -23,17 +23,16 @@ export async function GET(req: any) {
       throw new Error(`Failed to fetch source device list: ${response.statusText}`);
     }
 
-    const rawDevices = await response.json(); // Expected structural shape: Array of device objects
-    
+    const rawDevices = await response.json();
     let processedCount = 0;
-    const pipeline = kv.pipeline();
+    
+    // Create an Upstash multi-command pipeline
+    const pipeline = redis.pipeline();
 
-    // Loop and map into KV Store
     for (const item of rawDevices) {
-      // We target the technical build model as the Lookup Key
+      if (!item.model) continue;
+
       const key = `device:${String(item.model).trim().toLowerCase()}`;
-      
-      // We construct a clean commercial phrase (e.g., "Samsung Galaxy S24 Ultra")
       const manufacturer = String(item.manufacturer).trim();
       const marketName = String(item.market_name || item.name).trim();
       
@@ -41,18 +40,18 @@ export async function GET(req: any) {
         ? marketName
         : `${manufacturer} ${marketName}`;
 
-      if (item.model && cleanValue) {
+      if (cleanValue) {
         pipeline.set(key, cleanValue);
         processedCount++;
       }
     }
 
-    // Execute all batch changes at once natively inside Redis
+    // Execute the batched pipeline commands natively on Upstash
     await pipeline.exec();
 
     return new Response(JSON.stringify({ 
       success: true, 
-      message: `Successfully synchronized ${processedCount} Android devices into Edge KV memory.` 
+      message: `Successfully synchronized ${processedCount} Android devices into Upstash Redis.` 
     }), { status: 200 });
 
   } catch (error: any) {
