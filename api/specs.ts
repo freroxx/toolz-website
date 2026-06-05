@@ -73,12 +73,26 @@ async function scrapeDeviceSpecs(url: string) {
 }
 
 function generateSmartStrategies(input: string): string[] {
-  const clean = input.toLowerCase().trim();
+  // Strip common factory prefixes (like Samsung's SM-, GT-, etc.) that break GSMArena searches
+  let clean = input.toLowerCase().trim().replace(/\b(sm-|gt-|sch-|sgh-|sph-)/gi, '');
+  
   const parts = clean.split(/\s+/);
+  const strategies = [clean];
+
   if (parts.length > 1) {
-    return [clean, parts[parts.length - 1], parts.slice(0, -1).join(' ')];
+    strategies.push(parts[parts.length - 1]); // Try just the specific model code (e.g., "a366e")
+    strategies.push(parts.slice(0, -1).join(' ')); // Try just the brand/series
   }
-  return [clean];
+  
+  // Extract the base consumer model (e.g., turns "a366e" into "a36")
+  const lastWord = parts[parts.length - 1];
+  const baseModelMatch = lastWord.match(/[a-z]{1,2}\d{2}/i);
+  if (baseModelMatch) {
+    strategies.push(baseModelMatch[0]);
+  }
+
+  // Return unique strategies, filtering out empty strings
+  return [...new Set(strategies)].filter(q => q && q.length >= 2);
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
