@@ -1,6 +1,6 @@
 // @ts-ignore
 import gsmarena from 'gsmarena-api';
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
 
 interface GsmArenaSearchMatch {
   id: string;
@@ -56,20 +56,21 @@ export default async function handler(req: any, res: any) {
     const cleanInput = rawQuery.trim();
     let translatedQuery: string | null = null;
 
-    // ⚡ STEP 1 INTERCEPTOR: Quick query against the Google Play Device database
+    // Connect to Upstash Redis database instances
+    const redis = Redis.fromEnv();
+
+    // ⚡ STEP 1 INTERCEPTOR: Quick query against Upstash Redis
     try {
       const kvKey = `device:${cleanInput.toLowerCase()}`;
-      translatedQuery = await kv.get<string>(kvKey);
+      translatedQuery = await redis.get(kvKey); // Upstash safely infers the type directly here
     } catch (kvError) {
-      console.error("KV Lookup bypassed due to error:", kvError);
+      console.error("Redis Lookup bypassed due to error:", kvError);
     }
 
-    // Determine our base search strategies array
     let strategies: string[];
     let validationLogPrefix = "";
 
     if (translatedQuery) {
-      // Google list found a precise commercial match! Prioritize it first.
       strategies = [translatedQuery, ...generateSmartStrategies(cleanInput)];
       validationLogPrefix = "[Google Play Direct Match] ";
     } else {
@@ -79,7 +80,6 @@ export default async function handler(req: any, res: any) {
     let searchResults: GsmArenaSearchMatch[] = [];
     let successfulQuery = "";
 
-    // Sequential Fallback Execution Layer
     for (const query of strategies) {
       const results = await gsmarena.search.search(query);
       if (results && Array.isArray(results) && results.length > 0) {
@@ -89,7 +89,6 @@ export default async function handler(req: any, res: any) {
       }
     }
 
-    // Ultimate Failsafe
     if (searchResults.length === 0) {
       const words = cleanInput.split(/\s+/);
       if (words.length > 0) {
@@ -108,11 +107,9 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // Fetch the detailed specifications payload
     const bestMatchId = searchResults[0].id;
     const deviceDetails = await gsmarena.catalog.getDevice(bestMatchId);
 
-    // Apply cache rules and tracking headers
     res.setHeader('Cache-Control', CACHE_HEADER);
     res.setHeader('X-Matched-Query', encodeURIComponent(`${validationLogPrefix}${successfulQuery}`));
 
