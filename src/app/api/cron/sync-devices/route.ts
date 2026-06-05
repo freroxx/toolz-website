@@ -1,21 +1,21 @@
+import { NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
 
-export const config = {
-  cron: "0 0 1,15 * *",
-};
-
-export async function GET(req: any) {
+export async function GET(request: Request) {
   try {
-    const authHeader = req.headers.get('authorization');
+    // 1. Validate Cron Security Secret
+    const { searchParams } = new URL(request.url);
+    const authHeader = request.headers.get('authorization');
     const isLocal = process.env.NODE_ENV === 'development';
     
     if (!isLocal && process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return new Response(JSON.stringify({ error: "Unauthorized cron execution" }), { status: 401 });
+      return NextResponse.json({ error: "Unauthorized cron execution" }, { status: 401 });
     }
 
-    // Connect automatically using Upstash environment variables
+    // 2. Initialize Upstash Client
     const redis = Redis.fromEnv();
 
+    // 3. Fetch device database file from GitHub
     const url = 'https://raw.githubusercontent.com/PolymerJames/android-device-list/master/devices.json';
     const response = await fetch(url);
     
@@ -26,7 +26,7 @@ export async function GET(req: any) {
     const rawDevices = await response.json();
     let processedCount = 0;
     
-    // Create an Upstash multi-command pipeline
+    // 4. Batch items via multi-command pipeline
     const pipeline = redis.pipeline();
 
     for (const item of rawDevices) {
@@ -46,18 +46,18 @@ export async function GET(req: any) {
       }
     }
 
-    // Execute the batched pipeline commands natively on Upstash
+    // Run atomically over the server connection
     await pipeline.exec();
 
-    return new Response(JSON.stringify({ 
+    return NextResponse.json({ 
       success: true, 
       message: `Successfully synchronized ${processedCount} Android devices into Upstash Redis.` 
-    }), { status: 200 });
+    }, { status: 200 });
 
   } catch (error: any) {
-    return new Response(JSON.stringify({ 
+    return NextResponse.json({ 
       error: "Failed to run background device synchronization mapping.",
-      details: error?.message 
-    }), { status: 500 });
+      details: error?.message || "Unknown execution error context"
+    }, { status: 500 });
   }
 }
