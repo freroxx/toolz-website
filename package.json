@@ -13,6 +13,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@vercel/node" : "latest",
     "cheerio" : "latest",
     "@upstash/redis": "latest",
     "gsmarena-api": "latest",
