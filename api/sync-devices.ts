@@ -1,15 +1,19 @@
-import { NextResponse } from 'next/server';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Redis } from '@upstash/redis';
 
-export async function GET(request: Request) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Enforce GET requests only
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
   try {
     // 1. Validate Cron Security Secret
-    const { searchParams } = new URL(request.url);
-    const authHeader = request.headers.get('authorization');
+    const authHeader = req.headers.authorization;
     const isLocal = process.env.NODE_ENV === 'development';
     
     if (!isLocal && process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json({ error: "Unauthorized cron execution" }, { status: 401 });
+      return res.status(401).json({ error: "Unauthorized cron execution" });
     }
 
     // 2. Initialize Upstash Client
@@ -49,15 +53,15 @@ export async function GET(request: Request) {
     // Run atomically over the server connection
     await pipeline.exec();
 
-    return NextResponse.json({ 
+    return res.status(200).json({ 
       success: true, 
       message: `Successfully synchronized ${processedCount} Android devices into Upstash Redis.` 
-    }, { status: 200 });
+    });
 
   } catch (error: any) {
-    return NextResponse.json({ 
+    return res.status(500).json({ 
       error: "Failed to run background device synchronization mapping.",
       details: error?.message || "Unknown execution error context"
-    }, { status: 500 });
+    });
   }
 }
