@@ -39,7 +39,7 @@ async function fetchHtml(targetUrl: string): Promise<string | null> {
 async function scrapeGsmArenaSearch(query: string): Promise<string | null> {
   const searchUrl = new URL('https://www.gsmarena.com/results.php3');
   searchUrl.searchParams.set('sQuickSearch', 'yes');
-  searchParams.set('sName', query);
+  searchUrl.searchParams.set('sName', query);
   
   const html = await fetchHtml(searchUrl.toString());
   if (!html) return null;
