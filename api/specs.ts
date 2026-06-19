@@ -6,12 +6,18 @@ import * as cheerio from 'cheerio';
 async function fetchHtml(targetUrl: string): Promise<string | null> {
   const apiKey = process.env.SCRAPER_API_KEY;
   
-  const url = apiKey 
-    ? `https://api.scraperapi.com/?api_key=${apiKey}&url=${encodeURIComponent(targetUrl)}`
-    : targetUrl;
+  let fetchUrl: string;
+  if (apiKey) {
+    const proxyUrl = new URL('https://api.scraperapi.com/');
+    proxyUrl.searchParams.set('api_key', apiKey);
+    proxyUrl.searchParams.set('url', targetUrl);
+    fetchUrl = proxyUrl.toString();
+  } else {
+    fetchUrl = targetUrl;
+  }
 
   try {
-    const response = await fetch(url, {
+    const response = await fetch(fetchUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
         'Accept-Language': 'en-US,en;q=0.9'
@@ -31,8 +37,11 @@ async function fetchHtml(targetUrl: string): Promise<string | null> {
 
 // 🛠️ FIX: Uses the correct GSMArena QuickSearch endpoint parameters
 async function scrapeGsmArenaSearch(query: string): Promise<string | null> {
-  const searchUrl = `https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName=${encodeURIComponent(query)}`;
-  const html = await fetchHtml(searchUrl);
+  const searchUrl = new URL('https://www.gsmarena.com/results.php3');
+  searchUrl.searchParams.set('sQuickSearch', 'yes');
+  searchParams.set('sName', query);
+  
+  const html = await fetchHtml(searchUrl.toString());
   if (!html) return null;
 
   const $ = cheerio.load(html);
@@ -40,7 +49,7 @@ async function scrapeGsmArenaSearch(query: string): Promise<string | null> {
   // Guardrail: If GSMArena auto-redirects straight to the product spec page,
   // the table will already be here. Return the URL directly.
   if ($('#specs-list').length > 0) {
-    return searchUrl;
+    return searchUrl.toString();
   }
 
   const firstDeviceLink = $('.makers ul li a').first().attr('href');
