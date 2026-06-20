@@ -20,7 +20,8 @@ async function fetchHtml(targetUrl: string): Promise<{ text: string | null; stat
     const response = await fetch(fetchUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Accept-Language': 'en-US,en;q=0.9'
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Referer': 'https://www.google.com/'
       }
     });
 
@@ -51,10 +52,18 @@ async function scrapeGsmArenaSearchDebug(query: string) {
     specsListPresent: false,
     firstDeviceLink: null,
     canonical: null,
-    matchedUrl: null
+    matchedUrl: null,
+    turnstile: false
   };
 
   if (!html) return debug;
+
+  // Detect Cloudflare Turnstile / anti-bot pages quickly
+  const lowered = html.toLowerCase();
+  if (lowered.includes('cf-turnstile') || lowered.includes('turnstile') || lowered.includes('turnstile-verify') || lowered.includes('one quick check before you continue') || lowered.includes('meta name="robots" content="noindex')) {
+    debug.turnstile = true;
+    return debug;
+  }
 
   const $ = cheerio.load(html);
 
@@ -184,16 +193,96 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const debugAttempts: Array<any> = [];
   let targetDeviceUrl: string | null = null;
+  let sawTurnstile = false;
 
   // 3. Resolve the page location (with debug logging)
   for (const query of strategies) {
     const debug = await scrapeGsmArenaSearchDebug(query);
     debugAttempts.push(debug);
     console.info('GSM search attempt:', JSON.stringify(debug));
+    if (debug.turnstile) sawTurnstile = true;
     if (debug.matchedUrl) {
       targetDeviceUrl = debug.matchedUrl;
       break;
     }
+  }
+
+  // If we detected a Turnstile barrier, try to use a configured fallback service
+  if (!targetDeviceUrl && sawTurnstile) {
+    const fallbackRaw = process.env.FALLBACK_GSMARENA_API_URL;
+    if (fallbackRaw) {
+      const base = String(fallbackRaw).replace(/\/$/, '');
+      const candidatePaths = new Set<string>();
+
+      // If the provided value already looks like a full API path, use it raw
+      if (base.includes('/api/') || base.includes('/specs')) {
+        candidatePaths.add(`${base}${base.includes('?') ? '&' : '?'}model=${encodeURIComponent(cleanInput)}`);
+      }
+
+      // Common candidate endpoints on a fallback service
+      candidatePaths.add(`${base}/api/specs?model=${encodeURIComponent(cleanInput)}`);
+      candidatePaths.add(`${base}/specs?model=${encodeURIComponent(cleanInput)}`);
+      candidatePaths.add(`${base}/api?model=${encodeURIComponent(cleanInput)}`);
+      candidatePaths.add(`${base}/?model=${encodeURIComponent(cleanInput)}`);
+
+      const triedFallbacks: any[] = [];
+
+      for (const url of candidatePaths) {
+        try {
+          console.info('Attempting fallback endpoint:', url);
+          const r = await fetch(url, { headers: { 'User-Agent': 'Toolz/1.0 (fallback)', 'Accept': 'application/json' } });
+          const text = await r.text();
+          let parsed: any = null;
+          try { parsed = text ? JSON.parse(text) : null; } catch (e) { /* not JSON */ }
+
+          triedFallbacks.push({ url, status: r.status, body_length: text ? text.length : 0, parsed: parsed ? true : false });
+
+          if (r.ok && parsed) {
+            // Accept responses that include specifications or source_url
+            if (parsed.specifications || parsed.source_url || (parsed.specs)) {
+              console.info('Fallback succeeded with:', url);
+              return res.status(200).json({
+                search_query: cleanInput,
+                matched_device: translatedQuery || cleanInput,
+                source_url: parsed.source_url || parsed.specs?.source_url || null,
+                specifications: parsed.specifications || parsed.specs || parsed
+              });
+            }
+
+            // If parsed but doesn't include specs, maybe it's the raw format we expect
+            if (parsed && Object.keys(parsed).length > 0) {
+              console.info('Fallback returned JSON but without expected fields:', Object.keys(parsed));
+              return res.status(200).json(parsed);
+            }
+          }
+        } catch (e) {
+          console.error('Error calling fallback endpoint', url, e);
+          triedFallbacks.push({ url, error: String(e) });
+        }
+      }
+
+      // If we reach here, fallback attempts failed
+      return res.status(502).json({
+        error: 'Blocked by Cloudflare Turnstile and fallback attempts failed',
+        hint: 'GSMArena returned an anti-bot challenge (Turnstile). The configured FALLBACK_GSMARENA_API_URL did not respond with usable JSON.',
+        tried: debugAttempts,
+        fallback_tried: triedFallbacks,
+        suggestion: {
+          ensure_fallback_route: 'Deploy a parsing endpoint that accepts GET /api/specs?model=<model> and returns JSON { source_url, specifications }',
+          use_scraper_provider: 'Or configure SCRAPER_API_KEY on the fallback to a provider that supports Turnstile.'
+        }
+      });
+    }
+
+    return res.status(502).json({
+      error: 'Blocked by Cloudflare Turnstile / anti-bot gate',
+      hint: 'GSMArena returned an anti-bot challenge (Turnstile). Use a scraping provider that supports Turnstile or configure a fallback scraping API.',
+      tried: debugAttempts,
+      suggestion: {
+        use_scraper_provider: 'Set SCRAPER_API_KEY to a provider that explicitly supports Cloudflare Turnstile (e.g., a paid ScraperAPI/ScrapingBee plan).',
+        use_fallback_service: 'Set FALLBACK_GSMARENA_API_URL to a deployed gsmarena parsing service that can be used as a proxy.'
+      }
+    });
   }
 
   if (!targetDeviceUrl) {
