@@ -35,7 +35,8 @@ async function fetchHtml(targetUrl: string): Promise<string | null> {
   }
 }
 
-// 🛠️ FIX: Uses the correct GSMArena QuickSearch endpoint parameters
+// 🛠️ FIX: Uses the correct GSMArena QuickSearch endpoint parameters and
+// improved fallback when GSMArena returns the device page directly.
 async function scrapeGsmArenaSearch(query: string): Promise<string | null> {
   const searchUrl = new URL('https://www.gsmarena.com/results.php3');
   searchUrl.searchParams.set('sQuickSearch', 'yes');
@@ -47,14 +48,26 @@ async function scrapeGsmArenaSearch(query: string): Promise<string | null> {
   const $ = cheerio.load(html);
   
   // Guardrail: If GSMArena auto-redirects straight to the product spec page,
-  // the table will already be here. Return the URL directly.
+  // the table will already be here. Prefer the canonical/product URL when available.
   if ($('#specs-list').length > 0) {
+    const canonical = $('link[rel="canonical"]').attr('href') || $('meta[property="og:url"]').attr('content');
+    if (canonical) {
+      // Canonical is usually absolute. If it's relative, resolve against gsmarena base.
+      return canonical.startsWith('http') ? canonical : `https://www.gsmarena.com/${canonical.replace(/^\//, '')}`;
+    }
+
+    // If no canonical found, try to derive a usable URL from the page (fallback to the search URL)
     return searchUrl.toString();
   }
 
-  const firstDeviceLink = $('.makers ul li a').first().attr('href');
-  
-  return firstDeviceLink ? `https://www.gsmarena.com/${firstDeviceLink}` : null;
+  // Normal results listing: pick the first maker entry
+  // There are a couple of variants in markup; try multiple selectors defensively.
+  let firstDeviceLink = $('.makers ul li a').first().attr('href');
+  if (!firstDeviceLink) {
+    firstDeviceLink = $('.makers a').first().attr('href');
+  }
+
+  return firstDeviceLink ? `https://www.gsmarena.com/${firstDeviceLink.replace(/^\//, '')}` : null;
 }
 
 async function scrapeDeviceSpecs(url: string) {
@@ -84,6 +97,8 @@ async function scrapeDeviceSpecs(url: string) {
 function generateSmartStrategies(input: string): string[] {
   // Strip common factory prefixes (like Samsung's SM-, GT-, etc.) that break GSMArena searches
   let clean = input.toLowerCase().trim().replace(/\b(sm-|gt-|sch-|sgh-|sph-)/gi, '');
+  // Remove extra punctuation that can confuse search
+  clean = clean.replace(/[\/:,#]/g, ' ').replace(/\s+/g, ' ').trim();
   
   const parts = clean.split(/\s+/);
   const strategies = [clean];
@@ -92,12 +107,28 @@ function generateSmartStrategies(input: string): string[] {
     strategies.push(parts[parts.length - 1]); // Try just the specific model code (e.g., "a366e")
     strategies.push(parts.slice(0, -1).join(' ')); // Try just the brand/series
   }
+
+  // Joined version (e.g., "pixel7")
+  strategies.push(parts.join(''));
   
   // Extract the base consumer model (e.g., turns "a366e" into "a36")
   const lastWord = parts[parts.length - 1];
   const baseModelMatch = lastWord.match(/[a-z]{1,2}\d{2}/i);
   if (baseModelMatch) {
     strategies.push(baseModelMatch[0]);
+  }
+
+  // Brand hinting: some models (like Pixel) work better when prefixed with the vendor
+  const brandHints: Record<string, string> = {
+    pixel: 'google',
+    "galaxy": 'samsung',
+    iphone: 'apple'
+  };
+
+  for (const [hintKey, hintBrand] of Object.entries(brandHints)) {
+    if (clean.includes(hintKey) && !clean.includes(hintBrand)) {
+      strategies.unshift(`${hintBrand} ${clean}`);
+    }
   }
 
   // Return unique strategies, filtering out empty strings
