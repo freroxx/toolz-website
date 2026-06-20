@@ -3,7 +3,7 @@ import { Redis } from '@upstash/redis';
 import * as cheerio from 'cheerio';
 
 // Centralized fetch tool with integrated proxy support
-async function fetchHtml(targetUrl: string): Promise<string | null> {
+async function fetchHtml(targetUrl: string): Promise<{ text: string | null; status: number | null }> {
   const apiKey = process.env.SCRAPER_API_KEY;
   
   let fetchUrl: string;
@@ -26,52 +26,63 @@ async function fetchHtml(targetUrl: string): Promise<string | null> {
 
     if (!response.ok) {
       console.error(`Fetch failed with status ${response.status} for ${targetUrl}`);
-      return null;
+      return { text: null, status: response.status };
     }
-    return await response.text();
+    const text = await response.text();
+    return { text, status: response.status };
   } catch (error) {
     console.error(`Network error fetching ${targetUrl}:`, error);
-    return null;
+    return { text: null, status: null };
   }
 }
 
-// 🛠️ FIX: Uses the correct GSMArena QuickSearch endpoint parameters and
-// improved fallback when GSMArena returns the device page directly.
-async function scrapeGsmArenaSearch(query: string): Promise<string | null> {
+// Returns detailed debug information about the search attempt
+async function scrapeGsmArenaSearchDebug(query: string) {
   const searchUrl = new URL('https://www.gsmarena.com/results.php3');
   searchUrl.searchParams.set('sQuickSearch', 'yes');
   searchUrl.searchParams.set('sName', query);
-  
-  const html = await fetchHtml(searchUrl.toString());
-  if (!html) return null;
+
+  const { text: html, status } = await fetchHtml(searchUrl.toString());
+  const debug: any = {
+    query,
+    searchUrl: searchUrl.toString(),
+    httpStatus: status,
+    responseLength: html ? html.length : 0,
+    specsListPresent: false,
+    firstDeviceLink: null,
+    canonical: null,
+    matchedUrl: null
+  };
+
+  if (!html) return debug;
 
   const $ = cheerio.load(html);
-  
-  // Guardrail: If GSMArena auto-redirects straight to the product spec page,
-  // the table will already be here. Prefer the canonical/product URL when available.
+
   if ($('#specs-list').length > 0) {
+    debug.specsListPresent = true;
     const canonical = $('link[rel="canonical"]').attr('href') || $('meta[property="og:url"]').attr('content');
+    debug.canonical = canonical || null;
     if (canonical) {
-      // Canonical is usually absolute. If it's relative, resolve against gsmarena base.
-      return canonical.startsWith('http') ? canonical : `https://www.gsmarena.com/${canonical.replace(/^\//, '')}`;
+      debug.matchedUrl = canonical.startsWith('http') ? canonical : `https://www.gsmarena.com/${String(canonical).replace(/^\//, '')}`;
+      return debug;
     }
-
-    // If no canonical found, try to derive a usable URL from the page (fallback to the search URL)
-    return searchUrl.toString();
+    // No canonical, still mark matched by specs-list
+    debug.matchedUrl = searchUrl.toString();
+    return debug;
   }
 
-  // Normal results listing: pick the first maker entry
-  // There are a couple of variants in markup; try multiple selectors defensively.
-  let firstDeviceLink = $('.makers ul li a').first().attr('href');
-  if (!firstDeviceLink) {
-    firstDeviceLink = $('.makers a').first().attr('href');
+  let firstDeviceLink = $('.makers ul li a').first().attr('href') || $('.makers a').first().attr('href');
+  if (firstDeviceLink) {
+    firstDeviceLink = String(firstDeviceLink).replace(/^\//, '');
+    debug.firstDeviceLink = firstDeviceLink;
+    debug.matchedUrl = `https://www.gsmarena.com/${firstDeviceLink}`;
   }
 
-  return firstDeviceLink ? `https://www.gsmarena.com/${firstDeviceLink.replace(/^\//, '')}` : null;
+  return debug;
 }
 
 async function scrapeDeviceSpecs(url: string) {
-  const html = await fetchHtml(url);
+  const { text: html } = await fetchHtml(url);
   if (!html) return null;
 
   const $ = cheerio.load(html);
@@ -169,13 +180,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ? [translatedQuery, ...generateSmartStrategies(cleanInput)] 
     : generateSmartStrategies(cleanInput);
 
+  console.info('Spec lookup strategies:', strategies);
+
+  const debugAttempts: Array<any> = [];
   let targetDeviceUrl: string | null = null;
 
-  // 3. Resolve the page location
+  // 3. Resolve the page location (with debug logging)
   for (const query of strategies) {
-    const matchedUrl = await scrapeGsmArenaSearch(query);
-    if (matchedUrl) {
-      targetDeviceUrl = matchedUrl;
+    const debug = await scrapeGsmArenaSearchDebug(query);
+    debugAttempts.push(debug);
+    console.info('GSM search attempt:', JSON.stringify(debug));
+    if (debug.matchedUrl) {
+      targetDeviceUrl = debug.matchedUrl;
       break;
     }
   }
@@ -183,7 +199,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!targetDeviceUrl) {
     return res.status(404).json({ 
       error: `Hardware profile execution exhausted for lookup input: '${cleanInput}'`,
-      hint: "The device could not be resolved. Verify your search query spelling or check proxy health status parameters."
+      hint: "The device could not be resolved. Verify your search query spelling or check proxy health status parameters.",
+      tried: debugAttempts
     });
   }
 
@@ -191,7 +208,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const technicalSpecs = await scrapeDeviceSpecs(targetDeviceUrl);
 
   if (!technicalSpecs) {
-    return res.status(502).json({ error: "Failed to extract web structural blocks from target profile." });
+    return res.status(502).json({ error: "Failed to extract web structural blocks from target profile.", source_url: targetDeviceUrl });
   }
 
   return res.status(200).json({
