@@ -26,13 +26,15 @@ async function fetchHtml(targetUrl: string): Promise<{ text: string | null; stat
   }
 
   try {
-    const response = await fetch(fetchUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Referer': 'https://www.google.com/'
-      }
-    });
+    // Only apply fixed headers if NOT using ScraperAPI to prevent TLS fingerprint mismatches
+    const headers: Record<string, string> = {};
+    if (!apiKey) {
+      headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+      headers['Accept-Language'] = 'en-US,en;q=0.9';
+      headers['Referer'] = 'https://www.google.com/';
+    }
+
+    const response = await fetch(fetchUrl, { headers });
 
     // Always read the body, even on non-2xx — ScraperAPI returns a JSON/text
     // error message (invalid key, plan restriction, etc.) that we need to see
@@ -221,7 +223,62 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  // If we detected a Turnstile barrier, try to use a configured fallback service
+  // 3.5 Fallback Search Engine Discovery (Triggers if internal search was blocked or empty)
+  if (!targetDeviceUrl) {
+    console.info('GSMArena internal search engine blocked or failed. Attempting search engine index discovery...');
+    try {
+      const ddgUrl = new URL('https://html.duckduckgo.com/html/');
+      ddgUrl.searchParams.set('q', `site:gsmarena.com ${cleanInput}`);
+      const { text: ddgHtml } = await fetchHtml(ddgUrl.toString());
+      
+      if (ddgHtml) {
+        const $ddg = cheerio.load(ddgHtml);
+        const discoveredLinks: string[] = [];
+        
+        $ddg('a').each((_, el) => {
+          let href = $ddg(el).attr('href');
+          if (href && href.includes('gsmarena.com/')) {
+            if (href.includes('uddg=')) {
+              try {
+                const urlParams = new URLSearchParams(href.substring(href.indexOf('?')));
+                const exactUrl = urlParams.get('uddg');
+                if (exactUrl) href = exactUrl;
+              } catch (e) {}
+            }
+            
+            // Clean paths and drop platform utility routes
+            if (
+              href.includes('.php') &&
+              !href.includes('results.php') &&
+              !href.includes('search.php') &&
+              !href.includes('compare.php') &&
+              !href.includes('glossary.php') &&
+              !href.includes('blog.php')
+            ) {
+              discoveredLinks.push(href.startsWith('http') ? href : `https://www.gsmarena.com/${href.replace(/^\//, '')}`);
+            }
+          }
+        });
+
+        if (discoveredLinks.length > 0) {
+          targetDeviceUrl = discoveredLinks[0];
+          console.info('Successfully bypassed search block via search index discovery extraction:', targetDeviceUrl);
+          debugAttempts.push({
+            query: cleanInput,
+            searchUrl: ddgUrl.toString(),
+            httpStatus: 200,
+            specsListPresent: false,
+            matchedUrl: targetDeviceUrl,
+            discoveryMethod: 'duckduckgo'
+          });
+        }
+      }
+    } catch (ddgError) {
+      console.error('Search Engine Discovery failure:', ddgError);
+    }
+  }
+
+  // If we detected a Turnstile barrier and both direct strategies failed, try to use configured fallback service
   if (!targetDeviceUrl && sawTurnstile) {
     const fallbackRaw = process.env.FALLBACK_GSMARENA_API_URL;
     if (fallbackRaw) {
