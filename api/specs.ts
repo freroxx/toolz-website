@@ -204,7 +204,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // 1.5. Check specs cache using the final unified device identifier to speed up loading
   const cacheKeyIdentifier = (translatedQuery || cleanInput).toLowerCase();
   const specsCacheKey = `specs:${cacheKeyIdentifier}`;
-  const CACHE_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days expiration window
+  const CACHE_TTL_SECONDS = 90 * 24 * 60 * 60; // 90 days expiration window (7,776,000 seconds)
 
   if (redis) {
     try {
