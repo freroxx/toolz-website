@@ -3,7 +3,7 @@ import { Redis } from '@upstash/redis';
 import * as cheerio from 'cheerio';
 
 // Centralized fetch tool with integrated proxy support
-async function fetchHtml(targetUrl: string): Promise<{ text: string | null; status: number | null }> {
+async function fetchHtml(targetUrl: string): Promise<{ text: string | null; status: number | null; errorBody?: string }> {
   const apiKey = process.env.SCRAPER_API_KEY;
   
   let fetchUrl: string;
@@ -11,12 +11,15 @@ async function fetchHtml(targetUrl: string): Promise<{ text: string | null; stat
     const proxyUrl = new URL('https://api.scraperapi.com/');
     proxyUrl.searchParams.set('api_key', apiKey);
     proxyUrl.searchParams.set('url', targetUrl);
-    // GSMArena now gates results.php3 (and device pages) behind Cloudflare Turnstile.
-    // ScraperAPI only activates its Turnstile-solving pipeline when JS rendering +
-    // a premium/ultra_premium proxy tier are both requested — plain api_key+url
-    // just gets you the basic proxy pool, which always returns the challenge page.
-    proxyUrl.searchParams.set('render', 'true');
-    proxyUrl.searchParams.set('ultra_premium', 'true');
+    // GSMArena gates results.php3 (and device pages) behind Cloudflare Turnstile.
+    // Bypassing it needs ScraperAPI's render/premium/ultra_premium tiers — but those
+    // are NOT available on the free plan and ScraperAPI will 403 the whole request
+    // if you ask for a feature your plan doesn't include. So these are opt-in via
+    // env vars, defaulting to OFF, so a free-plan key still makes a valid (if
+    // likely Turnstile-blocked) request instead of getting rejected outright.
+    if (process.env.SCRAPER_RENDER === 'true') proxyUrl.searchParams.set('render', 'true');
+    if (process.env.SCRAPER_ULTRA_PREMIUM === 'true') proxyUrl.searchParams.set('ultra_premium', 'true');
+    else if (process.env.SCRAPER_PREMIUM === 'true') proxyUrl.searchParams.set('premium', 'true');
     fetchUrl = proxyUrl.toString();
   } else {
     fetchUrl = targetUrl;
@@ -31,11 +34,15 @@ async function fetchHtml(targetUrl: string): Promise<{ text: string | null; stat
       }
     });
 
-    if (!response.ok) {
-      console.error(`Fetch failed with status ${response.status} for ${targetUrl}`);
-      return { text: null, status: response.status };
-    }
+    // Always read the body, even on non-2xx — ScraperAPI returns a JSON/text
+    // error message (invalid key, plan restriction, etc.) that we need to see
+    // instead of silently discarding it as "null".
     const text = await response.text();
+
+    if (!response.ok) {
+      console.error(`Fetch failed with status ${response.status} for ${targetUrl}. Body: ${text.slice(0, 500)}`);
+      return { text: null, status: response.status, errorBody: text.slice(0, 500) };
+    }
     return { text, status: response.status };
   } catch (error) {
     console.error(`Network error fetching ${targetUrl}:`, error);
@@ -49,7 +56,7 @@ async function scrapeGsmArenaSearchDebug(query: string) {
   searchUrl.searchParams.set('sQuickSearch', 'yes');
   searchUrl.searchParams.set('sName', query);
 
-  const { text: html, status } = await fetchHtml(searchUrl.toString());
+  const { text: html, status, errorBody } = await fetchHtml(searchUrl.toString());
   const debug: any = {
     query,
     searchUrl: searchUrl.toString(),
@@ -59,7 +66,8 @@ async function scrapeGsmArenaSearchDebug(query: string) {
     firstDeviceLink: null,
     canonical: null,
     matchedUrl: null,
-    turnstile: false
+    turnstile: false,
+    proxyError: errorBody || null
   };
 
   if (!html) return debug;
