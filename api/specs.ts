@@ -11,6 +11,12 @@ async function fetchHtml(targetUrl: string): Promise<{ text: string | null; stat
     const proxyUrl = new URL('https://api.scraperapi.com/');
     proxyUrl.searchParams.set('api_key', apiKey);
     proxyUrl.searchParams.set('url', targetUrl);
+    // GSMArena now gates results.php3 (and device pages) behind Cloudflare Turnstile.
+    // ScraperAPI only activates its Turnstile-solving pipeline when JS rendering +
+    // a premium/ultra_premium proxy tier are both requested — plain api_key+url
+    // just gets you the basic proxy pool, which always returns the challenge page.
+    proxyUrl.searchParams.set('render', 'true');
+    proxyUrl.searchParams.set('ultra_premium', 'true');
     fetchUrl = proxyUrl.toString();
   } else {
     fetchUrl = targetUrl;
@@ -212,20 +218,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const fallbackRaw = process.env.FALLBACK_GSMARENA_API_URL;
     if (fallbackRaw) {
       const base = String(fallbackRaw).replace(/\/$/, '');
-      const candidatePaths = new Set<string>();
 
-      // If the provided value already looks like a full API path, use it raw
-      if (base.includes('/api/') || base.includes('/specs')) {
-        candidatePaths.add(`${base}${base.includes('?') ? '&' : '?'}model=${encodeURIComponent(cleanInput)}`);
-      }
-
-      // Common candidate endpoints on a fallback service
-      candidatePaths.add(`${base}/api/specs?model=${encodeURIComponent(cleanInput)}`);
-      candidatePaths.add(`${base}/specs?model=${encodeURIComponent(cleanInput)}`);
-      candidatePaths.add(`${base}/api?model=${encodeURIComponent(cleanInput)}`);
-      candidatePaths.add(`${base}/?model=${encodeURIComponent(cleanInput)}`);
+      // The fallback's actual (and only) contract is GET /api/specs?model=<model>.
+      // We previously guessed at 4 different shapes (/api/specs, /specs, /api, /)
+      // which wasted requests on 404s and made debugging harder. Call it directly.
+      const fallbackUrl = base.includes('/api/specs')
+        ? `${base}${base.includes('?') ? '&' : '?'}model=${encodeURIComponent(cleanInput)}`
+        : `${base}/api/specs?model=${encodeURIComponent(cleanInput)}`;
 
       const triedFallbacks: any[] = [];
+      const candidatePaths = [fallbackUrl];
 
       for (const url of candidatePaths) {
         try {
