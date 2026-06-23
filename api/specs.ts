@@ -186,11 +186,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const cleanInput = rawQuery.trim();
   let translatedQuery: string | null = null;
+  let redis: Redis | null = null;
 
   // 1. Grab commercial mapping from the Redis database 
   try {
     if (process.env.UPSTASH_REDIS_REST_URL) {
-      const redis = Redis.fromEnv();
+      redis = Redis.fromEnv();
       const cachedValue = await redis.get(`device:${cleanInput.toLowerCase()}`);
       if (cachedValue) {
         translatedQuery = String(cachedValue).trim();
@@ -198,6 +199,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   } catch (e) {
     console.error("Redis lookup error:", e);
+  }
+
+  // 1.5. Check specs cache using the final unified device identifier to speed up loading
+  const cacheKeyIdentifier = (translatedQuery || cleanInput).toLowerCase();
+  const specsCacheKey = `specs:${cacheKeyIdentifier}`;
+  const CACHE_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days expiration window
+
+  if (redis) {
+    try {
+      const cachedSpecs = await redis.get(specsCacheKey);
+      if (cachedSpecs) {
+        console.info(`Cache hit for hardware specifications key: ${specsCacheKey}`);
+        const parsedPayload = typeof cachedSpecs === 'string' ? JSON.parse(cachedSpecs) : cachedSpecs;
+        return res.status(200).json(parsedPayload);
+      }
+    } catch (cacheReadError) {
+      console.error("Redis hardware cache read error:", cacheReadError);
+    }
   }
 
   // 2. Queue lookups (Translated title first, raw title second)
@@ -308,17 +327,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             // Accept responses that include specifications or source_url
             if (parsed.specifications || parsed.source_url || (parsed.specs)) {
               console.info('Fallback succeeded with:', url);
-              return res.status(200).json({
+              const fallbackPayload = {
                 search_query: cleanInput,
                 matched_device: translatedQuery || cleanInput,
                 source_url: parsed.source_url || parsed.specs?.source_url || null,
                 specifications: parsed.specifications || parsed.specs || parsed
-              });
+              };
+
+              // Cache fallback parsed output payload
+              if (redis) {
+                await redis.set(specsCacheKey, JSON.stringify(fallbackPayload), { ex: CACHE_TTL_SECONDS })
+                  .catch(err => console.error("Redis write error (fallback payload):", err));
+              }
+
+              return res.status(200).json(fallbackPayload);
             }
 
             // If parsed but doesn't include specs, maybe it's the raw format we expect
             if (parsed && Object.keys(parsed).length > 0) {
               console.info('Fallback returned JSON but without expected fields:', Object.keys(parsed));
+              
+              // Cache generic fallback object structure
+              if (redis) {
+                await redis.set(specsCacheKey, JSON.stringify(parsed), { ex: CACHE_TTL_SECONDS })
+                  .catch(err => console.error("Redis write error (generic fallback JSON):", err));
+              }
+
               return res.status(200).json(parsed);
             }
           }
@@ -367,10 +401,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(502).json({ error: "Failed to extract web structural blocks from target profile.", source_url: targetDeviceUrl });
   }
 
-  return res.status(200).json({
+  const finalPayload = {
     search_query: cleanInput,
     matched_device: translatedQuery || cleanInput,
     source_url: targetDeviceUrl,
     specifications: technicalSpecs
-  });
+  };
+
+  // 5. Store data in Upstash Redis cache namespace before returning the response
+  if (redis) {
+    try {
+      await redis.set(specsCacheKey, JSON.stringify(finalPayload), { ex: CACHE_TTL_SECONDS });
+      console.info(`Successfully cached specifications for key: ${specsCacheKey}`);
+    } catch (cacheWriteError) {
+      console.error("Redis hardware cache save error:", cacheWriteError);
+    }
+  }
+
+  return res.status(200).json(finalPayload);
 }
