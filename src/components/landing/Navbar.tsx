@@ -35,7 +35,7 @@ const Navbar = () => {
               </span>
               <div className="flex items-center gap-2 mt-1">
                 <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
-                <span className="text-technical text-white/40 leading-none uppercase">v1.0.8_BETA</span>
+                <span className="text-technical text-white/40 leading-none uppercase">v1.0.9</span>
               </div>
             </div>
           </a>
@@ -127,7 +127,7 @@ const Navbar = () => {
             </div>
             
             <div className="p-6 border-t border-white/10 bg-zinc-950 flex items-center justify-between text-technical text-white/20">
-              <span>STATUS: 1.0.8_BETA</span>
+              <span>STATUS: 1.0.9</span>
               <div className="flex items-center gap-2">
                 <span className="text-primary">100% FREE</span>
                 <Cpu className="w-4 h-4" />

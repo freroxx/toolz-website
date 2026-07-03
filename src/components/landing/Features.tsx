@@ -61,7 +61,7 @@ const Features = () => {
           </div>
           <div className="text-right hidden md:block">
             <div className="text-technical text-white/20 mb-2">Build_Status</div>
-            <div className="text-xl font-mono font-bold text-primary animate-pulse">BETA_v1.0.8</div>
+            <div className="text-xl font-mono font-bold text-primary animate-pulse">v1.0.9</div>
           </div>
         </div>
 
