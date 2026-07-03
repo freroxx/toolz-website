@@ -110,3 +110,29 @@
 .text-glow-primary {
   text-shadow: 0 0 10px rgba(142, 70, 50, 0.5);
 }
+
+/* Accessibility & Performance */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Focus visibility for accessibility */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid rgba(142, 70, 50, 1);
+  outline-offset: 2px;
+}
+
+/* GPU acceleration for animations */
+.motion-safe {
+  will-change: transform;
+  transform: translateZ(0);
+}

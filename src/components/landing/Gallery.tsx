@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, LayoutGrid } from "lucide-react";
 
 const screenshots = [
@@ -42,6 +42,27 @@ const screenshots = [
 const Gallery = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!selectedImage) return;
+      const allImages = [...screenshots, ...screenshots];
+      const currentIndex = allImages.indexOf(selectedImage);
+      
+      if (e.key === "Escape") {
+        setSelectedImage(null);
+      } else if (e.key === "ArrowLeft" && currentIndex > 0) {
+        setSelectedImage(allImages[currentIndex - 1]);
+      } else if (e.key === "ArrowRight" && currentIndex < allImages.length - 1) {
+        setSelectedImage(allImages[currentIndex + 1]);
+      }
+    };
+    
+    if (selectedImage) {
+      window.addEventListener("keydown", handleKeyDown);
+      return () => window.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [selectedImage]);
+
   const column1 = [...screenshots].slice(0, 9);
   const column2 = [...screenshots].slice(9, 18);
   const column3 = [...screenshots].slice(18, 27);
@@ -71,6 +92,7 @@ const Gallery = () => {
               alt="Toolz_Buffer"
               className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
               loading="lazy"
+              decoding="async"
             />
             <div className="absolute inset-0 border-2 border-primary/0 group-hover:border-primary/50 transition-all" />
           </div>

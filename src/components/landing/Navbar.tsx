@@ -12,9 +12,25 @@ const navLinks = [
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("features");
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
+    const onScroll = () => {
+      setScrolled(window.scrollY > 20);
+      
+      // Scroll spy logic
+      const sections = ["features", "showcase", "gallery", "discord"];
+      for (const section of sections) {
+        const element = document.getElementById(section);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          if (rect.top <= 150 && rect.bottom >= 150) {
+            setActiveSection(section);
+            break;
+          }
+        }
+      }
+    };
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -42,16 +58,24 @@ const Navbar = () => {
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="px-6 py-2 text-technical text-white/50 hover:text-primary hover:bg-primary/5 transition-all relative group"
-              >
-                <span className="relative z-10">[{link.label}]</span>
-                <div className="absolute inset-0 border-x border-primary/0 group-hover:border-primary/20 transition-all" />
-              </a>
-            ))}
+            {navLinks.map((link) => {
+              const sectionId = link.href.slice(1);
+              const isActive = activeSection === sectionId;
+              return (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className={`px-6 py-2 text-technical transition-all relative group ${
+                    isActive 
+                      ? "text-primary bg-primary/10 border-b-2 border-primary" 
+                      : "text-white/50 hover:text-primary hover:bg-primary/5"
+                  }`}
+                >
+                  <span className="relative z-10">[{link.label}]</span>
+                  <div className="absolute inset-0 border-x border-primary/0 group-hover:border-primary/20 transition-all" />
+                </a>
+              );
+            })}
           </div>
 
           <div className="hidden md:flex items-center gap-6">

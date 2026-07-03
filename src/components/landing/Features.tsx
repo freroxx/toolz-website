@@ -21,7 +21,7 @@ const FeatureCard = ({ title, description, icon: Icon, className = "" }: any) =>
     <h3 className="text-xl font-black uppercase tracking-tight mb-4 group-hover:text-primary transition-colors group-hover:animate-glitch">
       {title}
     </h3>
-    <p className="text-sm font-mono text-white/40 leading-relaxed">
+    <p className="text-sm font-mono text-white/50 leading-relaxed">
       {description}
     </p>
     

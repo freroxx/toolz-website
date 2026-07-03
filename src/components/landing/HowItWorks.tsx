@@ -38,8 +38,8 @@ const HowItWorks = () => {
               The <br />
               <span className="text-primary italic">Standard.</span>
             </h2>
-            <p className="text-xl font-mono text-white/50 leading-relaxed max-w-xl mb-12">
-              Toolz isn't just a collection of apps. It's a high-performance framework that redefines what a mobile utility can be.
+            <p className="text-lg font-mono text-white/60 leading-relaxed max-w-xl mb-12">
+              Toolz isn&apos;t just a collection of apps. It&apos;s a high-performance framework that redefines what a mobile utility can be.
             </p>
             
             <div className="border border-white/10 p-8 relative group">
@@ -62,7 +62,7 @@ const HowItWorks = () => {
                   <reason.icon className="w-5 h-5" />
                 </div>
                 <h3 className="text-xl font-black uppercase mb-4 tracking-tight group-hover:text-primary transition-colors">{reason.title}</h3>
-                <p className="text-sm font-mono text-white/40 leading-relaxed">
+                <p className="text-sm font-mono text-white/50 leading-relaxed">
                   {reason.description}
                 </p>
               </div>

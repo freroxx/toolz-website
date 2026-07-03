@@ -11,8 +11,9 @@ import StatusPill from "@/components/landing/StatusPill";
 const Index = () => {
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/30 selection:text-primary-foreground">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:bg-black focus:border focus:border-primary focus:text-primary focus:px-4 focus:py-2">Skip to main content</a>
       <Navbar />
-      <main className="relative">
+      <main id="main-content" className="relative">
         <Hero />
         <div className="relative z-10 bg-background">
           <Features />
