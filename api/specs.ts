@@ -76,7 +76,15 @@ async function scrapeGsmArenaSearchDebug(query: string) {
 
   // Detect Cloudflare Turnstile / anti-bot pages quickly
   const lowered = html.toLowerCase();
-  if (lowered.includes('cf-turnstile') || lowered.includes('turnstile') || lowered.includes('turnstile-verify') || lowered.includes('one quick check before you continue') || lowered.includes('meta name="robots" content="noindex')) {
+  if (
+    lowered.includes('cf-turnstile') ||
+    lowered.includes('turnstile') ||
+    lowered.includes('turnstile-verify') ||
+    lowered.includes('one quick check before you continue') ||
+    lowered.includes('meta name="turnstile"') ||
+    lowered.includes('challenge-form') ||
+    lowered.includes('verify you are human')
+  ) {
     debug.turnstile = true;
     return debug;
   }
