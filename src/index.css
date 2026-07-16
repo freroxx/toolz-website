@@ -1,0 +1,143 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;700;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --primary: 142 70% 50%;
+    --primary-foreground: 240 5.9% 10%;
+    --border: 240 3.7% 15.9%;
+    --radius: 0px;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body {
+    @apply bg-background text-foreground font-sans antialiased overflow-x-hidden;
+    font-family: 'Inter', sans-serif;
+    background-color: #050505;
+    cursor: crosshair;
+  }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+}
+
+@layer components {
+  .utility-card {
+    @apply bg-black border border-white/10 relative overflow-hidden transition-all duration-500;
+  }
+  .utility-card:hover {
+    @apply border-primary/40 bg-zinc-950;
+    box-shadow: 0 0 30px rgba(142, 70, 50, 0.05);
+  }
+  .text-technical {
+    @apply font-mono uppercase tracking-[0.2em] text-[10px] font-black;
+  }
+  
+  .bg-blueprint {
+    background-color: #050505;
+    background-image: 
+      linear-gradient(rgba(142, 70, 50, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(142, 70, 50, 0.03) 1px, transparent 1px),
+      radial-gradient(circle at 1px 1px, rgba(142, 70, 50, 0.05) 1px, transparent 0);
+    background-size: 40px 40px, 40px 40px, 20px 20px;
+    position: relative;
+  }
+
+  .bg-blueprint::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, transparent 0%, #050505 80%);
+    pointer-events: none;
+  }
+
+  .scanline {
+    width: 100%;
+    height: 100px;
+    z-index: 40;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(142, 70, 50, 0.05) 50%, rgba(0, 0, 0, 0) 100%);
+    opacity: 0.1;
+    position: absolute;
+    bottom: 100%;
+    animation: scanline 10s linear infinite;
+    pointer-events: none;
+  }
+
+  .btn-technical {
+    @apply font-mono uppercase tracking-widest text-xs font-black border-2 border-primary px-8 py-4 bg-primary text-black hover:bg-black hover:text-primary transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 relative overflow-hidden;
+  }
+  
+  .btn-outline-technical {
+    @apply font-mono uppercase tracking-widest text-xs font-black border-2 border-white/20 px-8 py-4 hover:border-primary hover:text-primary transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 relative overflow-hidden;
+  }
+
+  .scroll-reveal {
+    @apply opacity-0 translate-y-8 transition-all duration-1000 ease-out;
+  }
+  .scroll-reveal.visible {
+    @apply opacity-100 translate-y-0;
+  }
+}
+
+@keyframes scanline {
+  0% { bottom: 100%; }
+  100% { bottom: -100%; }
+}
+
+@keyframes glitch {
+  0% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
+  100% { transform: translate(0); }
+}
+
+.animate-glitch {
+  animation: glitch 0.3s cubic-bezier(.25,.46,.45,.94) both infinite;
+  animation-play-state: paused;
+}
+.group:hover .animate-glitch {
+  animation-play-state: running;
+}
+
+@media (max-width: 768px) {
+  .text-huge {
+    @apply text-5xl leading-[0.9] tracking-tighter;
+  }
+}
+@media (min-width: 769px) {
+  .text-huge {
+    @apply text-[9rem] leading-[0.8] tracking-tighter;
+  }
+}
+
+.mask-fade-vertical {
+  mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+}
+
+.text-glow-primary {
+  text-shadow: 0 0 10px rgba(142, 70, 50, 0.5);
+}
+
+/* Tactile Feedback */
+.tactile-feedback {
+  position: relative;
+}
+.tactile-feedback::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(142, 70, 50, 0.1) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.tactile-feedback:hover::after {
+  opacity: 1;
+}
