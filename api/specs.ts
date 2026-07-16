@@ -3,7 +3,7 @@ import { Redis } from '@upstash/redis';
 import * as cheerio from 'cheerio';
 
 // Centralized fetch tool with integrated proxy support
-async function fetchHtml(targetUrl: string): Promise<{ text: string | null; status: number | null; errorBody?: string }> {
+async function fetchHtml(targetUrl: string, signal?: AbortSignal): Promise<{ text: string | null; status: number | null; errorBody?: string }> {
   const apiKey = process.env.SCRAPER_API_KEY;
   
   let fetchUrl: string;
@@ -34,7 +34,7 @@ async function fetchHtml(targetUrl: string): Promise<{ text: string | null; stat
       headers['Referer'] = 'https://www.google.com/';
     }
 
-    const response = await fetch(fetchUrl, { headers });
+    const response = await fetch(fetchUrl, { headers, signal });
 
     // Always read the body, even on non-2xx — ScraperAPI returns a JSON/text
     // error message (invalid key, plan restriction, etc.) that we need to see
@@ -46,19 +46,23 @@ async function fetchHtml(targetUrl: string): Promise<{ text: string | null; stat
       return { text: null, status: response.status, errorBody: text.slice(0, 500) };
     }
     return { text, status: response.status };
-  } catch (error) {
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      console.warn(`Fetch aborted due to timeout: ${targetUrl}`);
+      return { text: null, status: 408, errorBody: 'Request timeout' };
+    }
     console.error(`Network error fetching ${targetUrl}:`, error);
     return { text: null, status: null };
   }
 }
 
 // Returns detailed debug information about the search attempt
-async function scrapeGsmArenaSearchDebug(query: string) {
+async function scrapeGsmArenaSearchDebug(query: string, signal?: AbortSignal) {
   const searchUrl = new URL('https://www.gsmarena.com/results.php3');
   searchUrl.searchParams.set('sQuickSearch', 'yes');
   searchUrl.searchParams.set('sName', query);
 
-  const { text: html, status, errorBody } = await fetchHtml(searchUrl.toString());
+  const { text: html, status, errorBody } = await fetchHtml(searchUrl.toString(), signal);
   const debug: any = {
     query,
     searchUrl: searchUrl.toString(),
@@ -114,8 +118,8 @@ async function scrapeGsmArenaSearchDebug(query: string) {
   return debug;
 }
 
-async function scrapeDeviceSpecs(url: string) {
-  const { text: html } = await fetchHtml(url);
+async function scrapeDeviceSpecs(url: string, signal?: AbortSignal) {
+  const { text: html } = await fetchHtml(url, signal);
   if (!html) return null;
 
   const $ = cheerio.load(html);
@@ -180,34 +184,38 @@ function generateSmartStrategies(input: string): string[] {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8500); // 8.5s timeout for Vercel Hobby
 
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Method Not Allowed' });
-
-  const rawQuery = req.query.model;
-  if (!rawQuery || typeof rawQuery !== 'string') {
-    return res.status(400).json({ error: "Missing or invalid 'model' query parameter" });
-  }
-
-  const cleanInput = rawQuery.trim();
-  let translatedQuery: string | null = null;
-  let redis: Redis | null = null;
-
-  // 1. Grab commercial mapping from the Redis database 
   try {
-    if (process.env.UPSTASH_REDIS_REST_URL) {
-      redis = Redis.fromEnv();
-      const cachedValue = await redis.get(`device:${cleanInput.toLowerCase()}`);
-      if (cachedValue) {
-        translatedQuery = String(cachedValue).trim();
-      }
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    if (req.method === 'OPTIONS') return res.status(200).end();
+    if (req.method !== 'GET') return res.status(405).json({ error: 'Method Not Allowed' });
+
+    const rawQuery = req.query.model;
+    if (!rawQuery || typeof rawQuery !== 'string') {
+      return res.status(400).json({ error: "Missing or invalid 'model' query parameter" });
     }
-  } catch (e) {
-    console.error("Redis lookup error:", e);
-  }
+
+    const cleanInput = rawQuery.trim();
+    let translatedQuery: string | null = null;
+    let redis: Redis | null = null;
+
+    // 1. Grab commercial mapping from the Redis database
+    try {
+      if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+        redis = Redis.fromEnv();
+        const cachedValue = await redis.get(`device:${cleanInput.toLowerCase()}`);
+        if (cachedValue) {
+          translatedQuery = String(cachedValue).trim();
+        }
+      }
+    } catch (e) {
+      console.error("Redis lookup error:", e);
+    }
 
   // 1.5. Check specs cache using the final unified device identifier to speed up loading
   const cacheKeyIdentifier = (translatedQuery || cleanInput).toLowerCase();
@@ -228,8 +236,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // 2. Queue lookups (Translated title first, raw title second)
-  const strategies = translatedQuery 
-    ? [translatedQuery, ...generateSmartStrategies(cleanInput)] 
+  const strategies = translatedQuery
+    ? [translatedQuery, ...generateSmartStrategies(cleanInput)]
     : generateSmartStrategies(cleanInput);
 
   console.info('Spec lookup strategies:', strategies);
@@ -240,7 +248,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // 3. Resolve the page location (with debug logging)
   for (const query of strategies) {
-    const debug = await scrapeGsmArenaSearchDebug(query);
+    if (controller.signal.aborted) break;
+    const debug = await scrapeGsmArenaSearchDebug(query, controller.signal);
     debugAttempts.push(debug);
     console.info('GSM search attempt:', JSON.stringify(debug));
     if (debug.turnstile) sawTurnstile = true;
@@ -251,13 +260,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // 3.5 Fallback Search Engine Discovery (Triggers if internal search was blocked or empty)
-  if (!targetDeviceUrl) {
+  if (!targetDeviceUrl && !controller.signal.aborted) {
     console.info('GSMArena internal search engine blocked or failed. Attempting search engine index discovery...');
     try {
       const ddgUrl = new URL('https://html.duckduckgo.com/html/');
       ddgUrl.searchParams.set('q', `site:gsmarena.com ${cleanInput}`);
-      const { text: ddgHtml } = await fetchHtml(ddgUrl.toString());
-      
+      const { text: ddgHtml } = await fetchHtml(ddgUrl.toString(), controller.signal);
+
       if (ddgHtml) {
         const $ddg = cheerio.load(ddgHtml);
         const discoveredLinks: string[] = [];
@@ -272,7 +281,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 if (exactUrl) href = exactUrl;
               } catch (e) {}
             }
-            
+
             // Clean paths and drop platform utility routes
             if (
               href.includes('.php') &&
@@ -306,7 +315,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // If we detected a Turnstile barrier and both direct strategies failed, try to use configured fallback service
-  if (!targetDeviceUrl && sawTurnstile) {
+  if (!targetDeviceUrl && sawTurnstile && !controller.signal.aborted) {
     const fallbackRaw = process.env.FALLBACK_GSMARENA_API_URL;
     if (fallbackRaw) {
       const base = String(fallbackRaw).replace(/\/$/, '');
@@ -324,7 +333,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       for (const url of candidatePaths) {
         try {
           console.info('Attempting fallback endpoint:', url);
-          const r = await fetch(url, { headers: { 'User-Agent': 'Toolz/1.0 (fallback)', 'Accept': 'application/json' } });
+          const r = await fetch(url, {
+            headers: { 'User-Agent': 'Toolz/1.0 (fallback)', 'Accept': 'application/json' },
+            signal: controller.signal
+          });
           const text = await r.text();
           let parsed: any = null;
           try { parsed = text ? JSON.parse(text) : null; } catch (e) { /* not JSON */ }
@@ -354,7 +366,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             // If parsed but doesn't include specs, maybe it's the raw format we expect
             if (parsed && Object.keys(parsed).length > 0) {
               console.info('Fallback returned JSON but without expected fields:', Object.keys(parsed));
-              
+
               // Cache generic fallback object structure
               if (redis) {
                 await redis.set(specsCacheKey, JSON.stringify(parsed), { ex: CACHE_TTL_SECONDS })
@@ -394,8 +406,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   }
 
+  if (controller.signal.aborted) {
+    return res.status(504).json({ error: "Execution timed out", hint: "The request took too long and was aborted." });
+  }
+
   if (!targetDeviceUrl) {
-    return res.status(404).json({ 
+    return res.status(404).json({
       error: `Hardware profile execution exhausted for lookup input: '${cleanInput}'`,
       hint: "The device could not be resolved. Verify your search query spelling or check proxy health status parameters.",
       tried: debugAttempts
@@ -403,7 +419,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // 4. Scrape the table metrics
-  const technicalSpecs = await scrapeDeviceSpecs(targetDeviceUrl);
+  const technicalSpecs = await scrapeDeviceSpecs(targetDeviceUrl, controller.signal);
 
   if (!technicalSpecs) {
     return res.status(502).json({ error: "Failed to extract web structural blocks from target profile.", source_url: targetDeviceUrl });
@@ -427,4 +443,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   return res.status(200).json(finalPayload);
+  } catch (globalError: any) {
+    console.error("CRITICAL API FAILURE:", globalError);
+    return res.status(500).json({
+      error: "Internal Server Error",
+      message: globalError.message || "An unexpected error occurred"
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
