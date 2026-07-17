@@ -1,8 +1,18 @@
 import { Github, MessageSquare, Heart } from "lucide-react";
+import { motion } from "framer-motion";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 
 const Footer = () => {
+  const { ref, isInView } = useScrollReveal(0.1);
+
   return (
-    <footer className="bg-black border-t border-white/10 py-24">
+    <motion.footer
+      ref={ref}
+      className="bg-black border-t border-white/10 py-24"
+      initial={{ opacity: 0, y: 30 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.7, ease: "easeOut" }}
+    >
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-start gap-16 mb-24">
           <div className="max-w-sm">
@@ -15,7 +25,7 @@ const Footer = () => {
             <p className="text-sm font-mono text-white/30 leading-relaxed mb-8">
               A high-precision utility suite for Android. Engineered for operators who value speed, privacy, and technical clarity. 100% Free and Open Source.
             </p>
-            <div className="flex items-center gap-3 p-4 border border-white/5 bg-zinc-950/50">
+            <div className="flex items-center gap-3 p-4 border border-white/5 bg-zinc-950/50 hover:border-primary/20 transition-colors duration-500">
               <Heart className="w-5 h-5 text-red-500 animate-pulse" />
               <div className="flex flex-col">
                 <span className="text-[10px] font-mono text-white/20 uppercase">Developer_Signature</span>
@@ -64,7 +74,7 @@ const Footer = () => {
           </div>
         </div>
       </div>
-    </footer>
+    </motion.footer>
   );
 };
 

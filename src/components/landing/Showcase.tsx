@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useCallback } from "react";
 import { Shield, Activity, Cpu, Code, MousePointer2 } from "lucide-react";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 
 const allScreenshots = [
   "https://i.ibb.co/SDwBvkzW/Screenshot-20260504-201707-Toolz.jpg",
@@ -67,6 +68,8 @@ const Showcase = () => {
   const [activeMod, setActiveMod] = useState(0);
   const [imgIndex, setImgIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const { ref: selectorRef, isInView: selectorVisible } = useScrollReveal(0.15);
+  const { ref: viewerRef, isInView: viewerVisible } = useScrollReveal(0.15);
 
   const nextImage = useCallback(() => {
     setImgIndex(prev => (prev + 1) % modules[activeMod].images.length);
@@ -84,19 +87,28 @@ const Showcase = () => {
       <div className="container mx-auto px-4 relative z-10">
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-24 items-start">
           {/* Module Selector */}
-          <div className="lg:w-1/3 flex flex-col gap-4 sticky top-32">
+          <motion.div
+            ref={selectorRef}
+            className="lg:w-1/3 flex flex-col gap-4 sticky top-32"
+            initial={{ opacity: 0, x: -40 }}
+            animate={selectorVisible ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+          >
             <div className="flex items-center gap-4 mb-8">
               <div className="w-12 h-px bg-primary" />
               <span className="text-technical text-primary">System_Modules</span>
             </div>
             
             {modules.map((mod, i) => (
-              <button
+              <motion.button
                 key={mod.id}
                 onClick={() => {
                   setActiveMod(i);
                   setImgIndex(0);
                 }}
+                initial={{ opacity: 0, x: -20 }}
+                animate={selectorVisible ? { opacity: 1, x: 0 } : {}}
+                transition={{ duration: 0.5, delay: 0.15 + i * 0.1, ease: "easeOut" }}
                 className={`text-left p-6 border-2 transition-all duration-300 group relative overflow-hidden hover:translate-x-2 ${
                   activeMod === i ? "border-primary bg-primary/5" : "border-white/5 bg-transparent hover:border-white/20"
                 }`}
@@ -114,10 +126,15 @@ const Showcase = () => {
                 <p className={`text-xs font-mono mt-2 leading-relaxed transition-colors ${activeMod === i ? "text-white/70" : "text-white/20 group-hover:text-white/40"}`}>
                   {mod.description}
                 </p>
-              </button>
+              </motion.button>
             ))}
 
-            <div className="mt-8 p-6 border border-white/10 bg-zinc-950 flex flex-col gap-4 hover:border-primary/20 transition-colors">
+            <motion.div
+              className="mt-8 p-6 border border-white/10 bg-zinc-950 flex flex-col gap-4 hover:border-primary/20 transition-colors"
+              initial={{ opacity: 0 }}
+              animate={selectorVisible ? { opacity: 1 } : {}}
+              transition={{ duration: 0.5, delay: 0.6 }}
+            >
               <div className="flex items-center justify-between text-technical text-white/20">
                 <span>Made with love by frerox</span>
                 <Code className="w-3 h-3" />
@@ -126,11 +143,17 @@ const Showcase = () => {
                 <span className="text-technical text-primary animate-pulse">100% FREE</span>
                 <span className="text-[8px] font-mono text-white/20">NO_ADS_NO_TRACKERS</span>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* Module Viewer */}
-          <div className="lg:w-2/3 flex flex-col items-center">
+          <motion.div
+            ref={viewerRef}
+            className="lg:w-2/3 flex flex-col items-center"
+            initial={{ opacity: 0, x: 40 }}
+            animate={viewerVisible ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.7, delay: 0.1, ease: "easeOut" }}
+          >
             <div 
               className="relative bg-black border-4 border-white/10 p-2 shadow-2xl group cursor-pointer overflow-hidden w-full max-w-[360px]"
               onMouseEnter={() => setIsHovered(true)}
@@ -192,7 +215,7 @@ const Showcase = () => {
                 />
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

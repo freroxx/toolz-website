@@ -1,6 +1,6 @@
 import { Download, Github, Terminal, Activity, Cpu, Heart, Zap, MousePointer2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 const allScreenshots = [
   "https://i.ibb.co/SDwBvkzW/Screenshot-20260504-201707-Toolz.jpg",
@@ -42,6 +42,17 @@ const allScreenshots = [
 const Hero = () => {
   const [index, setIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const sectionRef = useRef(null);
+
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
+
+  // Parallax: text drifts up faster, phone stays more anchored
+  const textY = useTransform(scrollYProgress, [0, 1], ["0%", "-25%"]);
+  const phoneY = useTransform(scrollYProgress, [0, 1], ["0%", "10%"]);
+  const bgOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
   const nextImage = useCallback(() => {
     setIndex((prev) => (prev + 1) % allScreenshots.length);
@@ -55,16 +66,17 @@ const Hero = () => {
   }, [isHovered, nextImage]);
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-32 pb-24 bg-blueprint">
+    <section ref={sectionRef} className="relative min-h-screen flex items-center justify-center overflow-hidden pt-32 pb-24 bg-blueprint">
       <div className="scanline" />
       <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black" />
       
-      <div className="container mx-auto px-4 relative z-10">
+      <motion.div style={{ opacity: bgOpacity }} className="container mx-auto px-4 relative z-10">
         <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
-          <div className="flex-1 text-center lg:text-left">
+          <motion.div style={{ y: textY }} className="flex-1 text-center lg:text-left">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
               className="inline-flex items-center gap-4 mb-10 border border-primary/20 bg-primary/5 px-4 py-2 hover:border-primary transition-colors cursor-default"
             >
               <div className="w-2 h-2 bg-primary animate-pulse" />
@@ -72,15 +84,21 @@ const Hero = () => {
             </motion.div>
 
             <motion.h1
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.1, ease: "easeOut" }}
               className="text-huge font-black uppercase mb-12 group cursor-default"
             >
               <span className="inline-block group-hover:animate-glitch transition-all group-hover:text-primary">Zero</span> <br />
               <span className="text-primary italic group-hover:animate-glitch group-hover:text-white transition-all">Bloat.</span>
             </motion.h1>
 
-            <div className="flex flex-col gap-8 mb-16 max-w-2xl mx-auto lg:mx-0">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.25 }}
+              className="flex flex-col gap-8 mb-16 max-w-2xl mx-auto lg:mx-0"
+            >
               <p className="text-xl md:text-2xl text-white/70 leading-relaxed font-mono">
                 Toolz is a high-precision Android utility suite. <span className="text-primary font-black hover:text-white transition-colors cursor-default">100% FREE</span> and <span className="text-white font-black hover:text-primary transition-colors cursor-default">Highly Customizable</span>. Engineered for privacy.
               </p>
@@ -99,12 +117,12 @@ const Hero = () => {
                   <span>Made_By_Frerox</span>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.4, duration: 0.6 }}
               className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
             >
               <a href="https://github.com/freroxx/toolz/releases" className="btn-technical h-16 px-10 group">
@@ -116,11 +134,13 @@ const Hero = () => {
                 <div className="absolute inset-0 bg-primary/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
               </a>
             </motion.div>
-          </div>
+          </motion.div>
 
           <motion.div
+            style={{ y: phoneY }}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
             className="flex-1 relative w-full max-w-[400px]"
           >
             <div 
@@ -163,7 +183,7 @@ const Hero = () => {
             </div>
           </motion.div>
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 };

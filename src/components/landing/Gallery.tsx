@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { X, LayoutGrid } from "lucide-react";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 
 const screenshots = [
   "https://i.ibb.co/SDwBvkzW/Screenshot-20260504-201707-Toolz.jpg",
@@ -41,6 +42,8 @@ const screenshots = [
 
 const Gallery = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const { ref: titleRef, isInView: titleVisible } = useScrollReveal(0.3);
+  const { ref: gridRef, isInView: gridVisible } = useScrollReveal(0.1);
 
   const column1 = [...screenshots].slice(0, 9);
   const column2 = [...screenshots].slice(9, 18);
@@ -83,9 +86,21 @@ const Gallery = () => {
     <section id="gallery" className="relative py-32 bg-black border-y border-white/5">
       <div className="container mx-auto px-4 relative z-10">
         <div className="flex flex-col lg:flex-row gap-20 items-center">
-          <div className="lg:w-2/5">
+          <motion.div
+            ref={titleRef}
+            className="lg:w-2/5"
+            initial={{ opacity: 0, y: 30 }}
+            animate={titleVisible ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+          >
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-12 h-px bg-primary" />
+              <motion.div
+                className="w-12 h-px bg-primary"
+                initial={{ scaleX: 0 }}
+                animate={titleVisible ? { scaleX: 1 } : {}}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                style={{ originX: 0 }}
+              />
               <span className="text-technical text-primary">Visual_Assets</span>
             </div>
             <h2 className="text-5xl md:text-8xl font-black uppercase tracking-tighter leading-none mb-10">
@@ -95,20 +110,28 @@ const Gallery = () => {
             <p className="text-xl font-mono text-white/50 leading-relaxed">
               Every pixel of the Toolz UI is optimized for technical clarity and operational efficiency.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="lg:w-3/5 grid grid-cols-2 sm:grid-cols-4 gap-4 h-[800px] overflow-hidden mask-fade-edges grayscale hover:grayscale-0 transition-all duration-700">
+          <motion.div
+            ref={gridRef}
+            className="lg:w-3/5 grid grid-cols-2 sm:grid-cols-4 gap-4 h-[800px] overflow-hidden mask-fade-edges grayscale hover:grayscale-0 transition-all duration-700"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={gridVisible ? { opacity: 1, scale: 1 } : {}}
+            transition={{ duration: 0.8, delay: 0.15, ease: "easeOut" }}
+          >
             <ScrollingColumn items={column1} speed={40} />
             <ScrollingColumn items={column2} speed={50} reverse />
             <ScrollingColumn items={column3} speed={45} />
             <ScrollingColumn items={column4} speed={55} reverse />
-          </div>
+          </motion.div>
         </div>
       </div>
 
       {/* Lightbox */}
       {selectedImage && (
-        <div
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95"
           onClick={() => setSelectedImage(null)}
         >
@@ -118,7 +141,10 @@ const Gallery = () => {
           >
             <X className="w-6 h-6" />
           </button>
-          <div
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
             className="relative max-w-full max-h-[85vh] aspect-[9/19] border-2 border-white/10 p-2 bg-black"
             onClick={(e) => e.stopPropagation()}
           >
@@ -127,8 +153,8 @@ const Gallery = () => {
               alt="Toolz_Full_Buffer"
               className="w-full h-full object-contain"
             />
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
     </section>
   );
