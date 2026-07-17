@@ -16,7 +16,7 @@ const FeatureCard = ({ title, description, icon: Icon, className = "", index }: 
   >
     <div className="flex items-start justify-between mb-8">
       <div className="w-12 h-12 border border-white/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-black transition-all duration-300">
-        <Icon className="w-6 h-6 group-hover:rotate-12 transition-transform" />
+        <Icon className="w-6 h-6 group-hover:scale-110 transition-transform" />
       </div>
       <span className="text-technical text-white/10 group-hover:text-primary/40 transition-colors">
         MOD_{String(index + 1).padStart(2, "0")}

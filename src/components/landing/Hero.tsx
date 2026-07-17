@@ -1,4 +1,4 @@
-import { Download, Github, Terminal, Activity, Cpu, Heart, Zap, MousePointer2 } from "lucide-react";
+import { Download, Github, Terminal, Activity, Cpu, Heart, Zap } from "lucide-react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { useState, useEffect, useCallback, useRef } from "react";
 
@@ -105,7 +105,7 @@ const Hero = () => {
               
               <div className="flex flex-wrap justify-center lg:justify-start gap-6 text-technical text-white/30">
                 <div className="flex items-center gap-2 hover:text-primary transition-colors cursor-default group">
-                  <Activity className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+                  <Activity className="w-4 h-4 group-hover:scale-110 transition-transform" />
                   <span>30+ Modules</span>
                 </div>
                 <div className="flex items-center gap-2 text-primary/60 hover:text-primary transition-colors cursor-default group">
@@ -157,17 +157,16 @@ const Hero = () => {
                   <motion.img
                     key={allScreenshots[index]}
                     src={allScreenshots[index]}
-                    initial={{ opacity: 0, scale: 1.1 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.4 }}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
                     className="absolute inset-0 w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-700"
                   />
                 </AnimatePresence>
                 
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/20 backdrop-blur-[2px]">
-                  <div className="bg-black/80 border border-primary/50 px-4 py-2 flex items-center gap-2">
-                    <MousePointer2 className="w-4 h-4 text-primary animate-bounce" />
+                  <div className="bg-black/80 border border-primary/50 px-4 py-2">
                     <span className="text-technical text-primary">Skip_Buffer</span>
                   </div>
                 </div>

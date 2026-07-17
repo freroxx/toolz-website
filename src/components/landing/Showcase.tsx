@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useCallback } from "react";
-import { Shield, Activity, Cpu, Code, MousePointer2 } from "lucide-react";
+import { Shield, Activity, Cpu, Code } from "lucide-react";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 
 const allScreenshots = [
@@ -117,7 +117,7 @@ const Showcase = () => {
                   <motion.div layoutId="activeMod" className="absolute inset-0 bg-primary/10 -z-10" />
                 )}
                 <div className="flex items-center justify-between mb-4">
-                  <mod.icon className={`w-6 h-6 transition-transform group-hover:rotate-12 ${activeMod === i ? "text-primary" : "text-white/20"}`} />
+                  <mod.icon className={`w-6 h-6 transition-transform group-hover:scale-110 ${activeMod === i ? "text-primary" : "text-white/20"}`} />
                   <span className="text-[8px] font-mono text-white/20 group-hover:text-primary/40 transition-colors">{mod.id}</span>
                 </div>
                 <h3 className={`text-xl font-black uppercase tracking-tighter transition-colors ${activeMod === i ? "text-primary" : "text-white/40 group-hover:text-white"}`}>
@@ -169,10 +169,10 @@ const Showcase = () => {
                   <motion.img
                     key={`${activeMod}-${imgIndex}`}
                     src={modules[activeMod].images[imgIndex]}
-                    initial={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }}
-                    animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-                    exit={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }}
-                    transition={{ duration: 0.4, ease: "circOut" }}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
                     className="absolute inset-0 w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-700"
                   />
                 </AnimatePresence>
@@ -180,8 +180,7 @@ const Showcase = () => {
                 {/* Interactive Feedback Overlay */}
                 <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors duration-300" />
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="bg-black/80 border border-primary/50 px-4 py-2 flex items-center gap-2 backdrop-blur-md">
-                    <MousePointer2 className="w-4 h-4 text-primary animate-bounce" />
+                  <div className="bg-black/80 border border-primary/50 px-4 py-2 backdrop-blur-md">
                     <span className="text-technical text-primary">Click_To_Skip</span>
                   </div>
                 </div>
