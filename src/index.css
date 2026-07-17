@@ -13,6 +13,10 @@
     --border: 240 3.7% 15.9%;
     --radius: 0px;
   }
+
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 @layer base {
@@ -23,6 +27,12 @@
     background-color: #050505;
   }
   .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* Accessible focus ring */
+  :focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+  }
 }
 
 @layer components {
@@ -66,6 +76,12 @@
   }
   .btn-outline-technical {
     @apply font-mono uppercase tracking-widest text-xs font-black border-2 border-white/20 px-8 py-4 hover:border-primary hover:text-primary transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 relative overflow-hidden;
+  }
+
+  /* Mask utilities for gallery edges */
+  .mask-fade-edges {
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 5%, black 95%, transparent);
+    mask-image: linear-gradient(to bottom, transparent, black 5%, black 95%, transparent);
   }
 }
 
