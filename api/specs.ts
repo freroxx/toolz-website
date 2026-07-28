@@ -526,11 +526,3 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     clearTimeout(timeoutId);
   }
 }
-
-  } catch (err: any) {
-    console.error("Critical Failure:", err);
-    return res.status(500).json({ error: "Internal Server Error" });
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
