@@ -113,7 +113,13 @@ async function scrapeGsmArenaSuggest(query: string, signal?: AbortSignal) {
     if (Array.isArray(results) && results.length > 0) {
       const first = results[0];
       if (first.id) {
-        return { matchedUrl: `https://www.gsmarena.com/${first.id}.php`, text: first.text };
+        // Construct image URL if available in suggest API
+        const imageUrl = first.image ? `https://fdn2.gsmarena.com/vv/bigpic/${first.image}` : '';
+        return {
+          matchedUrl: `https://www.gsmarena.com/${first.id}.php`,
+          text: first.text,
+          image: imageUrl
+        };
       }
     }
   } catch (e) {}
@@ -156,6 +162,17 @@ async function scrapeDeviceSpecs(url: string, signal?: AbortSignal) {
   const $ = cheerio.load(html);
   const specs: Record<string, Record<string, string>> = {};
 
+  // Extract main image URL
+  let imageUrl = '';
+  try {
+    const imgElement = $('#specs-cp-pic img');
+    if (imgElement.length > 0) {
+      imageUrl = imgElement.attr('src') || '';
+    }
+  } catch (e) {
+    console.warn(`Failed to extract image from ${url}:`, e);
+  }
+
   $('#specs-list table').each((_, table) => {
     const sectionName = $(table).find('th').text().trim();
     if (!sectionName) return;
@@ -170,7 +187,7 @@ async function scrapeDeviceSpecs(url: string, signal?: AbortSignal) {
     });
   });
 
-  return Object.keys(specs).length > 0 ? specs : null;
+  return Object.keys(specs).length > 0 ? { specs, imageUrl } : null;
 }
 
 function generateSmartStrategies(input: string): string[] {
@@ -222,6 +239,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 2. Check URL Mapping Cache (Skip discovery phases)
     let targetDeviceUrl: string | null = null;
+    let suggestImage: string = '';
     const urlMapKey = `url_map:${cleanInput.toLowerCase()}`;
     if (redis) {
       targetDeviceUrl = await redis.get(urlMapKey);
@@ -243,6 +261,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (res?.turnstile) sawTurnstile = true;
         if (res?.matchedUrl) {
           targetDeviceUrl = res.matchedUrl;
+          if (res.image) suggestImage = res.image;
           break;
         }
       }
@@ -299,13 +318,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Phase 5: Extraction
     console.info(`[Phase 5] Extracting specs from: ${targetDeviceUrl}`);
-    const specs = await scrapeDeviceSpecs(targetDeviceUrl, controller.signal);
+    const extractionResult = await scrapeDeviceSpecs(targetDeviceUrl, controller.signal);
 
-    if (!specs) {
+    if (!extractionResult) {
       return res.status(502).json({ error: "Failed to extract specs", url: targetDeviceUrl });
     }
 
-    const payload = { search_query: cleanInput, source_url: targetDeviceUrl, specifications: specs };
+    const { specs, imageUrl } = extractionResult;
+    const finalImage = imageUrl || suggestImage || '';
+
+    const payload = {
+      search_query: cleanInput,
+      source_url: targetDeviceUrl,
+      image: finalImage,
+      specifications: specs
+    };
     if (redis) await redis.set(cacheKey, JSON.stringify(payload), { ex: 7776000 }); // 90 days
 
     return res.status(200).json(payload);
