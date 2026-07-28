@@ -221,17 +221,26 @@ async function scrapeGsmArenaSuggest(query: string, signal?: AbortSignal, startT
 }
 
 // Direct Search attempt with better logs - Always use proxy as search results are highly protected
-async function scrapeGsmArenaSearchDebug(query: string, signal?: AbortSignal) {
+async function scrapeGsmArenaSearchDebug(query: string, signal?: AbortSignal, startTime?: number, totalBudget: number = 9600) {
   const searchUrl = `https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName=${encodeURIComponent(query)}`;
   console.info(`[Phase 2] Attempting Proxy Search for: "${query}"`);
 
   // Direct search often triggers Turnstile immediately, using proxy by default here
-  const { text: html, turnstile, status } = await fetchHtml(searchUrl, signal, {}, { render: false, timeoutMs: 5000, useProxy: true });
+  let result = await fetchHtml(searchUrl, signal, {}, { render: false, timeoutMs: 5000, useProxy: true });
 
-  if (turnstile) return { turnstile: true };
-  if (!html) return null;
+  // Escalation: If blocked and we have significant budget left, try rendering
+  if (result.turnstile && startTime) {
+    const remaining = getRemainingTime(startTime, totalBudget);
+    if (remaining > 6000) {
+      console.info(`[Phase 2] Search blocked for "${query}", escalating to rendered fetch. Remaining: ${remaining}ms`);
+      result = await fetchHtml(searchUrl, signal, {}, { render: true, timeoutMs: remaining - 500, useProxy: true });
+    }
+  }
 
-  const $ = cheerio.load(html);
+  if (result.turnstile) return { turnstile: true };
+  if (!result.text) return null;
+
+  const $ = cheerio.load(result.text);
   if ($('#specs-list').length > 0) {
     const canonical = $('link[rel="canonical"]').attr('href') || $('meta[property="og:url"]').attr('content');
     if (canonical) {
@@ -428,19 +437,59 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       // Phase 2: Sequential Direct Search
-      if (!targetDeviceUrl && !sawTurnstile && !controller.signal.aborted) {
+      if (!targetDeviceUrl && !controller.signal.aborted) {
         if (getRemainingTime(startTime, totalBudget) > 4000) {
           for (const query of discoveryStrategies.slice(0, 2)) {
-            const res = await scrapeGsmArenaSearchDebug(query, controller.signal);
-            if (res?.turnstile) { sawTurnstile = true; break; }
+            const res = await scrapeGsmArenaSearchDebug(query, controller.signal, startTime, totalBudget);
             if (res?.matchedUrl) { targetDeviceUrl = res.matchedUrl; break; }
+            // Even if we hit Turnstile, we continue with other strategies or phases
+            if (res?.turnstile) sawTurnstile = true;
+            if (getRemainingTime(startTime, totalBudget) < 3000) break;
           }
+          console.info(`[Phase 2] Completed. URL Found: ${!!targetDeviceUrl}`);
         }
       }
 
-      // Phase 3: External Search (Omitting for brevity, remains similar if needed)
+      // Phase 3: External Search
+      if (!targetDeviceUrl && !controller.signal.aborted) {
+        const remainingForP3 = getRemainingTime(startTime, totalBudget);
+        if (remainingForP3 > 5000) {
+          console.info(`[Phase 3] External discovery for ${cleanInput}... Remaining: ${remainingForP3}ms`);
+          const engines = [
+            { name: 'Google', url: `https://www.google.com/search?q=site:gsmarena.com+${encodeURIComponent(cleanInput)}` },
+            { name: 'DuckDuckGo', url: `https://html.duckduckgo.com/html/?q=site:gsmarena.com+${encodeURIComponent(cleanInput)}` }
+          ];
 
-      // Post-discovery check for canonical cache AGAIN
+          const discoveryResults = await Promise.all(
+            engines.map(async (engine) => {
+              const { text: html, turnstile } = await fetchHtml(engine.url, controller.signal, {}, { render: false, timeoutMs: 2500 });
+              if (turnstile) return { turnstile: true };
+              if (!html) return null;
+              const $ = cheerio.load(html);
+              let link: string | null = null;
+              $('a').each((_, el) => {
+                let href = $(el).attr('href');
+                if (!href || link) return;
+                if (href.includes('uddg=')) try { href = new URLSearchParams(href.split('?')[1]).get('uddg') || href; } catch(e){}
+                if (href.startsWith('/url?q=')) try { href = new URLSearchParams(href.split('?')[1]).get('q') || href; } catch(e){}
+                if (href.includes('gsmarena.com/') && href.includes('.php') && !/results|search|compare|glossary|blog/i.test(href)) {
+                  link = href.startsWith('http') ? href : `https://www.gsmarena.com/${href.replace(/^\//, '')}`;
+                }
+              });
+              return link ? { matchedUrl: link } : null;
+            })
+          );
+
+          for (const res of discoveryResults) {
+            if (res?.turnstile) sawTurnstile = true;
+            if (res?.matchedUrl) {
+              targetDeviceUrl = res.matchedUrl;
+              break;
+            }
+          }
+          console.info(`[Phase 3] Completed. URL Found: ${!!targetDeviceUrl}`);
+        }
+      }
       if (targetDeviceUrl && redis) {
         const deviceId = getDeviceId(targetDeviceUrl);
         if (deviceId) {
