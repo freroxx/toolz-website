@@ -154,10 +154,13 @@ async function scrapeGsmArenaSearchDebug(query: string, signal?: AbortSignal) {
   return null;
 }
 
-async function scrapeDeviceSpecs(url: string, signal?: AbortSignal) {
-  // Extraction Phase: Try WITHOUT render first, if blocked we might be stuck on Hobby plan, but it's the best attempt
-  const { text: html, turnstile } = await fetchHtml(url, signal, {}, { render: true, timeoutMs: 7000 });
-  if (turnstile || !html) return null;
+async function scrapeDeviceSpecs(url: string, signal?: AbortSignal, options: { render?: boolean } = { render: false }) {
+  const { render = false } = options;
+  // Extraction Phase: Try WITHOUT render first (much faster). Fallback is handled by the caller.
+  const { text: html, turnstile } = await fetchHtml(url, signal, {}, { render, timeoutMs: render ? 7000 : 4000 });
+
+  if (turnstile) return { specs: null, turnstile: true };
+  if (!html) return null;
 
   const $ = cheerio.load(html);
   const specs: Record<string, Record<string, string>> = {};
@@ -187,7 +190,8 @@ async function scrapeDeviceSpecs(url: string, signal?: AbortSignal) {
     });
   });
 
-  return Object.keys(specs).length > 0 ? { specs, imageUrl } : null;
+  if (Object.keys(specs).length === 0) return null;
+  return { specs, imageUrl, turnstile: false };
 }
 
 function generateSmartStrategies(input: string): string[] {
@@ -204,6 +208,7 @@ function generateSmartStrategies(input: string): string[] {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const startTime = Date.now();
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 9200); // 9.2s budget
 
@@ -272,11 +277,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const res = await scrapeGsmArenaSearchDebug(query, controller.signal);
           if (res?.turnstile) { sawTurnstile = true; break; }
           if (res?.matchedUrl) { targetDeviceUrl = res.matchedUrl; break; }
+          // If we already spent > 4s, stop sequential searching to save time for extraction
+          if (Date.now() - startTime > 4000) break;
         }
       }
 
       // Phase 3: External Search (Parallel)
-      if (!targetDeviceUrl && !controller.signal.aborted) {
+      if (!targetDeviceUrl && !controller.signal.aborted && Date.now() - startTime < 6000) {
         console.info(`[Phase 3] External discovery for ${cleanInput}...`);
         const engines = [
           { name: 'Google', url: `https://www.google.com/search?q=site:gsmarena.com+${encodeURIComponent(cleanInput)}` },
@@ -285,7 +292,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const discoveryResults = await Promise.all(
           engines.map(async (engine) => {
-            const { text: html, turnstile } = await fetchHtml(engine.url, controller.signal, {}, { render: false, timeoutMs: 5000 });
+            const { text: html, turnstile } = await fetchHtml(engine.url, controller.signal, {}, { render: false, timeoutMs: 3000 });
             if (turnstile || !html) return null;
             const $ = cheerio.load(html);
             let link: string | null = null;
@@ -318,10 +325,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Phase 5: Extraction
     console.info(`[Phase 5] Extracting specs from: ${targetDeviceUrl}`);
-    const extractionResult = await scrapeDeviceSpecs(targetDeviceUrl, controller.signal);
 
-    if (!extractionResult) {
-      return res.status(502).json({ error: "Failed to extract specs", url: targetDeviceUrl });
+    // Attempt 1: Fast fetch (no render)
+    let extractionResult = await scrapeDeviceSpecs(targetDeviceUrl, controller.signal, { render: false });
+
+    // Attempt 2: Fallback to Render if blocked by Turnstile and we have time (at least 4.5s left)
+    const elapsed = Date.now() - startTime;
+    const remaining = 9200 - elapsed;
+
+    if ((!extractionResult || extractionResult.turnstile) && remaining > 4500 && !controller.signal.aborted) {
+      console.info(`[Phase 5] Blocked or failed (fast), retrying with render. Remaining: ${remaining}ms`);
+      extractionResult = await scrapeDeviceSpecs(targetDeviceUrl, controller.signal, { render: true });
+    }
+
+    if (!extractionResult || !extractionResult.specs) {
+      const isBlocked = extractionResult?.turnstile;
+      return res.status(isBlocked ? 502 : 502).json({
+        error: isBlocked ? "Blocked by anti-bot (Extraction)" : "Failed to extract specs",
+        url: targetDeviceUrl
+      });
     }
 
     const { specs, imageUrl } = extractionResult;
