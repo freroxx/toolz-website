@@ -34,6 +34,16 @@ function getRandomUserAgent() {
   return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 }
 
+/**
+ * Calculates remaining time in the global execution budget.
+ * Defaults to a safe minimum if budget is nearly exhausted.
+ */
+function getRemainingTime(startTime: number, totalBudget: number, minBuffer: number = 500): number {
+  const elapsed = Date.now() - startTime;
+  const remaining = totalBudget - elapsed;
+  return Math.max(remaining, minBuffer);
+}
+
 // Centralized fetch tool with integrated proxy support
 async function fetchHtml(
   targetUrl: string,
@@ -42,7 +52,10 @@ async function fetchHtml(
   options: { render?: boolean; timeoutMs?: number; useProxy?: boolean } = {}
 ): Promise<{ text: string | null; status: number | null; errorBody?: string; turnstile?: boolean }> {
   const apiKey = process.env.SCRAPER_API_KEY;
-  const { render = false, timeoutMs = 6000, useProxy = true } = options;
+  const { render = false, useProxy = true } = options;
+
+  // Use provided timeout or calculate based on what's reasonable
+  const timeoutMs = options.timeoutMs || (render ? 7000 : 4000);
 
   let fetchUrl: string;
   const isProxyActive = apiKey && useProxy;
@@ -112,32 +125,24 @@ async function fetchHtml(
 }
 
 // Uses GSMArena internal suggest API (Quick Search) - typically less protected
-async function scrapeGsmArenaSuggest(query: string, signal?: AbortSignal) {
+async function scrapeGsmArenaSuggest(query: string, signal?: AbortSignal, startTime?: number) {
   const suggestUrl = `https://www.gsmarena.com/suggest.php3?sTerm=${encodeURIComponent(query)}`;
-  console.info(`[Phase 1] Attempting Suggest API for: "${query}"`);
 
-  // Attempt 1: Direct Fetch (fastest)
+  // Attempt 1: Direct Fetch (fastest) - only if we have time
+  if (startTime && getRemainingTime(startTime, 9200) < 2000) return null;
+
   let result = await fetchHtml(suggestUrl, signal, {
     'X-Requested-With': 'XMLHttpRequest',
     'Referer': 'https://www.gsmarena.com/'
-  }, { render: false, timeoutMs: 2500, useProxy: false });
+  }, { render: false, timeoutMs: 2000, useProxy: false });
 
-  // Attempt 2: Fallback to Proxy if blocked or failed
-  if (result.turnstile || !result.text) {
-    console.info(`[Phase 1] Direct suggest blocked/failed, retrying with proxy...`);
+  // Attempt 2: Fallback to Proxy if blocked or failed - only if we have time
+  if ((result.turnstile || !result.text) && startTime && getRemainingTime(startTime, 9200) > 3000) {
+    console.info(`[Phase 1] Direct suggest blocked/failed for "${query}", retrying with proxy...`);
     result = await fetchHtml(suggestUrl, signal, {
       'X-Requested-With': 'XMLHttpRequest',
       'Referer': 'https://www.gsmarena.com/'
-    }, { render: false, timeoutMs: 3500, useProxy: true });
-  }
-
-  // Attempt 3: Final Premium/Render Fallback if still blocked and we have a budget (rarely needed for suggest)
-  if (result.turnstile && process.env.SCRAPER_ULTRA_PREMIUM === 'true') {
-    console.info(`[Phase 1] Proxy suggest blocked, retrying with Premium Render...`);
-    result = await fetchHtml(suggestUrl, signal, {
-      'X-Requested-With': 'XMLHttpRequest',
-      'Referer': 'https://www.gsmarena.com/'
-    }, { render: true, timeoutMs: 5000, useProxy: true });
+    }, { render: false, timeoutMs: 3000, useProxy: true });
   }
 
   if (result.turnstile) return { turnstile: true };
@@ -301,10 +306,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 3. Discovery Phases (Only if URL not cached)
     if (!targetDeviceUrl) {
-      // Phase 1: Parallel Suggest API (Top 2 strategies to reduce overhead)
+      // Phase 1: Parallel Suggest API
       console.info(`[Phase 1] Searching for ${cleanInput}...`);
       const suggestResults = await Promise.all(
-        strategies.slice(0, 2).map(q => scrapeGsmArenaSuggest(q, controller.signal))
+        strategies.slice(0, 2).map(q => scrapeGsmArenaSuggest(q, controller.signal, startTime))
       );
 
       for (const res of suggestResults) {
@@ -315,52 +320,60 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           break;
         }
       }
+      console.info(`[Phase 1] Completed in ${Date.now() - startTime}ms. URL Found: ${!!targetDeviceUrl}`);
 
-      // Phase 2: Sequential Direct Search (Limited)
+      // Phase 2: Sequential Direct Search
       if (!targetDeviceUrl && !sawTurnstile && !controller.signal.aborted) {
-        for (const query of strategies.slice(0, 2)) {
-          const res = await scrapeGsmArenaSearchDebug(query, controller.signal);
-          if (res?.turnstile) { sawTurnstile = true; break; }
-          if (res?.matchedUrl) { targetDeviceUrl = res.matchedUrl; break; }
-          // If we already spent > 4s, stop sequential searching to save time for extraction
-          if (Date.now() - startTime > 4000) break;
+        const remainingForP2 = getRemainingTime(startTime, 9200);
+        if (remainingForP2 > 4000) {
+          for (const query of strategies.slice(0, 2)) {
+            const res = await scrapeGsmArenaSearchDebug(query, controller.signal);
+            if (res?.turnstile) { sawTurnstile = true; break; }
+            if (res?.matchedUrl) { targetDeviceUrl = res.matchedUrl; break; }
+            if (getRemainingTime(startTime, 9200) < 4000) break;
+          }
+          console.info(`[Phase 2] Completed. Total time: ${Date.now() - startTime}ms. URL Found: ${!!targetDeviceUrl}`);
         }
       }
 
-      // Phase 3: External Search (Parallel)
-      if (!targetDeviceUrl && !controller.signal.aborted && Date.now() - startTime < 6000) {
-        console.info(`[Phase 3] External discovery for ${cleanInput}...`);
-        const engines = [
-          { name: 'Google', url: `https://www.google.com/search?q=site:gsmarena.com+${encodeURIComponent(cleanInput)}` },
-          { name: 'DuckDuckGo', url: `https://html.duckduckgo.com/html/?q=site:gsmarena.com+${encodeURIComponent(cleanInput)}` }
-        ];
+      // Phase 3: External Search
+      if (!targetDeviceUrl && !controller.signal.aborted) {
+        const remainingForP3 = getRemainingTime(startTime, 9200);
+        if (remainingForP3 > 5000) {
+          console.info(`[Phase 3] External discovery for ${cleanInput}... Remaining: ${remainingForP3}ms`);
+          const engines = [
+            { name: 'Google', url: `https://www.google.com/search?q=site:gsmarena.com+${encodeURIComponent(cleanInput)}` },
+            { name: 'DuckDuckGo', url: `https://html.duckduckgo.com/html/?q=site:gsmarena.com+${encodeURIComponent(cleanInput)}` }
+          ];
 
-        const discoveryResults = await Promise.all(
-          engines.map(async (engine) => {
-            const { text: html, turnstile } = await fetchHtml(engine.url, controller.signal, {}, { render: false, timeoutMs: 3000 });
-            if (turnstile) return { turnstile: true };
-            if (!html) return null;
-            const $ = cheerio.load(html);
-            let link: string | null = null;
-            $('a').each((_, el) => {
-              let href = $(el).attr('href');
-              if (!href || link) return;
-              if (href.includes('uddg=')) try { href = new URLSearchParams(href.split('?')[1]).get('uddg') || href; } catch(e){}
-              if (href.startsWith('/url?q=')) try { href = new URLSearchParams(href.split('?')[1]).get('q') || href; } catch(e){}
-              if (href.includes('gsmarena.com/') && href.includes('.php') && !/results|search|compare|glossary|blog/i.test(href)) {
-                link = href.startsWith('http') ? href : `https://www.gsmarena.com/${href.replace(/^\//, '')}`;
-              }
-            });
-            return link ? { matchedUrl: link } : null;
-          })
-        );
+          const discoveryResults = await Promise.all(
+            engines.map(async (engine) => {
+              const { text: html, turnstile } = await fetchHtml(engine.url, controller.signal, {}, { render: false, timeoutMs: 2500 });
+              if (turnstile) return { turnstile: true };
+              if (!html) return null;
+              const $ = cheerio.load(html);
+              let link: string | null = null;
+              $('a').each((_, el) => {
+                let href = $(el).attr('href');
+                if (!href || link) return;
+                if (href.includes('uddg=')) try { href = new URLSearchParams(href.split('?')[1]).get('uddg') || href; } catch(e){}
+                if (href.startsWith('/url?q=')) try { href = new URLSearchParams(href.split('?')[1]).get('q') || href; } catch(e){}
+                if (href.includes('gsmarena.com/') && href.includes('.php') && !/results|search|compare|glossary|blog/i.test(href)) {
+                  link = href.startsWith('http') ? href : `https://www.gsmarena.com/${href.replace(/^\//, '')}`;
+                }
+              });
+              return link ? { matchedUrl: link } : null;
+            })
+          );
 
-        for (const res of discoveryResults) {
-          if (res?.turnstile) sawTurnstile = true;
-          if (res?.matchedUrl) {
-            targetDeviceUrl = res.matchedUrl;
-            break;
+          for (const res of discoveryResults) {
+            if (res?.turnstile) sawTurnstile = true;
+            if (res?.matchedUrl) {
+              targetDeviceUrl = res.matchedUrl;
+              break;
+            }
           }
+          console.info(`[Phase 3] Completed. Total time: ${Date.now() - startTime}ms. URL Found: ${!!targetDeviceUrl}`);
         }
       }
 
@@ -380,22 +393,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.info(`[Phase 5] Extracting specs from: ${targetDeviceUrl}`);
 
     // Attempt 1: Fast fetch (no render)
-    let extractionResult = await scrapeDeviceSpecs(targetDeviceUrl, controller.signal, { render: false });
+    const remainingForExtraction = getRemainingTime(startTime, 9200);
+    let extractionResult = await scrapeDeviceSpecs(targetDeviceUrl, controller.signal, {
+      render: false,
+      // @ts-ignore - passing custom timeout through options if we wanted to
+      timeoutMs: Math.min(4000, remainingForExtraction - 500)
+    });
 
-    // Attempt 2: Fallback to Render if blocked by Turnstile and we have time (at least 4.5s left)
-    const elapsed = Date.now() - startTime;
-    const remaining = 9200 - elapsed;
+    // Attempt 2: Fallback to Render if blocked and we have time (at least 5s left)
+    const remainingAfterFast = getRemainingTime(startTime, 9200);
 
-    if ((!extractionResult || extractionResult.turnstile) && remaining > 4500 && !controller.signal.aborted) {
-      console.info(`[Phase 5] Blocked or failed (fast), retrying with render. Remaining: ${remaining}ms`);
+    if ((!extractionResult || extractionResult.turnstile) && remainingAfterFast > 5000 && !controller.signal.aborted) {
+      console.info(`[Phase 5] Blocked or failed (fast), retrying with render. Remaining: ${remainingAfterFast}ms`);
       extractionResult = await scrapeDeviceSpecs(targetDeviceUrl, controller.signal, { render: true });
     }
 
     if (!extractionResult || !extractionResult.specs) {
       const isBlocked = extractionResult?.turnstile;
       return res.status(isBlocked ? 502 : 502).json({
-        error: isBlocked ? "Blocked by anti-bot (Extraction)" : "Failed to extract specs",
-        url: targetDeviceUrl
+        error: isBlocked ? "Blocked by anti-bot (Extraction phase)" : "Failed to extract specs",
+        url: targetDeviceUrl,
+        timing_ms: Date.now() - startTime
       });
     }
 
