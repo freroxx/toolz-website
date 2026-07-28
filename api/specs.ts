@@ -129,7 +129,7 @@ async function scrapeGsmArenaSuggest(query: string, signal?: AbortSignal, startT
   const suggestUrl = `https://www.gsmarena.com/suggest.php3?sTerm=${encodeURIComponent(query)}`;
 
   // Attempt 1: Direct Fetch (fastest) - only if we have time
-  if (startTime && getRemainingTime(startTime, 9200) < 2000) return null;
+  if (startTime && getRemainingTime(startTime, 9500) < 2000) return null;
 
   let result = await fetchHtml(suggestUrl, signal, {
     'X-Requested-With': 'XMLHttpRequest',
@@ -137,7 +137,7 @@ async function scrapeGsmArenaSuggest(query: string, signal?: AbortSignal, startT
   }, { render: false, timeoutMs: 2000, useProxy: false });
 
   // Attempt 2: Fallback to Proxy if blocked or failed - only if we have time
-  if ((result.turnstile || !result.text) && startTime && getRemainingTime(startTime, 9200) > 3000) {
+  if ((result.turnstile || !result.text) && startTime && getRemainingTime(startTime, 9500) > 3000) {
     console.info(`[Phase 1] Direct suggest blocked/failed for "${query}", retrying with proxy...`);
     result = await fetchHtml(suggestUrl, signal, {
       'X-Requested-With': 'XMLHttpRequest',
@@ -199,10 +199,13 @@ async function scrapeGsmArenaSearchDebug(query: string, signal?: AbortSignal) {
   return null;
 }
 
-async function scrapeDeviceSpecs(url: string, signal?: AbortSignal, options: { render?: boolean } = { render: false }) {
+async function scrapeDeviceSpecs(url: string, signal?: AbortSignal, options: { render?: boolean; timeoutMs?: number } = { render: false }) {
   const { render = false } = options;
-  // Extraction Phase: Try WITHOUT render first (much faster). Fallback is handled by the caller.
-  const { text: html, turnstile } = await fetchHtml(url, signal, {}, { render, timeoutMs: render ? 7000 : 4000 });
+  // Extraction Phase: Honors the timeout passed in options or defaults based on render mode
+  const { text: html, turnstile } = await fetchHtml(url, signal, {}, {
+    render,
+    timeoutMs: options.timeoutMs || (render ? 7000 : 4000)
+  });
 
   if (turnstile) return { specs: null, turnstile: true };
   if (!html) return null;
@@ -260,7 +263,8 @@ function generateSmartStrategies(input: string): string[] {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const startTime = Date.now();
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 9200); // 9.2s budget
+  const totalBudget = 9500; // Increased to 9.5s for safer buffer
+  const timeoutId = setTimeout(() => controller.abort(), totalBudget);
 
   try {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -324,13 +328,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Phase 2: Sequential Direct Search
       if (!targetDeviceUrl && !sawTurnstile && !controller.signal.aborted) {
-        const remainingForP2 = getRemainingTime(startTime, 9200);
+        const remainingForP2 = getRemainingTime(startTime, 9500);
         if (remainingForP2 > 4000) {
           for (const query of strategies.slice(0, 2)) {
             const res = await scrapeGsmArenaSearchDebug(query, controller.signal);
             if (res?.turnstile) { sawTurnstile = true; break; }
             if (res?.matchedUrl) { targetDeviceUrl = res.matchedUrl; break; }
-            if (getRemainingTime(startTime, 9200) < 4000) break;
+            if (getRemainingTime(startTime, 9500) < 4000) break;
           }
           console.info(`[Phase 2] Completed. Total time: ${Date.now() - startTime}ms. URL Found: ${!!targetDeviceUrl}`);
         }
@@ -338,7 +342,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Phase 3: External Search
       if (!targetDeviceUrl && !controller.signal.aborted) {
-        const remainingForP3 = getRemainingTime(startTime, 9200);
+        const remainingForP3 = getRemainingTime(startTime, 9500);
         if (remainingForP3 > 5000) {
           console.info(`[Phase 3] External discovery for ${cleanInput}... Remaining: ${remainingForP3}ms`);
           const engines = [
@@ -383,29 +387,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    if (controller.signal.aborted) return res.status(504).json({ error: "Timeout" });
+    if (controller.signal.aborted) return res.status(504).json({ error: "Timeout", timing_ms: Date.now() - startTime });
 
     if (!targetDeviceUrl) {
-      return res.status(sawTurnstile ? 502 : 404).json({ error: sawTurnstile ? "Blocked by anti-bot" : "Device not found" });
+      return res.status(sawTurnstile ? 502 : 404).json({ error: sawTurnstile ? "Blocked by anti-bot" : "Device not found", timing_ms: Date.now() - startTime });
     }
 
     // Phase 5: Extraction
-    console.info(`[Phase 5] Extracting specs from: ${targetDeviceUrl}`);
+    const remainingForExtraction = getRemainingTime(startTime, totalBudget);
+    console.info(`[Phase 5] Extracting specs from: ${targetDeviceUrl}. Remaining: ${remainingForExtraction}ms`);
 
     // Attempt 1: Fast fetch (no render)
-    const remainingForExtraction = getRemainingTime(startTime, 9200);
     let extractionResult = await scrapeDeviceSpecs(targetDeviceUrl, controller.signal, {
       render: false,
-      // @ts-ignore - passing custom timeout through options if we wanted to
       timeoutMs: Math.min(4000, remainingForExtraction - 500)
     });
 
     // Attempt 2: Fallback to Render if blocked and we have time (at least 5s left)
-    const remainingAfterFast = getRemainingTime(startTime, 9200);
+    const remainingAfterFast = getRemainingTime(startTime, totalBudget);
 
     if ((!extractionResult || extractionResult.turnstile) && remainingAfterFast > 5000 && !controller.signal.aborted) {
       console.info(`[Phase 5] Blocked or failed (fast), retrying with render. Remaining: ${remainingAfterFast}ms`);
-      extractionResult = await scrapeDeviceSpecs(targetDeviceUrl, controller.signal, { render: true });
+      extractionResult = await scrapeDeviceSpecs(targetDeviceUrl, controller.signal, {
+        render: true,
+        timeoutMs: remainingAfterFast - 500
+      });
     }
 
     if (!extractionResult || !extractionResult.specs) {
