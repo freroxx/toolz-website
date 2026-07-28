@@ -65,11 +65,15 @@ async function fetchHtml(
     proxyUrl.searchParams.set('api_key', apiKey);
     proxyUrl.searchParams.set('url', targetUrl);
 
-    // Only render if explicitly requested (saves 3-5s per request)
+    // If render is requested, we ensure it's passed and use premium features
     if (render) {
-      if (process.env.SCRAPER_RENDER === 'true') proxyUrl.searchParams.set('render', 'true');
-      if (process.env.SCRAPER_ULTRA_PREMIUM === 'true') proxyUrl.searchParams.set('ultra_premium', 'true');
-      else if (process.env.SCRAPER_PREMIUM === 'true') proxyUrl.searchParams.set('premium', 'true');
+      proxyUrl.searchParams.set('render', 'true');
+      if (process.env.SCRAPER_ULTRA_PREMIUM === 'true') {
+        proxyUrl.searchParams.set('ultra_premium', 'true');
+      } else {
+        // Most GSMArena renders require premium to bypass blocks effectively
+        proxyUrl.searchParams.set('premium', 'true');
+      }
     }
 
     fetchUrl = proxyUrl.toString();
@@ -77,12 +81,26 @@ async function fetchHtml(
     fetchUrl = targetUrl;
   }
 
-  // Create an internal timeout signal that races with the global one
+  // Create an internal timeout signal
   const internalController = new AbortController();
   const internalTimeout = setTimeout(() => internalController.abort(), timeoutMs);
 
-  // Combine signals if possible, or just use internal for this fetch
-  const combinedSignal = signal; // Simple approach: use the global signal for overall budget
+  // Combine signals: abort if EITHER the global budget OR this specific fetch timeout expires
+  let combinedSignal: AbortSignal = internalController.signal;
+  if (signal) {
+    try {
+      // @ts-ignore - AbortSignal.any is available in modern Node.js (Vercel uses 18/20+)
+      if (typeof AbortSignal.any === 'function') {
+        combinedSignal = AbortSignal.any([internalController.signal, signal]);
+      } else {
+        // Fallback for older environments
+        signal.addEventListener('abort', () => internalController.abort());
+      }
+    } catch (e) {
+      console.warn('AbortSignal.any failed, falling back to global signal only');
+      combinedSignal = signal;
+    }
+  }
 
   try {
     const headers: Record<string, string> = { ...extraHeaders };
@@ -107,15 +125,16 @@ async function fetchHtml(
     }
 
     if (isTurnstile(text)) {
-      console.warn(`Turnstile detected for ${targetUrl}`);
+      console.warn(`Turnstile detected for ${targetUrl} (Render: ${render}, Proxy: ${isProxyActive})`);
       return { text, status: response.status, turnstile: true };
     }
 
     return { text, status: response.status };
   } catch (error: any) {
     if (error.name === 'AbortError') {
-      console.warn(`Fetch aborted (timeout/signal): ${targetUrl}`);
-      return { text: null, status: 408, errorBody: 'Request timeout' };
+      const isGlobal = signal?.aborted;
+      console.warn(`Fetch aborted (${isGlobal ? 'Global Budget' : 'Local Timeout'}): ${targetUrl}`);
+      return { text: null, status: 408, errorBody: isGlobal ? 'Global timeout' : 'Request timeout' };
     }
     console.error(`Network error fetching ${targetUrl}:`, error);
     return { text: null, status: null };
@@ -129,7 +148,8 @@ async function scrapeGsmArenaSuggest(query: string, signal?: AbortSignal, startT
   const suggestUrl = `https://www.gsmarena.com/suggest.php3?sTerm=${encodeURIComponent(query)}`;
 
   // Attempt 1: Direct Fetch (fastest) - only if we have time
-  if (startTime && getRemainingTime(startTime, 9500) < 2000) return null;
+  const remainingForDirect = startTime ? getRemainingTime(startTime, 9500) : 5000;
+  if (remainingForDirect < 2000) return null;
 
   let result = await fetchHtml(suggestUrl, signal, {
     'X-Requested-With': 'XMLHttpRequest',
@@ -137,7 +157,8 @@ async function scrapeGsmArenaSuggest(query: string, signal?: AbortSignal, startT
   }, { render: false, timeoutMs: 2000, useProxy: false });
 
   // Attempt 2: Fallback to Proxy if blocked or failed - only if we have time
-  if ((result.turnstile || !result.text) && startTime && getRemainingTime(startTime, 9500) > 3000) {
+  const remainingForProxy = startTime ? getRemainingTime(startTime, 9500) : 3000;
+  if ((result.turnstile || !result.text) && remainingForProxy > 3000) {
     console.info(`[Phase 1] Direct suggest blocked/failed for "${query}", retrying with proxy...`);
     result = await fetchHtml(suggestUrl, signal, {
       'X-Requested-With': 'XMLHttpRequest',
@@ -171,13 +192,13 @@ async function scrapeGsmArenaSuggest(query: string, signal?: AbortSignal, startT
   return null;
 }
 
-// Direct Search attempt with better logs
+// Direct Search attempt with better logs - Always use proxy as search results are highly protected
 async function scrapeGsmArenaSearchDebug(query: string, signal?: AbortSignal) {
   const searchUrl = `https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName=${encodeURIComponent(query)}`;
-  console.info(`[Phase 2] Attempting Direct Search for: "${query}"`);
+  console.info(`[Phase 2] Attempting Proxy Search for: "${query}"`);
 
-  // Direct search might need rendering if results are heavily protected
-  const { text: html, turnstile, status } = await fetchHtml(searchUrl, signal, {}, { render: false, timeoutMs: 5000 });
+  // Direct search often triggers Turnstile immediately, using proxy by default here
+  const { text: html, turnstile, status } = await fetchHtml(searchUrl, signal, {}, { render: false, timeoutMs: 5000, useProxy: true });
 
   if (turnstile) return { turnstile: true };
   if (!html) return null;
@@ -263,7 +284,7 @@ function generateSmartStrategies(input: string): string[] {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const startTime = Date.now();
   const controller = new AbortController();
-  const totalBudget = 9500; // Increased to 9.5s for safer buffer
+  const totalBudget = 9600; // Increased to 9.6s for safer buffer (Vercel max is usually 10s)
   const timeoutId = setTimeout(() => controller.abort(), totalBudget);
 
   try {
@@ -328,13 +349,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Phase 2: Sequential Direct Search
       if (!targetDeviceUrl && !sawTurnstile && !controller.signal.aborted) {
-        const remainingForP2 = getRemainingTime(startTime, 9500);
+        const remainingForP2 = getRemainingTime(startTime, totalBudget);
         if (remainingForP2 > 4000) {
           for (const query of strategies.slice(0, 2)) {
             const res = await scrapeGsmArenaSearchDebug(query, controller.signal);
             if (res?.turnstile) { sawTurnstile = true; break; }
             if (res?.matchedUrl) { targetDeviceUrl = res.matchedUrl; break; }
-            if (getRemainingTime(startTime, 9500) < 4000) break;
+            if (getRemainingTime(startTime, totalBudget) < 4000) break;
           }
           console.info(`[Phase 2] Completed. Total time: ${Date.now() - startTime}ms. URL Found: ${!!targetDeviceUrl}`);
         }
@@ -342,7 +363,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Phase 3: External Search
       if (!targetDeviceUrl && !controller.signal.aborted) {
-        const remainingForP3 = getRemainingTime(startTime, 9500);
+        const remainingForP3 = getRemainingTime(startTime, totalBudget);
         if (remainingForP3 > 5000) {
           console.info(`[Phase 3] External discovery for ${cleanInput}... Remaining: ${remainingForP3}ms`);
           const engines = [
@@ -387,10 +408,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    if (controller.signal.aborted) return res.status(504).json({ error: "Timeout", timing_ms: Date.now() - startTime });
+    if (controller.signal.aborted) {
+        return res.status(504).json({
+            error: "Timeout during discovery",
+            phase: targetDeviceUrl ? "Extraction" : "Discovery",
+            timing_ms: Date.now() - startTime
+        });
+    }
 
     if (!targetDeviceUrl) {
-      return res.status(sawTurnstile ? 502 : 404).json({ error: sawTurnstile ? "Blocked by anti-bot" : "Device not found", timing_ms: Date.now() - startTime });
+      return res.status(sawTurnstile ? 502 : 404).json({
+          error: sawTurnstile ? "Blocked by anti-bot during discovery" : "Device not found",
+          timing_ms: Date.now() - startTime
+      });
     }
 
     // Phase 5: Extraction
@@ -403,11 +433,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       timeoutMs: Math.min(4000, remainingForExtraction - 500)
     });
 
-    // Attempt 2: Fallback to Render if blocked and we have time (at least 5s left)
+    // Attempt 2: Fallback to Render if blocked or failed AND we have time
     const remainingAfterFast = getRemainingTime(startTime, totalBudget);
+    const isBlocked = extractionResult?.turnstile;
+    const noSpecs = !extractionResult || !extractionResult.specs;
 
-    if ((!extractionResult || extractionResult.turnstile) && remainingAfterFast > 5000 && !controller.signal.aborted) {
-      console.info(`[Phase 5] Blocked or failed (fast), retrying with render. Remaining: ${remainingAfterFast}ms`);
+    if ((isBlocked || noSpecs) && remainingAfterFast > 5000 && !controller.signal.aborted) {
+      console.info(`[Phase 5] ${isBlocked ? 'Blocked' : 'Failed'} (fast), retrying with render. Remaining: ${remainingAfterFast}ms`);
       extractionResult = await scrapeDeviceSpecs(targetDeviceUrl, controller.signal, {
         render: true,
         timeoutMs: remainingAfterFast - 500
@@ -415,9 +447,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (!extractionResult || !extractionResult.specs) {
-      const isBlocked = extractionResult?.turnstile;
-      return res.status(isBlocked ? 502 : 502).json({
-        error: isBlocked ? "Blocked by anti-bot (Extraction phase)" : "Failed to extract specs",
+      const isBlockedFinal = extractionResult?.turnstile;
+      return res.status(502).json({
+        error: isBlockedFinal ? "Blocked by anti-bot (Extraction phase)" : "Failed to extract specs",
         url: targetDeviceUrl,
         timing_ms: Date.now() - startTime
       });
@@ -430,7 +462,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       search_query: cleanInput,
       source_url: targetDeviceUrl,
       image: finalImage,
-      specifications: specs
+      specifications: specs,
+      timing_ms: Date.now() - startTime
     };
     if (redis) await redis.set(cacheKey, JSON.stringify(payload), { ex: 7776000 }); // 90 days
 
