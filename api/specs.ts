@@ -323,12 +323,13 @@ function generateSmartStrategies(input: string): string[] {
 }
 
 // Extracts a stable device ID from GSMArena URL (e.g. samsung_galaxy_a36-12822 -> samsung_galaxy_a36)
-function getDeviceId(url: string): string | null {
+function getDeviceId(url: string | null): string | null {
+  if (!url) return null;
   try {
     const slug = url.split('/').pop()?.replace('.php', '');
     if (!slug) return null;
     // Remove the numeric ID suffix if present
-    return slug.split('-')[0];
+    return slug.split('-')[0] || null;
   } catch (e) {
     return null;
   }
@@ -365,37 +366,43 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let targetDeviceUrl: string | null = null;
     let searchName = cleanInput;
 
-    if (redis) {
-      // 1a. Attempt to find a URL pointer for ANY input variation
-      const urlMapKeys = inputStrategies.map(s => `url_map:${s.toLowerCase()}`);
-      const mappedUrls = await redis.mget<string[]>(...urlMapKeys);
-      targetDeviceUrl = mappedUrls.find(u => !!u) || null;
+    if (redis && inputStrategies.length > 0) {
+      try {
+        // 1a. Attempt to find a URL pointer for ANY input variation
+        const urlMapKeys = inputStrategies.map(s => `url_map:${s.toLowerCase()}`);
+        // Use mget<(string | null)[]> to avoid JSON.parse errors on plain strings
+        const mappedUrls = await redis.mget<(string | null)[]>(...urlMapKeys);
+        targetDeviceUrl = mappedUrls.find(u => !!u) || null;
 
-      // 1b. Translation check (model -> market name)
-      const translationKeys = inputStrategies.map(s => `device:${s.toLowerCase()}`);
-      const translations = await redis.mget<string[]>(...translationKeys);
-      const firstTranslation = translations.find(t => !!t);
-      if (firstTranslation) {
-        console.info(`[Translation] Hit: ${firstTranslation}`);
-        searchName = firstTranslation;
+        // 1b. Translation check (model -> market name)
+        const translationKeys = inputStrategies.map(s => `device:${s.toLowerCase()}`);
+        const translations = await redis.mget<(string | null)[]>(...translationKeys);
+        const firstTranslation = translations.find(t => !!t);
+        if (firstTranslation) {
+          console.info(`[Translation] Hit: ${firstTranslation}`);
+          searchName = firstTranslation;
 
-        // If we didn't have a URL yet, check the translated name's URL map too
-        if (!targetDeviceUrl) {
-          targetDeviceUrl = await redis.get(`url_map:${searchName.toLowerCase()}`);
-        }
-      }
-
-      // 1c. Canonical Specs Check (If URL found)
-      if (targetDeviceUrl) {
-        const deviceId = getDeviceId(targetDeviceUrl);
-        if (deviceId) {
-          const canonicalData = await redis.get(`specs:url:${deviceId}`);
-          if (canonicalData) {
-            console.info(`[Cache] Canonical hit via strategy for: ${deviceId}`);
-            const payload = typeof canonicalData === 'string' ? JSON.parse(canonicalData) : canonicalData;
-            return res.status(200).json({ ...payload, timing_ms: Date.now() - startTime, cached: true });
+          // If we didn't have a URL yet, check the translated name's URL map too
+          if (!targetDeviceUrl) {
+            targetDeviceUrl = await redis.get<string>(`url_map:${searchName.toLowerCase()}`);
           }
         }
+
+        // 1c. Canonical Specs Check (If URL found)
+        if (targetDeviceUrl) {
+          const deviceId = getDeviceId(targetDeviceUrl);
+          if (deviceId) {
+            const canonicalData = await redis.get<any>(`specs:url:${deviceId}`);
+            if (canonicalData) {
+              console.info(`[Cache] Canonical hit via strategy for: ${deviceId}`);
+              const payload = typeof canonicalData === 'string' ? JSON.parse(canonicalData) : canonicalData;
+              return res.status(200).json({ ...payload, timing_ms: Date.now() - startTime, cached: true });
+            }
+          }
+        }
+      } catch (redisError) {
+        console.error("[Cache] Strategy lookup failed (resiliently falling back):", redisError);
+        // Fallback: searchName remains cleanInput, targetDeviceUrl remains null
       }
     }
 
