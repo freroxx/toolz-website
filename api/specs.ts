@@ -55,7 +55,7 @@ async function fetchHtml(
   const backupApiKey = process.env.SCRAPER_API_KEY_1;
   const { render = false, useProxy = true } = options;
 
-  const performFetch = async (apiKey: string | undefined): Promise<{ text: string | null; status: number | null; errorBody?: string; turnstile?: boolean }> => {
+  const performFetch = async (apiKey: string | undefined, keyName: string): Promise<{ text: string | null; status: number | null; errorBody?: string; turnstile?: boolean }> => {
     // Use provided timeout or calculate based on what's reasonable
     const timeoutMs = options.timeoutMs || (render ? 7000 : 4000);
 
@@ -63,6 +63,7 @@ async function fetchHtml(
     const isProxyActive = apiKey && useProxy;
 
     if (isProxyActive) {
+      console.info(`[Proxy] Fetching ${targetUrl} using ${keyName} (${apiKey.slice(0, 4)}...)`);
       const proxyUrl = new URL('https://api.scraperapi.com/');
       proxyUrl.searchParams.set('api_key', apiKey);
       proxyUrl.searchParams.set('url', targetUrl);
@@ -80,6 +81,7 @@ async function fetchHtml(
 
       fetchUrl = proxyUrl.toString();
     } else {
+      if (useProxy) console.warn(`[Proxy] No API key available for ${keyName}, falling back to direct fetch`);
       fetchUrl = targetUrl;
     }
 
@@ -144,13 +146,21 @@ async function fetchHtml(
     }
   };
 
-  // Initial attempt with primary key
-  let result = await performFetch(primaryApiKey);
+  // Initial attempt with primary key (or backup if primary missing)
+  const initialKey = primaryApiKey || backupApiKey;
+  const initialName = primaryApiKey ? "Primary" : "Backup";
 
-  // If rate limited (403) and backup key exists, retry once
-  if (result.status === 403 && backupApiKey && useProxy && primaryApiKey !== backupApiKey) {
-    console.warn(`[Proxy] Primary key exhausted (403), retrying with backup key for: ${targetUrl}`);
-    result = await performFetch(backupApiKey);
+  let result = await performFetch(initialKey, initialName);
+
+  // If rate limited (403) and we have a different backup key, retry once
+  if (result.status === 403 && useProxy) {
+    const isPrimaryExhausted = initialName === "Primary";
+    if (isPrimaryExhausted && backupApiKey && backupApiKey !== primaryApiKey) {
+      console.warn(`[Proxy] Primary key exhausted (403), retrying with Backup key...`);
+      result = await performFetch(backupApiKey, "Backup");
+    } else {
+      console.error(`[Proxy] ${initialName} key exhausted (403) and no viable fallback available.`);
+    }
   }
 
   // Handle errors if still failing
@@ -289,13 +299,26 @@ async function scrapeDeviceSpecs(url: string, signal?: AbortSignal, options: { r
 function generateSmartStrategies(input: string): string[] {
   let clean = input.toLowerCase().trim().replace(/\b(sm-|gt-|sch-|sgh-|sph-)/gi, '');
   clean = clean.replace(/[\/:,#]/g, ' ').replace(/\s+/g, ' ').trim();
-  const parts = clean.split(/\s+/);
+
+  // Strategy 1: Original clean input
   const strategies = [clean];
+
+  // Strategy 2: Handle squashed inputs (e.g., galaxya36 -> galaxy a36)
+  // Split between letters and numbers
+  const splitSquashed = clean.replace(/([a-z])([0-9])/g, '$1 $2').replace(/([0-9])([a-z])/g, '$1 $2');
+  if (splitSquashed !== clean) strategies.push(splitSquashed);
+
+  const parts = splitSquashed.split(/\s+/);
   if (parts.length > 1) {
+    // Strategy 3: Just the last part (often the model/number)
     strategies.push(parts[parts.length - 1]);
+    // Strategy 4: All but the last part
     strategies.push(parts.slice(0, -1).join(' '));
   }
+
+  // Strategy 5: Completely squashed (no spaces)
   strategies.push(parts.join(''));
+
   return [...new Set(strategies)].filter(q => q && q.length >= 2);
 }
 
