@@ -51,96 +51,114 @@ async function fetchHtml(
   extraHeaders: Record<string, string> = {},
   options: { render?: boolean; timeoutMs?: number; useProxy?: boolean } = {}
 ): Promise<{ text: string | null; status: number | null; errorBody?: string; turnstile?: boolean }> {
-  const apiKey = process.env.SCRAPER_API_KEY;
+  const primaryApiKey = process.env.SCRAPER_API_KEY;
+  const backupApiKey = process.env.SCRAPER_API_KEY_1;
   const { render = false, useProxy = true } = options;
 
-  // Use provided timeout or calculate based on what's reasonable
-  const timeoutMs = options.timeoutMs || (render ? 7000 : 4000);
+  const performFetch = async (apiKey: string | undefined): Promise<{ text: string | null; status: number | null; errorBody?: string; turnstile?: boolean }> => {
+    // Use provided timeout or calculate based on what's reasonable
+    const timeoutMs = options.timeoutMs || (render ? 7000 : 4000);
 
-  let fetchUrl: string;
-  const isProxyActive = apiKey && useProxy;
+    let fetchUrl: string;
+    const isProxyActive = apiKey && useProxy;
 
-  if (isProxyActive) {
-    const proxyUrl = new URL('https://api.scraperapi.com/');
-    proxyUrl.searchParams.set('api_key', apiKey);
-    proxyUrl.searchParams.set('url', targetUrl);
+    if (isProxyActive) {
+      const proxyUrl = new URL('https://api.scraperapi.com/');
+      proxyUrl.searchParams.set('api_key', apiKey);
+      proxyUrl.searchParams.set('url', targetUrl);
 
-    // If render is requested, we ensure it's passed and use premium features
-    if (render) {
-      proxyUrl.searchParams.set('render', 'true');
-      if (process.env.SCRAPER_ULTRA_PREMIUM === 'true') {
-        proxyUrl.searchParams.set('ultra_premium', 'true');
-      } else {
-        // Most GSMArena renders require premium to bypass blocks effectively
-        proxyUrl.searchParams.set('premium', 'true');
+      // If render is requested, we ensure it's passed and use premium features
+      if (render) {
+        proxyUrl.searchParams.set('render', 'true');
+        if (process.env.SCRAPER_ULTRA_PREMIUM === 'true') {
+          proxyUrl.searchParams.set('ultra_premium', 'true');
+        } else {
+          // Most GSMArena renders require premium to bypass blocks effectively
+          proxyUrl.searchParams.set('premium', 'true');
+        }
+      }
+
+      fetchUrl = proxyUrl.toString();
+    } else {
+      fetchUrl = targetUrl;
+    }
+
+    // Create an internal timeout signal
+    const internalController = new AbortController();
+    const internalTimeout = setTimeout(() => internalController.abort(), timeoutMs);
+
+    // Combine signals: abort if EITHER the global budget OR this specific fetch timeout expires
+    let combinedSignal: AbortSignal = internalController.signal;
+    if (signal) {
+      try {
+        // @ts-ignore - AbortSignal.any is available in modern Node.js (Vercel uses 18/20+)
+        if (typeof AbortSignal.any === 'function') {
+          combinedSignal = AbortSignal.any([internalController.signal, signal]);
+        } else {
+          // Fallback for older environments
+          signal.addEventListener('abort', () => internalController.abort());
+        }
+      } catch (e) {
+        console.warn('AbortSignal.any failed, falling back to global signal only');
+        combinedSignal = signal;
       }
     }
 
-    fetchUrl = proxyUrl.toString();
-  } else {
-    fetchUrl = targetUrl;
-  }
-
-  // Create an internal timeout signal
-  const internalController = new AbortController();
-  const internalTimeout = setTimeout(() => internalController.abort(), timeoutMs);
-
-  // Combine signals: abort if EITHER the global budget OR this specific fetch timeout expires
-  let combinedSignal: AbortSignal = internalController.signal;
-  if (signal) {
     try {
-      // @ts-ignore - AbortSignal.any is available in modern Node.js (Vercel uses 18/20+)
-      if (typeof AbortSignal.any === 'function') {
-        combinedSignal = AbortSignal.any([internalController.signal, signal]);
-      } else {
-        // Fallback for older environments
-        signal.addEventListener('abort', () => internalController.abort());
+      const headers: Record<string, string> = { ...extraHeaders };
+      if (!isProxyActive) {
+        headers['User-Agent'] = getRandomUserAgent();
+        headers['Accept-Language'] = 'en-US,en;q=0.9';
+        headers['Referer'] = targetUrl.includes('gsmarena.com') ? 'https://www.gsmarena.com/' : 'https://www.google.com/';
       }
-    } catch (e) {
-      console.warn('AbortSignal.any failed, falling back to global signal only');
-      combinedSignal = signal;
+
+      const response = await fetch(fetchUrl, {
+        headers,
+        signal: combinedSignal,
+        // @ts-ignore - internal timeout
+        next: { revalidate: 0 }
+      });
+
+      const text = await response.text();
+
+      if (!response.ok) {
+        return { text, status: response.status, errorBody: text.slice(0, 200) };
+      }
+
+      if (isTurnstile(text)) {
+        console.warn(`Turnstile detected for ${targetUrl} (Render: ${render}, Proxy: ${isProxyActive})`);
+        return { text, status: response.status, turnstile: true };
+      }
+
+      return { text, status: response.status };
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        const isGlobal = signal?.aborted;
+        console.warn(`Fetch aborted (${isGlobal ? 'Global Budget' : 'Local Timeout'}): ${targetUrl}`);
+        return { text: null, status: 408, errorBody: isGlobal ? 'Global timeout' : 'Request timeout' };
+      }
+      console.error(`Network error fetching ${targetUrl}:`, error);
+      return { text: null, status: null };
+    } finally {
+      clearTimeout(internalTimeout);
     }
+  };
+
+  // Initial attempt with primary key
+  let result = await performFetch(primaryApiKey);
+
+  // If rate limited (403) and backup key exists, retry once
+  if (result.status === 403 && backupApiKey && useProxy && primaryApiKey !== backupApiKey) {
+    console.warn(`[Proxy] Primary key exhausted (403), retrying with backup key for: ${targetUrl}`);
+    result = await performFetch(backupApiKey);
   }
 
-  try {
-    const headers: Record<string, string> = { ...extraHeaders };
-    if (!isProxyActive) {
-      headers['User-Agent'] = getRandomUserAgent();
-      headers['Accept-Language'] = 'en-US,en;q=0.9';
-      headers['Referer'] = targetUrl.includes('gsmarena.com') ? 'https://www.gsmarena.com/' : 'https://www.google.com/';
-    }
-
-    const response = await fetch(fetchUrl, {
-      headers,
-      signal: combinedSignal,
-      // @ts-ignore - internal timeout
-      next: { revalidate: 0 }
-    });
-
-    const text = await response.text();
-
-    if (!response.ok) {
-      console.error(`Fetch failed (${response.status}) for ${targetUrl}. Body: ${text.slice(0, 200)}`);
-      return { text: null, status: response.status, errorBody: text.slice(0, 200) };
-    }
-
-    if (isTurnstile(text)) {
-      console.warn(`Turnstile detected for ${targetUrl} (Render: ${render}, Proxy: ${isProxyActive})`);
-      return { text, status: response.status, turnstile: true };
-    }
-
-    return { text, status: response.status };
-  } catch (error: any) {
-    if (error.name === 'AbortError') {
-      const isGlobal = signal?.aborted;
-      console.warn(`Fetch aborted (${isGlobal ? 'Global Budget' : 'Local Timeout'}): ${targetUrl}`);
-      return { text: null, status: 408, errorBody: isGlobal ? 'Global timeout' : 'Request timeout' };
-    }
-    console.error(`Network error fetching ${targetUrl}:`, error);
-    return { text: null, status: null };
-  } finally {
-    clearTimeout(internalTimeout);
+  // Handle errors if still failing
+  if (result.status && result.status >= 400 && result.status !== 408) {
+      console.error(`Fetch failed (${result.status}) for ${targetUrl}. Body: ${result.errorBody || ''}`);
   }
+
+  return result;
 }
 
 // Uses GSMArena internal suggest API (Quick Search) - typically less protected
@@ -281,6 +299,18 @@ function generateSmartStrategies(input: string): string[] {
   return [...new Set(strategies)].filter(q => q && q.length >= 2);
 }
 
+// Extracts a stable device ID from GSMArena URL (e.g. samsung_galaxy_a36-12822 -> samsung_galaxy_a36)
+function getDeviceId(url: string): string | null {
+  try {
+    const slug = url.split('/').pop()?.replace('.php', '');
+    if (!slug) return null;
+    // Remove the numeric ID suffix if present
+    return slug.split('-')[0];
+  } catch (e) {
+    return null;
+  }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const startTime = Date.now();
   const controller = new AbortController();
@@ -301,32 +331,61 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const cleanInput = rawQuery.trim();
+    let searchName = cleanInput;
     let redis: Redis | null = null;
 
     if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
       redis = Redis.fromEnv();
     }
 
-    // 1. Check Full Specs Cache
-    const cacheKey = `specs:${cleanInput.toLowerCase()}`;
+    // 0. Translation: Try to convert model number to market name (e.g. SM-A366B -> Samsung Galaxy A36)
     if (redis) {
-      const cached = await redis.get(cacheKey);
+      const translated = await redis.get(`device:${cleanInput.toLowerCase()}`);
+      if (translated && typeof translated === 'string') {
+        console.info(`[Translation] ${cleanInput} -> ${translated}`);
+        searchName = translated;
+      }
+    }
+
+    // 1. Check Query-based Cache (Fastest)
+    const cacheKey = `specs:${cleanInput.toLowerCase()}`;
+    const nameCacheKey = `specs:${searchName.toLowerCase()}`;
+
+    if (redis) {
+      const cached = await redis.get(cacheKey) || (searchName !== cleanInput ? await redis.get(nameCacheKey) : null);
       if (cached) {
-        console.info(`[Cache] Full specs hit for: ${cleanInput}`);
+        console.info(`[Cache] Full specs hit for query: ${cleanInput}`);
         return res.status(200).json(typeof cached === 'string' ? JSON.parse(cached) : cached);
       }
     }
 
-    // 2. Check URL Mapping Cache (Skip discovery phases)
+    // 2. Check URL Mapping Cache
     let targetDeviceUrl: string | null = null;
     let suggestImage: string = '';
     const urlMapKey = `url_map:${cleanInput.toLowerCase()}`;
+    const nameUrlMapKey = `url_map:${searchName.toLowerCase()}`;
+
     if (redis) {
-      targetDeviceUrl = await redis.get(urlMapKey);
-      if (targetDeviceUrl) console.info(`[Cache] URL mapping hit: ${targetDeviceUrl}`);
+      targetDeviceUrl = await redis.get(urlMapKey) || (searchName !== cleanInput ? await redis.get(nameUrlMapKey) : null);
+      if (targetDeviceUrl) {
+        console.info(`[Cache] URL mapping hit: ${targetDeviceUrl}`);
+
+        // 2b. Check Canonical Cache (keyed by URL/ID)
+        const deviceId = getDeviceId(targetDeviceUrl);
+        if (deviceId) {
+          const canonicalCached = await redis.get(`specs:url:${deviceId}`);
+          if (canonicalCached) {
+            console.info(`[Cache] Canonical specs hit for: ${deviceId}`);
+            const payload = typeof canonicalCached === 'string' ? JSON.parse(canonicalCached) : canonicalCached;
+            // Also update the query-based cache for next time
+            await redis.set(cacheKey, JSON.stringify(payload), { ex: 7776000 });
+            return res.status(200).json(payload);
+          }
+        }
+      }
     }
 
-    const strategies = generateSmartStrategies(cleanInput);
+    const strategies = generateSmartStrategies(searchName); // Use searchName for discovery
     let sawTurnstile = false;
 
     // 3. Discovery Phases (Only if URL not cached)
@@ -405,6 +464,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Save discovered URL to cache if found
       if (targetDeviceUrl && redis) {
         await redis.set(urlMapKey, targetDeviceUrl, { ex: 2592000 }); // 30 days
+        if (searchName !== cleanInput) await redis.set(nameUrlMapKey, targetDeviceUrl, { ex: 2592000 });
+
+        // 3b. Check Canonical Cache AGAIN after discovery but before extraction
+        const deviceId = getDeviceId(targetDeviceUrl);
+        if (deviceId) {
+          const canonicalCached = await redis.get(`specs:url:${deviceId}`);
+          if (canonicalCached) {
+            console.info(`[Cache] Canonical specs hit after discovery for: ${deviceId}`);
+            const payload = typeof canonicalCached === 'string' ? JSON.parse(canonicalCached) : canonicalCached;
+            await redis.set(cacheKey, JSON.stringify(payload), { ex: 7776000 });
+            return res.status(200).json(payload);
+          }
+        }
       }
     }
 
@@ -460,12 +532,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const payload = {
       search_query: cleanInput,
+      search_name: searchName,
       source_url: targetDeviceUrl,
       image: finalImage,
       specifications: specs,
       timing_ms: Date.now() - startTime
     };
-    if (redis) await redis.set(cacheKey, JSON.stringify(payload), { ex: 7776000 }); // 90 days
+
+    if (redis) {
+      const deviceId = getDeviceId(targetDeviceUrl);
+      const pipe = redis.pipeline();
+
+      // Save to canonical cache
+      if (deviceId) {
+        pipe.set(`specs:url:${deviceId}`, JSON.stringify(payload), { ex: 7776000 }); // 90 days
+      }
+
+      // Save to query-based caches
+      pipe.set(cacheKey, JSON.stringify(payload), { ex: 7776000 });
+      if (searchName !== cleanInput) {
+        pipe.set(`specs:${searchName.toLowerCase()}`, JSON.stringify(payload), { ex: 7776000 });
+      }
+
+      // Save URL mappings
+      pipe.set(urlMapKey, targetDeviceUrl, { ex: 2592000 }); // 30 days
+      if (searchName !== cleanInput) {
+        pipe.set(`url_map:${searchName.toLowerCase()}`, targetDeviceUrl, { ex: 2592000 });
+      }
+
+      await pipe.exec();
+    }
 
     return res.status(200).json(payload);
 
