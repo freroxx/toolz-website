@@ -112,12 +112,17 @@ async function scrapeGsmArenaSuggest(query: string, signal?: AbortSignal) {
     const results = JSON.parse(jsonText);
     if (Array.isArray(results) && results.length > 0) {
       const first = results[0];
-      if (first.id) {
+      // GSMArena internal suggest API often uses shorthand keys: n (name), i (image), u (url/id)
+      const id = first.id || first.u;
+      const text = first.text || first.n;
+      const image = first.image || first.i;
+
+      if (id) {
         // Construct image URL if available in suggest API
-        const imageUrl = first.image ? `https://fdn2.gsmarena.com/vv/bigpic/${first.image}` : '';
+        const imageUrl = image ? `https://fdn2.gsmarena.com/vv/bigpic/${image}` : '';
         return {
-          matchedUrl: `https://www.gsmarena.com/${first.id}.php`,
-          text: first.text,
+          matchedUrl: id.startsWith('http') ? id : `https://www.gsmarena.com/${String(id).replace(/^\//, '').replace(/\.php$/, '')}.php`,
+          text: text || '',
           image: imageUrl
         };
       }
@@ -168,9 +173,14 @@ async function scrapeDeviceSpecs(url: string, signal?: AbortSignal, options: { r
   // Extract main image URL
   let imageUrl = '';
   try {
-    const imgElement = $('#specs-cp-pic img');
+    // Try multiple selectors for the main image (GSMArena design updates frequently)
+    const imgElement = $('.specs-photo-main img, #specs-cp-pic img, #specs-cp-main img, img[src*="/bigpic/"]').first();
     if (imgElement.length > 0) {
       imageUrl = imgElement.attr('src') || '';
+      // Ensure absolute URL if needed
+      if (imageUrl && !imageUrl.startsWith('http')) {
+        imageUrl = `https://www.gsmarena.com/${imageUrl.replace(/^\//, '')}`;
+      }
     }
   } catch (e) {
     console.warn(`Failed to extract image from ${url}:`, e);
