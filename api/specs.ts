@@ -6,6 +6,9 @@ import * as cheerio from 'cheerio';
 // Detect Cloudflare Turnstile / anti-bot pages quickly
 function isTurnstile(html: string): boolean {
   if (!html) return false;
+  // If it looks like JSON, it's probably not a Turnstile page
+  if (html.trim().startsWith('{') || html.trim().startsWith('[')) return false;
+
   const lowered = html.toLowerCase();
   return (
     lowered.includes('cf-turnstile') ||
@@ -17,6 +20,18 @@ function isTurnstile(html: string): boolean {
     lowered.includes('verify you are human') ||
     lowered.includes('cloudflare.com/static/cos/')
   );
+}
+
+// User agent rotation for direct fetches
+const USER_AGENTS = [
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0'
+];
+
+function getRandomUserAgent() {
+  return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 }
 
 // Centralized fetch tool with integrated proxy support
@@ -59,7 +74,7 @@ async function fetchHtml(
   try {
     const headers: Record<string, string> = { ...extraHeaders };
     if (!isProxyActive) {
-      headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+      headers['User-Agent'] = getRandomUserAgent();
       headers['Accept-Language'] = 'en-US,en;q=0.9';
       headers['Referer'] = targetUrl.includes('gsmarena.com') ? 'https://www.gsmarena.com/' : 'https://www.google.com/';
     }
@@ -114,6 +129,15 @@ async function scrapeGsmArenaSuggest(query: string, signal?: AbortSignal) {
       'X-Requested-With': 'XMLHttpRequest',
       'Referer': 'https://www.gsmarena.com/'
     }, { render: false, timeoutMs: 3500, useProxy: true });
+  }
+
+  // Attempt 3: Final Premium/Render Fallback if still blocked and we have a budget (rarely needed for suggest)
+  if (result.turnstile && process.env.SCRAPER_ULTRA_PREMIUM === 'true') {
+    console.info(`[Phase 1] Proxy suggest blocked, retrying with Premium Render...`);
+    result = await fetchHtml(suggestUrl, signal, {
+      'X-Requested-With': 'XMLHttpRequest',
+      'Referer': 'https://www.gsmarena.com/'
+    }, { render: true, timeoutMs: 5000, useProxy: true });
   }
 
   if (result.turnstile) return { turnstile: true };
@@ -314,7 +338,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const discoveryResults = await Promise.all(
           engines.map(async (engine) => {
             const { text: html, turnstile } = await fetchHtml(engine.url, controller.signal, {}, { render: false, timeoutMs: 3000 });
-            if (turnstile || !html) return null;
+            if (turnstile) return { turnstile: true };
+            if (!html) return null;
             const $ = cheerio.load(html);
             let link: string | null = null;
             $('a').each((_, el) => {
@@ -326,10 +351,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 link = href.startsWith('http') ? href : `https://www.gsmarena.com/${href.replace(/^\//, '')}`;
               }
             });
-            return link;
+            return link ? { matchedUrl: link } : null;
           })
         );
-        targetDeviceUrl = discoveryResults.find(l => l) || null;
+
+        for (const res of discoveryResults) {
+          if (res?.turnstile) sawTurnstile = true;
+          if (res?.matchedUrl) {
+            targetDeviceUrl = res.matchedUrl;
+            break;
+          }
+        }
       }
 
       // Save discovered URL to cache if found
