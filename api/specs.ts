@@ -227,7 +227,7 @@ function generateSmartStrategies(input: string): string[] {
 
   return [...new Set(strategies)].filter(q => q && q.length >= 2);
 }
-
+2
 // Parallel discovery is now handled directly in the handler handler
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
