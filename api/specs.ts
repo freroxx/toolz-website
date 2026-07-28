@@ -24,13 +24,15 @@ async function fetchHtml(
   targetUrl: string,
   signal?: AbortSignal,
   extraHeaders: Record<string, string> = {},
-  options: { render?: boolean; timeoutMs?: number } = {}
+  options: { render?: boolean; timeoutMs?: number; useProxy?: boolean } = {}
 ): Promise<{ text: string | null; status: number | null; errorBody?: string; turnstile?: boolean }> {
   const apiKey = process.env.SCRAPER_API_KEY;
-  const { render = false, timeoutMs = 6000 } = options;
+  const { render = false, timeoutMs = 6000, useProxy = true } = options;
 
   let fetchUrl: string;
-  if (apiKey) {
+  const isProxyActive = apiKey && useProxy;
+
+  if (isProxyActive) {
     const proxyUrl = new URL('https://api.scraperapi.com/');
     proxyUrl.searchParams.set('api_key', apiKey);
     proxyUrl.searchParams.set('url', targetUrl);
@@ -56,7 +58,7 @@ async function fetchHtml(
 
   try {
     const headers: Record<string, string> = { ...extraHeaders };
-    if (!apiKey) {
+    if (!isProxyActive) {
       headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
       headers['Accept-Language'] = 'en-US,en;q=0.9';
       headers['Referer'] = targetUrl.includes('gsmarena.com') ? 'https://www.gsmarena.com/' : 'https://www.google.com/';
@@ -99,17 +101,26 @@ async function scrapeGsmArenaSuggest(query: string, signal?: AbortSignal) {
   const suggestUrl = `https://www.gsmarena.com/suggest.php3?sTerm=${encodeURIComponent(query)}`;
   console.info(`[Phase 1] Attempting Suggest API for: "${query}"`);
 
-  // Use NO rendering for Phase 1 to keep it fast
-  const { text: jsonText, turnstile } = await fetchHtml(suggestUrl, signal, {
+  // Attempt 1: Direct Fetch (fastest)
+  let result = await fetchHtml(suggestUrl, signal, {
     'X-Requested-With': 'XMLHttpRequest',
     'Referer': 'https://www.gsmarena.com/'
-  }, { render: false, timeoutMs: 4000 });
+  }, { render: false, timeoutMs: 2500, useProxy: false });
 
-  if (turnstile) return { turnstile: true };
-  if (!jsonText) return null;
+  // Attempt 2: Fallback to Proxy if blocked or failed
+  if (result.turnstile || !result.text) {
+    console.info(`[Phase 1] Direct suggest blocked/failed, retrying with proxy...`);
+    result = await fetchHtml(suggestUrl, signal, {
+      'X-Requested-With': 'XMLHttpRequest',
+      'Referer': 'https://www.gsmarena.com/'
+    }, { render: false, timeoutMs: 3500, useProxy: true });
+  }
+
+  if (result.turnstile) return { turnstile: true };
+  if (!result.text) return null;
 
   try {
-    const results = JSON.parse(jsonText);
+    const results = JSON.parse(result.text);
     if (Array.isArray(results) && results.length > 0) {
       const first = results[0];
       // GSMArena internal suggest API often uses shorthand keys: n (name), i (image), u (url/id)
@@ -266,10 +277,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 3. Discovery Phases (Only if URL not cached)
     if (!targetDeviceUrl) {
-      // Phase 1: Parallel Suggest API (Top 3 strategies)
+      // Phase 1: Parallel Suggest API (Top 2 strategies to reduce overhead)
       console.info(`[Phase 1] Searching for ${cleanInput}...`);
       const suggestResults = await Promise.all(
-        strategies.slice(0, 3).map(q => scrapeGsmArenaSuggest(q, controller.signal))
+        strategies.slice(0, 2).map(q => scrapeGsmArenaSuggest(q, controller.signal))
       );
 
       for (const res of suggestResults) {
