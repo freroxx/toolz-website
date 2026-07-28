@@ -306,26 +306,38 @@ async function scrapeDeviceSpecs(url: string, signal?: AbortSignal, options: { r
 }
 
 function generateSmartStrategies(input: string): string[] {
-  let clean = input.toLowerCase().trim().replace(/\b(sm-|gt-|sch-|sgh-|sph-)/gi, '');
-  clean = clean.replace(/[\/:,#]/g, ' ').replace(/\s+/g, ' ').trim();
+  const raw = input.trim();
+  const lower = raw.toLowerCase();
 
-  // Strategy 1: Original clean input
-  const strategies = [clean];
+  // Strategy 1: Exact original input (Crucial for technical model numbers like SM-A366B)
+  const strategies = [lower];
 
-  // Strategy 2: Handle squashed inputs (e.g., galaxya36 -> galaxy a36)
-  // Split between letters and numbers
+  // Strategy 2: Cleaned input (spaces replaced, small symbols removed)
+  let clean = lower.replace(/[\/:,#]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (clean !== lower) strategies.push(clean);
+
+  // Strategy 3: Handle squashed inputs (e.g., galaxya36 -> galaxy a36)
   const splitSquashed = clean.replace(/([a-z])([0-9])/g, '$1 $2').replace(/([0-9])([a-z])/g, '$1 $2');
   if (splitSquashed !== clean) strategies.push(splitSquashed);
 
+  // Strategy 4: Handle technical prefix stripping as fallback ONLY
+  // (sm-a366b -> a366b)
+  const stripped = lower.replace(/\b(sm-|gt-|sch-|sgh-|sph-)/gi, '');
+  if (stripped !== lower) {
+      strategies.push(stripped.trim());
+      const cleanStripped = stripped.replace(/[\/:,#]/g, ' ').replace(/\s+/g, ' ').trim();
+      if (cleanStripped !== stripped) strategies.push(cleanStripped);
+  }
+
   const parts = splitSquashed.split(/\s+/);
   if (parts.length > 1) {
-    // Strategy 3: Just the last part (often the model/number)
+    // Strategy 5: Just the last part (often the model/number)
     strategies.push(parts[parts.length - 1]);
-    // Strategy 4: All but the last part
+    // Strategy 6: All but the last part
     strategies.push(parts.slice(0, -1).join(' '));
   }
 
-  // Strategy 5: Completely squashed (no spaces)
+  // Strategy 7: Completely squashed (no spaces)
   strategies.push(parts.join(''));
 
   return [...new Set(strategies)].filter(q => q && q.length >= 2);
@@ -421,10 +433,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let sawTurnstile = false;
 
     if (!targetDeviceUrl) {
-      // Phase 1: Parallel Suggest API
+      // Phase 1: Parallel Suggest API (Fastest) - Try more strategies here since it's cheap
       console.info(`[Phase 1] Searching for ${searchName}...`);
       const suggestResults = await Promise.all(
-        discoveryStrategies.slice(0, 2).map(q => scrapeGsmArenaSuggest(q, controller.signal, startTime))
+        discoveryStrategies.slice(0, 3).map(q => scrapeGsmArenaSuggest(q, controller.signal, startTime))
       );
 
       for (const res of suggestResults) {
@@ -439,10 +451,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Phase 2: Sequential Direct Search
       if (!targetDeviceUrl && !controller.signal.aborted) {
         if (getRemainingTime(startTime, totalBudget) > 4000) {
-          for (const query of discoveryStrategies.slice(0, 2)) {
+          // Priority strategies for deep search
+          const priorityStrategies = discoveryStrategies.slice(0, 2);
+          for (const query of priorityStrategies) {
             const res = await scrapeGsmArenaSearchDebug(query, controller.signal, startTime, totalBudget);
             if (res?.matchedUrl) { targetDeviceUrl = res.matchedUrl; break; }
-            // Even if we hit Turnstile, we continue with other strategies or phases
             if (res?.turnstile) sawTurnstile = true;
             if (getRemainingTime(startTime, totalBudget) < 3000) break;
           }
@@ -450,14 +463,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
       }
 
-      // Phase 3: External Search
+      // Phase 3: External Search (Google/DDG)
       if (!targetDeviceUrl && !controller.signal.aborted) {
         const remainingForP3 = getRemainingTime(startTime, totalBudget);
-        if (remainingForP3 > 5000) {
-          console.info(`[Phase 3] External discovery for ${cleanInput}... Remaining: ${remainingForP3}ms`);
+        if (remainingForP3 > 5500) { // Slightly stricter requirement for P3
+          console.info(`[Phase 3] External discovery for ${searchName}... Remaining: ${remainingForP3}ms`);
           const engines = [
-            { name: 'Google', url: `https://www.google.com/search?q=site:gsmarena.com+${encodeURIComponent(cleanInput)}` },
-            { name: 'DuckDuckGo', url: `https://html.duckduckgo.com/html/?q=site:gsmarena.com+${encodeURIComponent(cleanInput)}` }
+            { name: 'Google', url: `https://www.google.com/search?q=site:gsmarena.com+${encodeURIComponent(searchName)}` },
+            { name: 'DuckDuckGo', url: `https://html.duckduckgo.com/html/?q=site:gsmarena.com+${encodeURIComponent(searchName)}` }
           ];
 
           const discoveryResults = await Promise.all(
