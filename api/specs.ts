@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Redis } from '@upstash/redis';
 import * as cheerio from 'cheerio';
 
+// For anyone reading this, I spent countless hours fixing this shit, not once not twice, this is a warning for any contributor, if it works, don't touch it
 // Detect Cloudflare Turnstile / anti-bot pages quickly
 function isTurnstile(html: string): boolean {
   if (!html) return false;
