@@ -94,6 +94,11 @@ const getDashboardUI = (password: string) => `
       margin-bottom: 6px;
       border-left: 4px solid transparent;
       background: rgba(255, 255, 255, 0.03);
+      animation: log-fade-in 0.3s ease-out forwards;
+    }
+    @keyframes log-fade-in {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
     }
     .log-item.success { border-color: #81C784; background: rgba(129, 199, 132, 0.08); }
     .log-item.error { border-color: #E57373; background: rgba(229, 115, 115, 0.08); }
@@ -173,24 +178,22 @@ const getDashboardUI = (password: string) => `
                 <div id="stat-progress-bar" class="progress-bar-fill" style="width: 0%"></div>
               </div>
             </div>
-            <div class="grid grid-cols-2 gap-4 pt-2">
-              <div class="stat-blue p-3 rounded-2xl">
-                <span class="text-[10px] uppercase font-bold opacity-70">Processed</span>
-                <div id="stat-processed" class="text-xl font-bold">0</div>
+              <div class="stat-blue p-4 rounded-[24px] border border-blue-500/20">
+                <span class="text-[10px] uppercase font-bold tracking-widest opacity-70">Processed</span>
+                <div id="stat-processed" class="text-2xl font-bold mt-1">0</div>
               </div>
-              <div class="stat-neutral p-3 rounded-2xl opacity-70">
-                <span class="text-[10px] uppercase font-bold">Queue Total</span>
-                <div id="stat-total" class="text-xl font-bold">0</div>
+              <div class="stat-neutral p-4 rounded-[24px] border border-white/10 opacity-70">
+                <span class="text-[10px] uppercase font-bold tracking-widest">Queue Total</span>
+                <div id="stat-total" class="text-2xl font-bold mt-1">0</div>
               </div>
-              <div class="stat-green p-3 rounded-2xl">
-                <span class="text-[10px] uppercase font-bold opacity-70">Success</span>
-                <div id="stat-success" class="text-xl font-bold">0</div>
+              <div class="stat-green p-4 rounded-[24px] border border-green-500/20">
+                <span class="text-[10px] uppercase font-bold tracking-widest opacity-70">Success</span>
+                <div id="stat-success" class="text-2xl font-bold mt-1">0</div>
               </div>
-              <div class="stat-red p-3 rounded-2xl">
-                <span class="text-[10px] uppercase font-bold opacity-70">Failures</span>
-                <div id="stat-fail" class="text-xl font-bold">0</div>
+              <div class="stat-red p-4 rounded-[24px] border border-red-500/20">
+                <span class="text-[10px] uppercase font-bold tracking-widest opacity-70">Failures</span>
+                <div id="stat-fail" class="text-2xl font-bold mt-1">0</div>
               </div>
-            </div>
             <button id="btn-view-fails" class="m3-button m3-button-outlined w-full justify-center text-xs mt-2">Open Failure Audit</button>
           </div>
         </section>
@@ -250,20 +253,34 @@ const getDashboardUI = (password: string) => `
 
     function addLog(msg, type = 'info', input = '', output = '') {
       const item = document.createElement('div');
-      item.className = \`log-item \${type}\`;
+      item.className = `log-item ${type}`;
 
-      let html = \`<div class="font-medium">\${msg}</div>\`;
+      let icon = '•';
+      if (type === 'success') icon = '✓';
+      if (type === 'error') icon = '⚠';
+      if (type === 'warn') icon = '⚡';
+
+      let html = `
+        <div class="flex items-center gap-3">
+          <span class="opacity-50 font-mono text-xs">${new Date().toLocaleTimeString()}</span>
+          <span class="font-bold text-[10px] uppercase tracking-tighter opacity-70">${icon} ${type}</span>
+          <div class="font-medium text-sm flex-grow">${msg}</div>
+        </div>
+      `;
+
       if (input || output) {
-        html += \`<div class="log-details">\`;
-        if (input) html += \`<div><strong>→ Input:</strong> \${input}</div>\`;
-        if (output) html += \`<div><strong>← Output:</strong> \${output}</div>\`;
-        html += \`</div>\`;
+        html += `
+          <div class="mt-2 ml-16 flex flex-col gap-1 border-l border-white/10 pl-3">
+            ${input ? `<div class="text-[11px]"><span class="opacity-40 uppercase font-bold mr-2">Input</span><span class="font-mono text-blue-300">${input}</span></div>` : ''}
+            ${output ? `<div class="text-[11px]"><span class="opacity-40 uppercase font-bold mr-2">Output</span><span class="font-mono text-emerald-300">${output}</span></div>` : ''}
+          </div>
+        `;
       }
 
       item.innerHTML = html;
       dom.terminal.appendChild(item);
       dom.terminal.scrollTop = dom.terminal.scrollHeight;
-      if (dom.terminal.children.length > 300) dom.terminal.removeChild(dom.terminal.firstChild);
+      if (dom.terminal.children.length > 200) dom.terminal.removeChild(dom.terminal.firstChild);
     }
 
     async function callApi(action, body = {}) {
@@ -446,10 +463,9 @@ const getPasswordPrompt = (error?: string) => `
  */
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  try {
-    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN || !process.env.SYNC_PASSWORD) {
-      return res.status(500).json({ error: "Missing Required Environment Variables" });
-    }
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN || !process.env.SYNC_PASSWORD) {
+    return res.status(500).json({ error: "Missing Required Environment Variables" });
+  }
 
   const redis = Redis.fromEnv();
   const SYNC_PASSWORD = process.env.SYNC_PASSWORD;
@@ -511,7 +527,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (action === 'get_failures') {
       const fails = await redis.hgetall(FAILURES_KEY);
-      return res.status(200).json({ fails });
+      // Parse JSON strings back into objects for the UI
+      const parsedFails = Object.entries(fails || {}).reduce((acc, [key, val]) => {
+        try {
+          acc[key] = typeof val === 'string' ? JSON.parse(val) : val;
+        } catch (e) {
+          acc[key] = { count: 1, errors: [String(val)] };
+        }
+        return acc;
+      }, {} as any);
+      return res.status(200).json({ fails: parsedFails });
     }
 
     if (action === 'start') {
@@ -570,7 +595,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ state, log: await addLog('Operations complete!', 'success') });
       }
 
+      // Pre-emptively advance index to prevent sticking on crash-prone devices
       const input = String(model);
+      state.currentIndex++;
+      await redis.set(STATE_KEY, state);
+
       let output = '';
 
       try {
@@ -579,18 +608,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const baseUrl = `${protocol}://${host}`;
 
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 18000);
+        const timeout = setTimeout(() => controller.abort(), 8000); // 8s timeout to stay within Vercel's 10s limit
 
         try {
           const specRes = await fetch(`${baseUrl}/api/specs?model=${encodeURIComponent(input)}`, {
-            signal: controller.signal
+            signal: controller.signal,
+            headers: { 'User-Agent': 'ToolzDeviceBot/1.0' }
           });
-          const data = await specRes.json();
+
+          let data: any;
+          try {
+            data = await specRes.json();
+          } catch (e) {
+            const text = await specRes.text();
+            throw new Error(`Invalid JSON response: ${text.slice(0, 100)}`);
+          }
 
           if (specRes.ok) {
             output = data.search_name || 'Specs Cached';
             state.successCount++;
-            state.currentIndex++;
+            // Update counts in Redis
             await redis.set(STATE_KEY, state);
             return res.status(200).json({ state, log: await addLog(`Success: ${input}`, 'success', input, output) });
           } else {
@@ -603,12 +640,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         output = e.message;
         state.failCount++;
 
-        const failData: any = (await redis.hget(FAILURES_KEY, input)) || { count: 0, errors: [] };
-        failData.count++;
-        failData.errors.push(output);
-        await redis.hset(FAILURES_KEY, { [input]: failData });
+        const rawFailData = await redis.hget(FAILURES_KEY, input);
+        const failData: any = typeof rawFailData === 'string' ? JSON.parse(rawFailData) : (rawFailData || { count: 0, errors: [] });
 
-        state.currentIndex++;
+        failData.count++;
+        failData.errors.push(output.slice(0, 200));
+        await redis.hset(FAILURES_KEY, { [input]: JSON.stringify(failData) });
+
+        // Update counts in Redis
         await redis.set(STATE_KEY, state);
 
         const type = failData.count > 5 ? 'error' : 'warn';
@@ -618,7 +657,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(400).json({ error: 'Invalid operation' });
   } catch (err: any) {
-    console.error("Handler Error:", err);
+    console.error("Bot Logic Error:", err);
     return res.status(500).json({ error: err.message || "Internal Server Error" });
   }
 }
