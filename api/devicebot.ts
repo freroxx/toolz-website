@@ -320,6 +320,14 @@ const getPasswordPrompt = (error?: string) => `
  */
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Explicitly catch missing environment variables before executing
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN || !process.env.SYNC_PASSWORD) {
+    return res.status(500).json({
+      error: "Missing Required Environment Variables, user skill issue detected",
+      details: "Please add UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN, and SYNC_PASSWORD to your environment settings, you fcking dumbass"
+    });
+  }
+
   const redis = Redis.fromEnv();
   const SYNC_PASSWORD = process.env.SYNC_PASSWORD || '';
   const isLocal = process.env.NODE_ENV === 'development';
@@ -377,34 +385,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (state.status === 'stopped') {
         // Initialize Queue
         await addLog('Initializing device queue from source...', 'info');
-        const sourceUrl = 'https://raw.githubusercontent.com/pbakondy/android-device-list/master/devices.json';
-        const response = await fetch(sourceUrl);
-        const devices = await response.json();
+        try {
+          const sourceUrl = 'https://raw.githubusercontent.com/pbakondy/android-device-list/master/devices.json';
+          const response = await fetch(sourceUrl);
+          if (!response.ok) throw new Error(`Failed to fetch source: ${response.statusText}`);
+          const devices = await response.json();
 
-        // Use a Set to unique models/names
-        const uniqueModels = new Set<string>();
-        for (const d of devices) {
-          if (d.model) uniqueModels.add(d.model);
-          if (d.name) uniqueModels.add(d.name);
+          // Use a Set to unique models/names
+          const uniqueModels = new Set<string>();
+          for (const d of devices) {
+            if (d.model) uniqueModels.add(d.model.trim());
+            if (d.name) uniqueModels.add(d.name.trim());
+          }
+
+          const models = Array.from(uniqueModels).filter(m => m.length > 1);
+          await redis.del(QUEUE_KEY);
+          // Chunk Rpush for large lists - 2000 is safer for Vercel request limits
+          const chunkSize = 2000;
+          for (let i = 0; i < models.length; i += chunkSize) {
+            await redis.rpush(QUEUE_KEY, ...models.slice(i, i + chunkSize));
+          }
+
+          state = {
+            status: 'running',
+            currentIndex: 0,
+            total: models.length,
+            successCount: 0,
+            failCount: 0,
+            delay: req.body.delay || 1000
+          };
+          await addLog(`Queue initialized with ${models.length} devices.`, 'success');
+        } catch (initErr: any) {
+          await addLog(`Queue Initialization Failed: ${initErr.message}`, 'error');
+          return res.status(500).json({ error: 'Failed to initialize device list', details: initErr.message });
         }
-
-        const models = Array.from(uniqueModels);
-        await redis.del(QUEUE_KEY);
-        // Chunk Rpush for large lists
-        const chunkSize = 5000;
-        for (let i = 0; i < models.length; i += chunkSize) {
-          await redis.rpush(QUEUE_KEY, ...models.slice(i, i + chunkSize));
-        }
-
-        state = {
-          status: 'running',
-          currentIndex: 0,
-          total: models.length,
-          successCount: 0,
-          failCount: 0,
-          delay: req.body.delay || 1000
-        };
-        await addLog(`Queue initialized with ${models.length} devices.`, 'success');
       } else {
         state.status = 'running';
         await addLog('Bot resumed.', 'info');
@@ -441,13 +455,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Execute Specs Sync
       try {
-        let baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
-        // Handle production custom domain if available, otherwise stick to VERCEL_URL
-        if (req.headers.host && !req.headers.host.includes('localhost')) {
-          baseUrl = `https://${req.headers.host}`;
+        let baseUrl = 'http://localhost:3000';
+        if (process.env.VERCEL_URL) {
+          baseUrl = `https://${process.env.VERCEL_URL}`;
+        }
+        // req.headers.host is the most reliable for the active domain
+        if (req.headers.host) {
+          const protocol = req.headers.host.includes('localhost') ? 'http' : 'https';
+          baseUrl = `${protocol}://${req.headers.host}`;
         }
 
-        const specRes = await fetch(`${baseUrl}/api/specs?model=${encodeURIComponent(String(model))}`);
+        const specRes = await fetch(`${baseUrl}/api/specs?model=${encodeURIComponent(String(model))}`, {
+          signal: AbortSignal.timeout(15000) // 15s timeout for the internal call
+        });
 
         if (specRes.ok) {
           state.successCount++;
