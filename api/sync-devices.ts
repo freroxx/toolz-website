@@ -99,6 +99,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(401).send(getPasswordPrompt());
     }
 
+    // 5. Cooldown Check (1 minute)
+    if (!isLocal) {
+      const cooldown = await redis.get('sync_cooldown');
+      if (cooldown) {
+        return res.status(429).json({
+          error: "Cooldown Active",
+          message: "Synchronization was recently performed. Please wait at least 1 minute between syncs."
+        });
+      }
+    }
+
     // --- Original Sync Logic ---
     const url = 'https://raw.githubusercontent.com/pbakondy/android-device-list/master/devices.json';
     const response = await fetch(url);
@@ -144,6 +155,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (chunkCount > 0) {
       await pipeline.exec();
     }
+
+    // Set cooldown for 1 minute
+    await redis.set('sync_cooldown', 'active', { ex: 60 });
 
     return res.status(200).json({ 
       success: true, 
