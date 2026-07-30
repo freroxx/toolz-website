@@ -204,11 +204,6 @@ const getDashboardUI = (password: string) => `
       const res = await api('step', { delay: parseInt(elements.inputDelay.value) });
       if (res.error) {
         addLog(\`Step Error: \${res.error}\`, 'error');
-        if (res.should_pause) {
-           state.status = 'paused';
-           updateUI();
-           return;
-        }
       }
 
       if (res.state) {
@@ -499,15 +494,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Skip to next after log
         state.currentIndex++;
         await redis.set(STATE_KEY, state);
-
-        // If blocked by Cloudflare (502/403 often in this project), pause the bot
-        const shouldPause = e.message.toLowerCase().includes('blocked') || e.message.toLowerCase().includes('turnstile');
-        if (shouldPause) {
-           state.status = 'paused';
-           await redis.set(STATE_KEY, state);
-           await addLog('Bot paused automatically due to anti-bot block.', 'error');
-           return res.status(200).json({ state, error: e.message, should_pause: true });
-        }
 
         return res.status(200).json({ state, log });
       }
