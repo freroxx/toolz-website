@@ -262,8 +262,8 @@ const getDashboardUI = (password: string) => `
       const res = await api('get_failures');
       if (res.fails) {
         const list = Object.entries(res.fails)
-          .map(([model, data]) => `${model}: ${data.count} fails (Last: ${data.errors.slice(-1)})`)
-          .join('\n');
+          .map(([model, data]) => \`\${model}: \${data.count} fails (Last: \${data.errors.slice(-1)})\`)
+          .join('\\n');
         alert(list || 'No failures recorded.');
       }
     };
@@ -302,7 +302,7 @@ const getPasswordPrompt = (error?: string) => `
   <form method="POST">
     <h1>Device Bot</h1>
     <p>Authentication required to access the bot controller.</p>
-    ${error ? \`<div class="error">\${error}</div>\` : ''}
+    ${error ? `<div class="error">${error}</div>` : ''}
     <input type="password" name="pw" placeholder="Enter password" required autofocus>
     <button type="submit">Unlock Dashboard</button>
   </form>
@@ -318,8 +318,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Explicitly catch missing environment variables before executing
   if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN || !process.env.SYNC_PASSWORD) {
     return res.status(500).json({
-      error: "Missing Required Environment Variables, user skill issue detected",
-      details: "Please add UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN, and SYNC_PASSWORD to your environment settings, you fcking dumbass"
+      error: "Missing Required Environment Variables",
+      details: "Please add UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN, and SYNC_PASSWORD to your environment settings."
     });
   }
 
@@ -395,11 +395,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
           const models = Array.from(uniqueModels).filter(m => m.length > 1);
           await redis.del(QUEUE_KEY);
-          // Chunk Rpush for large lists - 2000 is safer for Vercel request limits
+
+          // Use a pipeline for significantly faster queue initialization
+          const pipeline = redis.pipeline();
           const chunkSize = 2000;
           for (let i = 0; i < models.length; i += chunkSize) {
-            await redis.rpush(QUEUE_KEY, ...models.slice(i, i + chunkSize));
+            pipeline.rpush(QUEUE_KEY, ...models.slice(i, i + chunkSize));
           }
+          await pipeline.exec();
 
           state = {
             status: 'running',
@@ -460,19 +463,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           baseUrl = `${protocol}://${req.headers.host}`;
         }
 
-        const specRes = await fetch(`${baseUrl}/api/specs?model=${encodeURIComponent(String(model))}`, {
-          signal: AbortSignal.timeout(15000) // 15s timeout for the internal call
-        });
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
 
-        if (specRes.ok) {
-          state.successCount++;
-          const log = await addLog(`Processed: ${model}`, 'success');
-          state.currentIndex++;
-          await redis.set(STATE_KEY, state);
-          return res.status(200).json({ state, log });
-        } else {
-          const errData = await specRes.json().catch(() => ({}));
-          throw new Error(errData.error || `HTTP ${specRes.status}`);
+        try {
+          const specRes = await fetch(`${baseUrl}/api/specs?model=${encodeURIComponent(String(model))}`, {
+            signal: controller.signal
+          });
+
+          if (specRes.ok) {
+            state.successCount++;
+            const log = await addLog(`Processed: ${model}`, 'success');
+            state.currentIndex++;
+            await redis.set(STATE_KEY, state);
+            return res.status(200).json({ state, log });
+          } else {
+            const errData = await specRes.json().catch(() => ({}));
+            throw new Error(errData.error || `HTTP ${specRes.status}`);
+          }
+        } finally {
+          clearTimeout(timeout);
         }
       } catch (e: any) {
         state.failCount++;
