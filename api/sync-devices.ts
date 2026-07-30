@@ -1,7 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Redis } from '@upstash/redis';
-
-const SYNC_PASSWORD = "YahiaToolzSyncDevices2026#";
+import crypto from 'crypto';
 
 const getPasswordPrompt = (error?: string) => `
 <!DOCTYPE html>
@@ -22,7 +21,7 @@ const getPasswordPrompt = (error?: string) => `
   </style>
 </head>
 <body>
-  <form method="GET">
+  <form method="POST">
     <h1>Secure Sync</h1>
     <p>Authentication required to run device sync.</p>
     ${error ? `<div class="error">${error}</div>` : ''}
@@ -34,18 +33,19 @@ const getPasswordPrompt = (error?: string) => `
 `;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'GET') {
+  if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
   // 🛑 Explicitly catch missing environment variables before executing
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN || !process.env.SYNC_PASSWORD) {
     return res.status(500).json({ 
-      error: "Missing Upstash Redis Credentials", 
-      details: "Please add UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN to your Vercel Environment Variables settings." 
+      error: "Missing Required Environment Variables",
+      details: "Please add UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN, and SYNC_PASSWORD to your environment settings."
     });
   }
 
+  const SYNC_PASSWORD = process.env.SYNC_PASSWORD;
   const redis = Redis.fromEnv();
   const ip = (req.headers['x-forwarded-for'] as string || '').split(',')[0].trim() || 'unknown';
   const isLocal = process.env.NODE_ENV === 'development';
@@ -68,20 +68,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const authHeader = req.headers.authorization;
     const isCron = process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`;
     
-    const cookies = req.headers.cookie || '';
-    const hasValidCookie = cookies.includes(`sync_auth=${SYNC_PASSWORD}`);
+    // Cookie auth removed for better security as requested
+    const providedPw = req.method === 'POST' ? req.body?.pw : req.query?.pw;
 
-    const providedPw = req.query.pw as string;
-
-    let authenticated = isLocal || isCron || hasValidCookie;
+    let authenticated = isLocal || isCron;
 
     // 3. Handle Password Submission
     if (!authenticated && providedPw) {
-      if (providedPw === SYNC_PASSWORD) {
+      const bufProvided = Buffer.from(String(providedPw));
+      const bufExpected = Buffer.from(SYNC_PASSWORD);
+
+      if (bufProvided.length === bufExpected.length && crypto.timingSafeEqual(bufProvided, bufExpected)) {
         authenticated = true;
-        // Set cookie for 30 days
-        res.setHeader('Set-Cookie', `sync_auth=${SYNC_PASSWORD}; Max-Age=2592000; Path=/; HttpOnly; SameSite=Strict; Secure`);
-        // We continue execution
+        // Cookie logic removed
       } else {
         // Increment fails
         const fails = await redis.incr(`fails:${ip}`);
