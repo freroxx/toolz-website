@@ -3,7 +3,7 @@ import { Redis } from '@upstash/redis';
 import crypto from 'crypto';
 
 /**
- * Authentication & UI Logic
+ * Authentication & UI Logic (Material 3 Expressive Design)
  */
 
 const getDashboardUI = (password: string) => `
@@ -11,127 +11,262 @@ const getDashboardUI = (password: string) => `
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Device Registration Bot - Toolz</title>
+  <title>Device Bot — Material Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto+Mono&display=swap" rel="stylesheet">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap');
-    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-    .terminal { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; height: 300px; overflow-y: auto; background: #0f172a; color: #cbd5e1; }
-    .log-entry { border-bottom: 1px solid #1e293b; padding: 0.25rem 0.5rem; }
-    .log-info { color: #38bdf8; }
-    .log-error { color: #f43f5e; }
-    .log-success { color: #10b981; }
-    .log-warn { color: #fbbf24; }
+    :root {
+      --md-sys-color-primary: #d1e4ff;
+      --md-sys-color-on-primary: #003258;
+      --md-sys-color-primary-container: #00497d;
+      --md-sys-color-on-primary-container: #d1e4ff;
+      --md-sys-color-secondary: #bbc7db;
+      --md-sys-color-surface: #1a1c1e;
+      --md-sys-color-on-surface: #e2e2e6;
+      --md-sys-color-surface-variant: #43474e;
+      --md-sys-color-on-surface-variant: #c3c7d0;
+      --md-sys-color-outline: #8d9199;
+      --md-sys-color-error: #ffdad6;
+      --bg-card: #232528;
+      --bg-dialog: #232528;
+    }
+
+    body {
+      font-family: 'Google Sans', sans-serif;
+      background-color: var(--md-sys-color-surface);
+      color: var(--md-sys-color-on-surface);
+      margin: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .m3-card {
+      background: var(--bg-card);
+      border-radius: 28px;
+      padding: 24px;
+      border: 1px solid var(--md-sys-color-surface-variant);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .m3-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    }
+
+    .m3-button {
+      border-radius: 100px;
+      padding: 12px 24px;
+      font-weight: 500;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .m3-button-filled {
+      background-color: var(--md-sys-color-primary);
+      color: var(--md-sys-color-on-primary);
+    }
+    .m3-button-tonal {
+      background-color: var(--md-sys-color-primary-container);
+      color: var(--md-sys-color-on-primary-container);
+    }
+    .m3-button-outlined {
+      border: 1px solid var(--md-sys-color-outline);
+      color: var(--md-sys-color-primary);
+    }
+    .m3-button:active {
+      transform: scale(0.96);
+    }
+
+    .terminal {
+      font-family: 'Roboto Mono', monospace;
+      background: #000000;
+      color: #e2e2e6;
+      border-radius: 24px;
+      height: 400px;
+      overflow-y: auto;
+      padding: 20px;
+      font-size: 0.85rem;
+      border: 1px solid var(--md-sys-color-surface-variant);
+    }
+    .log-item {
+      padding: 10px 14px;
+      border-radius: 12px;
+      margin-bottom: 6px;
+      border-left: 4px solid transparent;
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .log-item.success { border-color: #81C784; background: rgba(129, 199, 132, 0.08); }
+    .log-item.error { border-color: #E57373; background: rgba(229, 115, 115, 0.08); }
+    .log-item.warn { border-color: #FFD54F; background: rgba(255, 213, 79, 0.08); }
+    .log-details { font-size: 0.75rem; color: #aeb2bb; margin-top: 6px; }
+
+    /* Modal Styles */
+    #modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 100;
+      backdrop-filter: blur(4px);
+    }
+    .m3-dialog {
+      background: var(--bg-dialog); border-radius: 28px; width: 90%; max-width: 600px; max-height: 80vh;
+      overflow-y: auto; padding: 32px; box-shadow: 0 24px 48px rgba(0,0,0,0.4);
+      border: 1px solid var(--md-sys-color-surface-variant);
+    }
+
+    .progress-bar-container {
+      height: 6px; background: var(--md-sys-color-surface-variant); border-radius: 3px; overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%; background: var(--md-sys-color-primary); transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Stats Accent Colors */
+    .stat-blue { background: rgba(209, 228, 255, 0.08); color: #d1e4ff; }
+    .stat-green { background: rgba(129, 199, 132, 0.08); color: #81c784; }
+    .stat-red { background: rgba(229, 115, 115, 0.08); color: #e57373; }
+    .stat-neutral { background: rgba(255, 255, 255, 0.05); color: #e2e2e6; }
   </style>
 </head>
-<body class="p-4 md:p-8">
-  <div class="max-w-4xl mx-auto space-y-6">
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+<body class="p-4 lg:p-12">
+  <div class="max-w-6xl mx-auto space-y-8">
+
+    <!-- App Bar -->
+    <header class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900">Device Bot Dashboard</h1>
-        <p class="text-slate-500 text-sm">Automated registration and caching for device specifications.</p>
+        <h1 class="text-3xl font-bold tracking-tight">Device Registration Bot</h1>
+        <p class="text-slate-500 mt-1">Material 3 Expressive Operations</p>
       </div>
-      <div class="flex items-center gap-2" id="status-badge">
-        <span class="relative flex h-3 w-3">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-3 w-3 bg-slate-500"></span>
-        </span>
-        <span class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Disconnected</span>
+      <div id="status-chip" class="px-4 py-2 rounded-full text-sm font-medium bg-slate-100 text-slate-600 flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+        <span>Disconnected</span>
+      </div>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Sidebar: Controls & Stats -->
+      <div class="space-y-6">
+        <section class="m3-card">
+          <h2 class="text-lg font-bold mb-4">Operations</h2>
+          <div class="flex flex-col gap-3">
+            <button id="btn-start" class="m3-button m3-button-filled w-full justify-center">Start Registration</button>
+            <button id="btn-pause" class="m3-button m3-button-tonal w-full justify-center hidden">Pause Bot</button>
+            <button id="btn-stop" class="m3-button m3-button-outlined w-full justify-center text-red-600 border-red-200 hover:bg-red-50">Reset Progress</button>
+          </div>
+
+          <div class="mt-6 space-y-2">
+            <label class="text-xs font-bold text-slate-500 uppercase">Step Delay</label>
+            <div class="flex items-center gap-3">
+              <input type="range" id="input-delay-range" min="200" max="5000" step="100" value="1000" class="flex-grow">
+              <span id="delay-val" class="text-sm font-mono bg-slate-100 px-2 py-1 rounded">1000ms</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="m3-card">
+          <h2 class="text-lg font-bold mb-4">Statistics</h2>
+          <div class="space-y-4">
+            <div>
+              <div class="flex justify-between text-sm mb-2">
+                <span class="font-medium">Total Progress</span>
+                <span id="stat-progress-text">0%</span>
+              </div>
+              <div class="progress-bar-container">
+                <div id="stat-progress-bar" class="progress-bar-fill" style="width: 0%"></div>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4 pt-2">
+              <div class="stat-blue p-3 rounded-2xl">
+                <span class="text-[10px] uppercase font-bold opacity-70">Processed</span>
+                <div id="stat-processed" class="text-xl font-bold">0</div>
+              </div>
+              <div class="stat-neutral p-3 rounded-2xl opacity-70">
+                <span class="text-[10px] uppercase font-bold">Queue Total</span>
+                <div id="stat-total" class="text-xl font-bold">0</div>
+              </div>
+              <div class="stat-green p-3 rounded-2xl">
+                <span class="text-[10px] uppercase font-bold opacity-70">Success</span>
+                <div id="stat-success" class="text-xl font-bold">0</div>
+              </div>
+              <div class="stat-red p-3 rounded-2xl">
+                <span class="text-[10px] uppercase font-bold opacity-70">Failures</span>
+                <div id="stat-fail" class="text-xl font-bold">0</div>
+              </div>
+            </div>
+            <button id="btn-view-fails" class="m3-button m3-button-outlined w-full justify-center text-xs mt-2">Open Failure Audit</button>
+          </div>
+        </section>
+      </div>
+
+      <!-- Main: Terminal Logs -->
+      <div class="lg:col-span-2">
+        <section class="m3-card h-full flex flex-col">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold">Execution Stream</h2>
+            <button id="btn-clear-logs" class="text-xs text-slate-400 hover:text-slate-600 font-medium">Clear Dashboard</button>
+          </div>
+          <div id="terminal" class="terminal flex-grow">
+            <div class="log-item">Ready for input. Click Start to begin synchronization.</div>
+          </div>
+        </section>
       </div>
     </div>
+  </div>
 
-    <!-- Stats Grid -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-        <p class="text-xs font-medium text-slate-500 uppercase">Progress</p>
-        <p class="text-xl font-bold text-slate-900" id="stat-progress">0%</p>
-        <div class="w-full bg-slate-100 rounded-full h-1.5 mt-2">
-          <div id="stat-progress-bar" class="bg-blue-600 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
-        </div>
+  <!-- Failure Modal -->
+  <div id="modal-overlay">
+    <div class="m3-dialog">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-bold text-red-600">Failure Audit</h2>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600">✕</button>
       </div>
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-        <p class="text-xs font-medium text-slate-500 uppercase">Processed</p>
-        <p class="text-xl font-bold text-slate-900" id="stat-processed">0 / 0</p>
-      </div>
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-        <p class="text-xs font-medium text-slate-500 uppercase">Successes</p>
-        <p class="text-xl font-bold text-green-600" id="stat-success">0</p>
-      </div>
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-        <p class="text-xs font-medium text-slate-500 uppercase">Failures</p>
-        <p class="text-xl font-bold text-rose-600" id="stat-fail">0</p>
-      </div>
-    </div>
-
-    <!-- Controls -->
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-      <div class="flex flex-wrap gap-3">
-        <button id="btn-start" class="px-6 py-2 bg-black text-white rounded-lg font-medium hover:bg-slate-800 transition-colors disabled:opacity-50">Start Bot</button>
-        <button id="btn-pause" class="px-6 py-2 bg-white border border-slate-200 text-slate-900 rounded-lg font-medium hover:bg-slate-50 transition-colors hidden">Pause</button>
-        <button id="btn-stop" class="px-6 py-2 bg-white border border-slate-200 text-rose-600 rounded-lg font-medium hover:bg-rose-50 transition-colors">Stop & Reset</button>
-        <button id="btn-view-fails" class="px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg font-medium hover:bg-slate-50 transition-colors">View Failures</button>
-        <div class="flex-grow"></div>
-        <div class="flex items-center gap-2">
-          <label class="text-sm font-medium text-slate-600">Delay (ms):</label>
-          <input type="number" id="input-delay" value="1000" min="100" class="w-20 px-2 py-1 border border-slate-200 rounded text-sm outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
-      </div>
-    </div>
-
-    <!-- Terminal -->
-    <div class="bg-slate-900 rounded-2xl shadow-lg overflow-hidden border border-slate-800">
-      <div class="px-4 py-2 bg-slate-800 flex items-center justify-between">
-        <span class="text-xs font-semibold text-slate-400 uppercase tracking-widest">Logs</span>
-        <button id="btn-clear-logs" class="text-[10px] text-slate-500 hover:text-white uppercase">Clear UI</button>
-      </div>
-      <div id="terminal" class="terminal p-2">
-        <div class="log-entry log-info">System ready. Waiting for user...</div>
+      <div id="fails-list" class="space-y-4">
+        <p class="text-slate-500 italic">No failures recorded in current session.</p>
       </div>
     </div>
   </div>
 
   <script>
     const PW = "${password}";
-    let state = {
-      status: 'stopped',
-      currentIndex: 0,
-      total: 0,
-      successCount: 0,
-      failCount: 0,
-      delay: 1000
-    };
-    let timer = null;
+    let state = { status: 'stopped', currentIndex: 0, total: 0, successCount: 0, failCount: 0 };
+    let isRequesting = false;
 
-    const elements = {
-      status: document.getElementById('status-badge'),
-      progressText: document.getElementById('stat-progress'),
+    const dom = {
+      statusChip: document.getElementById('status-chip'),
+      progressText: document.getElementById('stat-progress-text'),
       progressBar: document.getElementById('stat-progress-bar'),
       processed: document.getElementById('stat-processed'),
+      total: document.getElementById('stat-total'),
       success: document.getElementById('stat-success'),
       fail: document.getElementById('stat-fail'),
       terminal: document.getElementById('terminal'),
       btnStart: document.getElementById('btn-start'),
       btnPause: document.getElementById('btn-pause'),
       btnStop: document.getElementById('btn-stop'),
-      inputDelay: document.getElementById('input-delay'),
-      btnViewFails: document.getElementById('btn-view-fails')
+      btnFails: document.getElementById('btn-view-fails'),
+      delayRange: document.getElementById('input-delay-range'),
+      delayVal: document.getElementById('delay-val'),
+      modal: document.getElementById('modal-overlay'),
+      failsList: document.getElementById('fails-list')
     };
 
-    function addLog(msg, type = 'info') {
-      const entry = document.createElement('div');
-      entry.className = \`log-entry log-\${type}\`;
-      entry.textContent = \`[\${new Date().toLocaleTimeString()}] \${msg}\`;
-      elements.terminal.appendChild(entry);
-      elements.terminal.scrollTop = elements.terminal.scrollHeight;
+    function addLog(msg, type = 'info', input = '', output = '') {
+      const item = document.createElement('div');
+      item.className = \`log-item \${type}\`;
 
-      if (elements.terminal.children.length > 500) {
-        elements.terminal.removeChild(elements.terminal.firstChild);
+      let html = \`<div class="font-medium">\${msg}</div>\`;
+      if (input || output) {
+        html += \`<div class="log-details">\`;
+        if (input) html += \`<div><strong>→ Input:</strong> \${input}</div>\`;
+        if (output) html += \`<div><strong>← Output:</strong> \${output}</div>\`;
+        html += \`</div>\`;
       }
+
+      item.innerHTML = html;
+      dom.terminal.appendChild(item);
+      dom.terminal.scrollTop = dom.terminal.scrollHeight;
+      if (dom.terminal.children.length > 300) dom.terminal.removeChild(dom.terminal.firstChild);
     }
 
-    async function api(action, body = {}) {
+    async function callApi(action, body = {}) {
       try {
         const res = await fetch('/api/devicebot', {
           method: 'POST',
@@ -141,91 +276,71 @@ const getDashboardUI = (password: string) => `
         return await res.json();
       } catch (e) {
         console.error(e);
-        return { error: 'Network error' };
+        return { error: 'Network Connection Lost' };
       }
     }
 
     function updateUI() {
       const percent = state.total > 0 ? Math.round((state.currentIndex / state.total) * 100) : 0;
-      elements.progressText.textContent = \`\${percent}%\`;
-      elements.progressBar.style.width = \`\${percent}%\`;
-      elements.processed.textContent = \`\${state.currentIndex} / \${state.total}\`;
-      elements.success.textContent = state.successCount;
-      elements.fail.textContent = state.failCount;
+      dom.progressText.textContent = \`\${percent}%\`;
+      dom.progressBar.style.width = \`\${percent}%\`;
+      dom.processed.textContent = state.currentIndex;
+      dom.total.textContent = state.total;
+      dom.success.textContent = state.successCount;
+      dom.fail.textContent = state.failCount;
 
-      // Status Badge
-      const dot = elements.status.querySelector('.relative.inline-flex');
-      const ping = elements.status.querySelector('.animate-ping');
-      const text = elements.status.querySelector('span:last-child');
+      // Status Styling
+      const dot = dom.statusChip.querySelector('span:first-child');
+      const text = dom.statusChip.querySelector('span:last-child');
 
       if (state.status === 'running') {
-        dot.className = 'relative inline-flex rounded-full h-3 w-3 bg-emerald-500';
-        ping.className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75';
-        text.textContent = 'Running';
-        text.className = 'text-sm font-semibold text-emerald-600 uppercase tracking-wider';
-        elements.btnStart.classList.add('hidden');
-        elements.btnPause.classList.remove('hidden');
+        dom.statusChip.className = 'px-4 py-2 rounded-full text-sm font-medium bg-blue-50 text-blue-700 flex items-center gap-2';
+        dot.className = 'w-2 h-2 rounded-full bg-blue-500 animate-pulse';
+        text.textContent = 'Active Execution';
+        dom.btnStart.classList.add('hidden');
+        dom.btnPause.classList.remove('hidden');
       } else if (state.status === 'paused') {
-        dot.className = 'relative inline-flex rounded-full h-3 w-3 bg-amber-500';
-        ping.className = 'hidden';
-        text.textContent = 'Paused';
-        text.className = 'text-sm font-semibold text-amber-600 uppercase tracking-wider';
-        elements.btnStart.classList.remove('hidden');
-        elements.btnStart.textContent = 'Resume Bot';
-        elements.btnPause.classList.add('hidden');
+        dom.statusChip.className = 'px-4 py-2 rounded-full text-sm font-medium bg-amber-50 text-amber-700 flex items-center gap-2';
+        dot.className = 'w-2 h-2 rounded-full bg-amber-500';
+        text.textContent = 'Process Paused';
+        dom.btnStart.classList.remove('hidden');
+        dom.btnStart.textContent = 'Resume Execution';
+        dom.btnPause.classList.add('hidden');
       } else {
-        dot.className = 'relative inline-flex rounded-full h-3 w-3 bg-slate-500';
-        ping.className = 'hidden';
-        text.textContent = 'Stopped';
-        text.className = 'text-sm font-semibold text-slate-500 uppercase tracking-wider';
-        elements.btnStart.classList.remove('hidden');
-        elements.btnStart.textContent = 'Start Bot';
-        elements.btnPause.classList.add('hidden');
-      }
-    }
-
-    async function syncState() {
-      const res = await api('get_state');
-      if (res.state) {
-        state = res.state;
-        updateUI();
-        if (res.logs) {
-          res.logs.reverse().forEach(l => {
-            const parsed = JSON.parse(l);
-            addLog(parsed.msg, parsed.type);
-          });
-        }
+        dom.statusChip.className = 'px-4 py-2 rounded-full text-sm font-medium bg-slate-100 text-slate-600 flex items-center gap-2';
+        dot.className = 'w-2 h-2 rounded-full bg-slate-400';
+        text.textContent = 'Standby';
+        dom.btnStart.classList.remove('hidden');
+        dom.btnStart.textContent = 'Start Registration';
+        dom.btnPause.classList.add('hidden');
       }
     }
 
     async function step() {
-      if (state.status !== 'running') return;
+      if (state.status !== 'running' || isRequesting) return;
 
-      const res = await api('step', { delay: parseInt(elements.inputDelay.value) });
-      if (res.error) {
-        addLog(\`Step Error: \${res.error}\`, 'error');
-      }
-
-      if (res.state) {
-        state = res.state;
-        updateUI();
-      }
-
-      if (res.log) {
-        addLog(res.log.msg, res.log.type);
-        if (res.log.type === 'error' && Notification.permission === 'granted') {
-          new Notification('Device Bot - Critical Error', { body: res.log.msg });
+      isRequesting = true;
+      try {
+        const res = await callApi('step');
+        if (res.state) {
+          state = res.state;
+          updateUI();
         }
-      }
-
-      if (state.status === 'running') {
-        const d = parseInt(elements.inputDelay.value) || 1000;
-        setTimeout(step, d);
+        if (res.log) {
+          addLog(res.log.msg, res.log.type, res.log.input, res.log.output);
+        } else if (res.error) {
+          addLog(\`Execution Error: \${res.error}\`, 'error');
+        }
+      } finally {
+        isRequesting = false;
+        if (state.status === 'running') {
+          setTimeout(step, parseInt(dom.delayRange.value));
+        }
       }
     }
 
-    elements.btnStart.onclick = async () => {
-      const res = await api('start', { delay: parseInt(elements.inputDelay.value) });
+    dom.btnStart.onclick = async () => {
+      const res = await callApi('start');
       if (res.success) {
         state.status = 'running';
         updateUI();
@@ -233,48 +348,62 @@ const getDashboardUI = (password: string) => `
       }
     };
 
-    elements.btnPause.onclick = async () => {
-      const res = await api('pause');
+    dom.btnPause.onclick = async () => {
+      const res = await callApi('pause');
       if (res.success) {
         state.status = 'paused';
         updateUI();
       }
     };
 
-    elements.btnStop.onclick = async () => {
-      if (!confirm('Are you sure you want to stop and reset ALL progress?')) return;
-      const res = await api('stop');
+    dom.btnStop.onclick = async () => {
+      if (!confirm('Are you sure? This will wipe ALL progress and logs from the database.')) return;
+      const res = await callApi('stop');
       if (res.success) {
-        state.status = 'stopped';
-        state.currentIndex = 0;
-        state.successCount = 0;
-        state.failCount = 0;
+        location.reload();
+      }
+    };
+
+    dom.delayRange.oninput = () => {
+      dom.delayVal.textContent = \`\${dom.delayRange.value}ms\`;
+    };
+
+    dom.btnFails.onclick = async () => {
+      dom.modal.style.display = 'flex';
+      dom.failsList.innerHTML = '<div class="text-slate-400 animate-pulse">Loading failure logs...</div>';
+      const res = await callApi('get_failures');
+      if (res.fails && Object.keys(res.fails).length > 0) {
+        dom.failsList.innerHTML = Object.entries(res.fails).map(([model, data]) => `
+          <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
+            <div class="flex justify-between items-start mb-2">
+              <span class="font-bold text-blue-200">\${model}</span>
+              <span class="px-2 py-0.5 bg-red-900/40 text-red-300 text-[10px] font-bold rounded uppercase">\${data.count} Retries</span>
+            </div>
+            <div class="text-xs text-slate-400 font-mono">\${data.errors.slice(-1)}</div>
+          </div>
+        `).join('');
+      } else {
+        dom.failsList.innerHTML = '<p class="text-slate-500 italic text-center py-8">No failed devices found.</p>';
+      }
+    };
+
+    window.closeModal = () => dom.modal.style.display = 'none';
+    window.onclick = (e) => { if (e.target == dom.modal) closeModal(); };
+
+    // Initial Sync
+    (async () => {
+      const res = await callApi('get_state');
+      if (res.state) {
+        state = res.state;
         updateUI();
-        addLog('Bot stopped and reset.', 'warn');
+        if (res.logs) {
+          res.logs.reverse().forEach(l => {
+            const p = JSON.parse(l);
+            addLog(p.msg, p.type, p.input, p.output);
+          });
+        }
       }
-    };
-
-    elements.btnClearLogs.onclick = () => {
-      elements.terminal.innerHTML = '';
-    };
-
-    elements.btnViewFails.onclick = async () => {
-      const res = await api('get_failures');
-      if (res.fails) {
-        const list = Object.entries(res.fails)
-          .map(([model, data]) => \`\${model}: \${data.count} fails (Last: \${data.errors.slice(-1)})\`)
-          .join('\\n');
-        alert(list || 'No failures recorded.');
-      }
-    };
-
-    // Initialize
-    syncState();
-
-    // Browser Notification Setup
-    if ("Notification" in window) {
-      Notification.requestPermission();
-    }
+    })();
   </script>
 </body>
 </html>
@@ -285,26 +414,25 @@ const getPasswordPrompt = (error?: string) => `
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Device Bot - Authentication</title>
+  <title>Protected Access — Toolz</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f4f4f5; }
-    form { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); width: 100%; max-width: 360px; }
-    h1 { margin: 0 0 0.5rem 0; font-size: 1.25rem; font-weight: 600; text-align: center; }
-    p { color: #6b7280; font-size: 0.875rem; text-align: center; margin-bottom: 1.5rem; }
-    input { width: 100%; padding: 0.75rem; margin-bottom: 1rem; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
-    button { width: 100%; padding: 0.75rem; background: #000; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 1rem; transition: background 0.2s; }
-    button:hover { background: #1f2937; }
-    .error { color: #ef4444; font-size: 0.875rem; margin-bottom: 1rem; text-align: center; background: #fef2f2; padding: 0.5rem; border-radius: 4px; border: 1px solid #fee2e2; }
+    body { font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #fdfcff; }
+    form { background: #232528; padding: 32px; border-radius: 28px; border: 1px solid #43474e; width: 100%; max-width: 380px; text-align: center; color: #e2e2e6; }
+    h1 { margin: 0 0 12px 0; font-size: 1.5rem; color: #d1e4ff; }
+    p { color: #c3c7d0; font-size: 0.9rem; margin-bottom: 24px; }
+    input { width: 100%; padding: 12px 16px; margin-bottom: 16px; border: 1px solid #73777f; border-radius: 8px; box-sizing: border-box; background: #1a1c1e; color: white; }
+    button { width: 100%; padding: 12px; background: #d1e4ff; color: #003258; border: none; border-radius: 100px; cursor: pointer; font-weight: 500; }
+    .error { color: #ffdad6; font-size: 0.8rem; margin-bottom: 16px; background: #93000a; padding: 8px; border-radius: 4px; }
   </style>
 </head>
 <body>
   <form method="POST">
     <h1>Device Bot</h1>
-    <p>Authentication required to access the bot controller.</p>
+    <p>Authentication required to manage operations.</p>
     ${error ? `<div class="error">${error}</div>` : ''}
-    <input type="password" name="pw" placeholder="Enter password" required autofocus>
-    <button type="submit">Unlock Dashboard</button>
+    <input type="password" name="pw" placeholder="Auth Key" required autofocus>
+    <button type="submit">Verify & Access</button>
   </form>
 </body>
 </html>
@@ -315,35 +443,27 @@ const getPasswordPrompt = (error?: string) => `
  */
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Explicitly catch missing environment variables before executing
   if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN || !process.env.SYNC_PASSWORD) {
-    return res.status(500).json({
-      error: "Missing Required Environment Variables",
-      details: "Please add UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN, and SYNC_PASSWORD to your environment settings."
-    });
+    return res.status(500).json({ error: "Missing Required Environment Variables" });
   }
 
   const redis = Redis.fromEnv();
-  const SYNC_PASSWORD = process.env.SYNC_PASSWORD || '';
+  const SYNC_PASSWORD = process.env.SYNC_PASSWORD;
   const isLocal = process.env.NODE_ENV === 'development';
-  const ip = (req.headers['x-forwarded-for'] as string || '').split(',')[0].trim() || 'unknown';
 
-  // 1. Auth Logic (Same as sync-devices but adapted for JSON API)
   const providedPw = req.method === 'POST' ? req.body?.pw : req.query?.pw;
   let authenticated = isLocal || (providedPw && crypto.timingSafeEqual(Buffer.from(String(providedPw)), Buffer.from(SYNC_PASSWORD)));
 
   if (!authenticated) {
     if (req.method === 'POST' && req.body?.action) return res.status(401).json({ error: 'Unauthorized' });
-    if (providedPw) return res.status(401).send(getPasswordPrompt('Invalid password.'));
+    if (providedPw) return res.status(401).send(getPasswordPrompt('Invalid Auth Key.'));
     return res.status(401).send(getPasswordPrompt());
   }
 
-  // 2. Dashboard Rendering
   if (req.method === 'GET' || (req.method === 'POST' && !req.body.action)) {
     return res.status(200).send(getDashboardUI(String(providedPw || '')));
   }
 
-  // 3. Bot API Actions
   const action = req.body.action;
 
   try {
@@ -354,13 +474,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const getState = async () => {
       const s = await redis.get(STATE_KEY);
-      return (s as any) || { status: 'stopped', currentIndex: 0, total: 0, successCount: 0, failCount: 0, delay: 1000 };
+      return (s as any) || { status: 'stopped', currentIndex: 0, total: 0, successCount: 0, failCount: 0 };
     };
 
-    const addLog = async (msg: string, type: 'info' | 'error' | 'success' | 'warn' = 'info') => {
-      const log = JSON.stringify({ msg, type, ts: Date.now() });
+    const addLog = async (msg: string, type: string, input = '', output = '') => {
+      const log = JSON.stringify({ msg, type, input, output, ts: Date.now() });
       await redis.lpush(LOGS_KEY, log);
-      await redis.ltrim(LOGS_KEY, 0, 499);
+      await redis.ltrim(LOGS_KEY, 0, 299);
       return JSON.parse(log);
     };
 
@@ -378,48 +498,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (action === 'start') {
       let state = await getState();
       if (state.status === 'stopped') {
-        // Initialize Queue
-        await addLog('Initializing device queue from source...', 'info');
-        try {
-          const sourceUrl = 'https://raw.githubusercontent.com/pbakondy/android-device-list/master/devices.json';
-          const response = await fetch(sourceUrl);
-          if (!response.ok) throw new Error(`Failed to fetch source: ${response.statusText}`);
-          const devices = await response.json();
+        await addLog('Initializing system queue...', 'info');
+        const sourceUrl = 'https://raw.githubusercontent.com/pbakondy/android-device-list/master/devices.json';
+        const response = await fetch(sourceUrl);
+        const devices = await response.json();
 
-          // Use a Set to unique models/names
-          const uniqueModels = new Set<string>();
-          for (const d of devices) {
-            if (d.model) uniqueModels.add(d.model.trim());
-            if (d.name) uniqueModels.add(d.name.trim());
-          }
-
-          const models = Array.from(uniqueModels).filter(m => m.length > 1);
-          await redis.del(QUEUE_KEY);
-
-          // Use a pipeline for significantly faster queue initialization
-          const pipeline = redis.pipeline();
-          const chunkSize = 2000;
-          for (let i = 0; i < models.length; i += chunkSize) {
-            pipeline.rpush(QUEUE_KEY, ...models.slice(i, i + chunkSize));
-          }
-          await pipeline.exec();
-
-          state = {
-            status: 'running',
-            currentIndex: 0,
-            total: models.length,
-            successCount: 0,
-            failCount: 0,
-            delay: req.body.delay || 1000
-          };
-          await addLog(`Queue initialized with ${models.length} devices.`, 'success');
-        } catch (initErr: any) {
-          await addLog(`Queue Initialization Failed: ${initErr.message}`, 'error');
-          return res.status(500).json({ error: 'Failed to initialize device list', details: initErr.message });
+        const unique = new Set<string>();
+        for (const d of devices) {
+          if (d.model?.trim().length > 1) unique.add(d.model.trim());
+          if (d.name?.trim().length > 1) unique.add(d.name.trim());
         }
+
+        const models = Array.from(unique);
+        await redis.del(QUEUE_KEY);
+        const pipeline = redis.pipeline();
+        for (let i = 0; i < models.length; i += 2000) {
+          pipeline.rpush(QUEUE_KEY, ...models.slice(i, i + 2000));
+        }
+        await pipeline.exec();
+
+        state = { status: 'running', currentIndex: 0, total: models.length, successCount: 0, failCount: 0 };
+        await addLog(`Queue built: ${models.length} items.`, 'success');
       } else {
         state.status = 'running';
-        await addLog('Bot resumed.', 'info');
+        await addLog('System resumed.', 'info');
       }
       await redis.set(STATE_KEY, state);
       return res.status(200).json({ success: true, state });
@@ -429,7 +531,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const state = await getState();
       state.status = 'paused';
       await redis.set(STATE_KEY, state);
-      await addLog('Bot paused.', 'warn');
+      await addLog('System paused by user.', 'warn');
       return res.status(200).json({ success: true });
     }
 
@@ -440,79 +542,63 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (action === 'step') {
       const state = await getState();
-      if (state.status !== 'running') return res.status(400).json({ error: 'Bot is not running' });
+      if (state.status !== 'running') return res.status(400).json({ error: 'System inactive' });
 
-      // Get next item from queue
       const model = await redis.lindex(QUEUE_KEY, state.currentIndex);
       if (!model) {
         state.status = 'stopped';
         await redis.set(STATE_KEY, state);
-        const finishLog = await addLog('All devices processed!', 'success');
-        return res.status(200).json({ state, log: finishLog });
+        return res.status(200).json({ state, log: await addLog('Operations complete!', 'success') });
       }
 
-      // Execute Specs Sync
+      const input = String(model);
+      let output = '';
+
       try {
-        let baseUrl = 'http://localhost:3000';
-        if (process.env.VERCEL_URL) {
-          baseUrl = `https://${process.env.VERCEL_URL}`;
-        }
-        // req.headers.host is the most reliable for the active domain
-        if (req.headers.host) {
-          const protocol = req.headers.host.includes('localhost') ? 'http' : 'https';
-          baseUrl = `${protocol}://${req.headers.host}`;
-        }
+        const host = req.headers.host || 'localhost:3000';
+        const protocol = host.includes('localhost') ? 'http' : 'https';
+        const baseUrl = `${protocol}://${host}`;
 
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000);
+        const timeout = setTimeout(() => controller.abort(), 18000);
 
         try {
-          const specRes = await fetch(`${baseUrl}/api/specs?model=${encodeURIComponent(String(model))}`, {
+          const specRes = await fetch(`${baseUrl}/api/specs?model=${encodeURIComponent(input)}`, {
             signal: controller.signal
           });
+          const data = await specRes.json();
 
           if (specRes.ok) {
+            output = data.search_name || 'Specs Cached';
             state.successCount++;
-            const log = await addLog(`Processed: ${model}`, 'success');
             state.currentIndex++;
             await redis.set(STATE_KEY, state);
-            return res.status(200).json({ state, log });
+            return res.status(200).json({ state, log: await addLog(`Success: ${input}`, 'success', input, output) });
           } else {
-            const errData = await specRes.json().catch(() => ({}));
-            throw new Error(errData.error || `HTTP ${specRes.status}`);
+            throw new Error(data.error || `HTTP ${specRes.status}`);
           }
         } finally {
           clearTimeout(timeout);
         }
       } catch (e: any) {
+        output = e.message;
         state.failCount++;
 
-        // Failure tracking
-        const failInfo: any = (await redis.hget(FAILURES_KEY, String(model))) || { count: 0, errors: [] };
-        failInfo.count++;
-        failInfo.errors.push(e.message);
-        failInfo.lastAttempt = Date.now();
-        await redis.hset(FAILURES_KEY, { [String(model)]: failInfo });
+        const failData: any = (await redis.hget(FAILURES_KEY, input)) || { count: 0, errors: [] };
+        failData.count++;
+        failData.errors.push(output);
+        await redis.hset(FAILURES_KEY, { [input]: failData });
 
-        const logType = failInfo.count >= 20 ? 'error' : 'warn';
-        const msg = failInfo.count >= 20
-          ? `CRITICAL FAIL (${failInfo.count}): ${model} - ${e.message}`
-          : `Failed: ${model} (Try ${failInfo.count}) - ${e.message}`;
-
-        const log = await addLog(msg, logType as any);
-
-        // Skip to next after log
         state.currentIndex++;
         await redis.set(STATE_KEY, state);
 
-        return res.status(200).json({ state, log });
+        const type = failData.count > 5 ? 'error' : 'warn';
+        return res.status(200).json({ state, log: await addLog(`Failed: ${input}`, type, input, output) });
       }
     }
 
-    return res.status(400).json({ error: 'Unknown action' });
-
+    return res.status(400).json({ error: 'Invalid operation' });
   } catch (err: any) {
-    console.error(err);
     return res.status(500).json({ error: err.message });
   }
 }
