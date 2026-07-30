@@ -253,28 +253,28 @@ const getDashboardUI = (password: string) => `
 
     function addLog(msg, type = 'info', input = '', output = '') {
       const item = document.createElement('div');
-      item.className = `log-item ${type}`;
+      item.className = \`log-item \${type}\`;
 
       let icon = '•';
       if (type === 'success') icon = '✓';
       if (type === 'error') icon = '⚠';
       if (type === 'warn') icon = '⚡';
 
-      let html = `
+      let html = \`
         <div class="flex items-center gap-3">
-          <span class="opacity-50 font-mono text-xs">${new Date().toLocaleTimeString()}</span>
-          <span class="font-bold text-[10px] uppercase tracking-tighter opacity-70">${icon} ${type}</span>
-          <div class="font-medium text-sm flex-grow">${msg}</div>
+          <span class="opacity-50 font-mono text-xs">\${new Date().toLocaleTimeString()}</span>
+          <span class="font-bold text-[10px] uppercase tracking-tighter opacity-70">\${icon} \${type}</span>
+          <div class="font-medium text-sm flex-grow">\${msg}</div>
         </div>
-      `;
+      \`;
 
       if (input || output) {
-        html += `
+        html += \`
           <div class="mt-2 ml-16 flex flex-col gap-1 border-l border-white/10 pl-3">
-            ${input ? `<div class="text-[11px]"><span class="opacity-40 uppercase font-bold mr-2">Input</span><span class="font-mono text-blue-300">${input}</span></div>` : ''}
-            ${output ? `<div class="text-[11px]"><span class="opacity-40 uppercase font-bold mr-2">Output</span><span class="font-mono text-emerald-300">${output}</span></div>` : ''}
+            \${input ? \`<div class="text-[11px]"><span class="opacity-40 uppercase font-bold mr-2">Input</span><span class="font-mono text-blue-300">\${input}</span></div>\` : ''}
+            \${output ? \`<div class="text-[11px]"><span class="opacity-40 uppercase font-bold mr-2">Output</span><span class="font-mono text-emerald-300">\${output}</span></div>\` : ''}
           </div>
-        `;
+        \`;
       }
 
       item.innerHTML = html;
@@ -392,15 +392,15 @@ const getDashboardUI = (password: string) => `
       if (res.fails && Object.keys(res.fails).length > 0) {
         dom.failsList.innerHTML = Object.entries(res.fails).map(([model, data]) => {
           const lastError = Array.isArray(data.errors) ? data.errors[data.errors.length - 1] : 'Unknown error';
-          return `
+          return \`
             <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
               <div class="flex justify-between items-start mb-2">
-                <span class="font-bold text-blue-200">${model}</span>
-                <span class="px-2 py-0.5 bg-red-900/40 text-red-300 text-[10px] font-bold rounded uppercase">${data.count} Retries</span>
+                <span class="font-bold text-blue-200">\${model}</span>
+                <span class="px-2 py-0.5 bg-red-900/40 text-red-300 text-[10px] font-bold rounded uppercase">\${data.count} Retries</span>
               </div>
-              <div class="text-xs text-slate-400 font-mono">${lastError}</div>
+              <div class="text-xs text-slate-400 font-mono">\${lastError}</div>
             </div>
-          `;
+          \`;
         }).join('');
       } else {
         dom.failsList.innerHTML = '<p class="text-slate-500 italic text-center py-8">No failed devices found.</p>';
