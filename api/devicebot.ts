@@ -373,15 +373,18 @@ const getDashboardUI = (password: string) => `
       dom.failsList.innerHTML = '<div class="text-slate-400 animate-pulse">Loading failure logs...</div>';
       const res = await callApi('get_failures');
       if (res.fails && Object.keys(res.fails).length > 0) {
-        dom.failsList.innerHTML = Object.entries(res.fails).map(([model, data]) => `
-          <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
-            <div class="flex justify-between items-start mb-2">
-              <span class="font-bold text-blue-200">\${model}</span>
-              <span class="px-2 py-0.5 bg-red-900/40 text-red-300 text-[10px] font-bold rounded uppercase">\${data.count} Retries</span>
+        dom.failsList.innerHTML = Object.entries(res.fails).map(([model, data]) => {
+          const lastError = Array.isArray(data.errors) ? data.errors[data.errors.length - 1] : 'Unknown error';
+          return `
+            <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
+              <div class="flex justify-between items-start mb-2">
+                <span class="font-bold text-blue-200">${model}</span>
+                <span class="px-2 py-0.5 bg-red-900/40 text-red-300 text-[10px] font-bold rounded uppercase">${data.count} Retries</span>
+              </div>
+              <div class="text-xs text-slate-400 font-mono">${lastError}</div>
             </div>
-            <div class="text-xs text-slate-400 font-mono">\${data.errors.slice(-1)}</div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
       } else {
         dom.failsList.innerHTML = '<p class="text-slate-500 italic text-center py-8">No failed devices found.</p>';
       }
@@ -443,16 +446,29 @@ const getPasswordPrompt = (error?: string) => `
  */
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN || !process.env.SYNC_PASSWORD) {
-    return res.status(500).json({ error: "Missing Required Environment Variables" });
-  }
+  try {
+    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN || !process.env.SYNC_PASSWORD) {
+      return res.status(500).json({ error: "Missing Required Environment Variables" });
+    }
 
   const redis = Redis.fromEnv();
   const SYNC_PASSWORD = process.env.SYNC_PASSWORD;
   const isLocal = process.env.NODE_ENV === 'development';
 
   const providedPw = req.method === 'POST' ? req.body?.pw : req.query?.pw;
-  let authenticated = isLocal || (providedPw && crypto.timingSafeEqual(Buffer.from(String(providedPw)), Buffer.from(SYNC_PASSWORD)));
+  let authenticated = isLocal;
+
+  if (!authenticated && providedPw && SYNC_PASSWORD) {
+    try {
+      const bufProvided = Buffer.from(String(providedPw));
+      const bufExpected = Buffer.from(SYNC_PASSWORD);
+      if (bufProvided.length === bufExpected.length) {
+        authenticated = crypto.timingSafeEqual(bufProvided, bufExpected);
+      }
+    } catch (e) {
+      console.error("Auth error:", e);
+    }
+  }
 
   if (!authenticated) {
     if (req.method === 'POST' && req.body?.action) return res.status(401).json({ error: 'Unauthorized' });
@@ -474,11 +490,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const getState = async () => {
       const s = await redis.get(STATE_KEY);
-      return (s as any) || { status: 'stopped', currentIndex: 0, total: 0, successCount: 0, failCount: 0 };
+      if (!s) return { status: 'stopped', currentIndex: 0, total: 0, successCount: 0, failCount: 0 };
+      return typeof s === 'string' ? JSON.parse(s) : s;
     };
 
     const addLog = async (msg: string, type: string, input = '', output = '') => {
-      const log = JSON.stringify({ msg, type, input, output, ts: Date.now() });
+      // Truncate output to prevent payload size issues (Vercel 4.5MB limit)
+      const safeOutput = typeof output === 'string' ? (output.length > 400 ? output.slice(0, 400) + '...' : output) : JSON.stringify(output).slice(0, 400);
+      const log = JSON.stringify({ msg, type, input, output: safeOutput, ts: Date.now() });
       await redis.lpush(LOGS_KEY, log);
       await redis.ltrim(LOGS_KEY, 0, 299);
       return JSON.parse(log);
@@ -599,6 +618,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(400).json({ error: 'Invalid operation' });
   } catch (err: any) {
-    return res.status(500).json({ error: err.message });
+    console.error("Handler Error:", err);
+    return res.status(500).json({ error: err.message || "Internal Server Error" });
   }
 }
