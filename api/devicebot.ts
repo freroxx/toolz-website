@@ -124,11 +124,27 @@ const getDashboardUI = (password: string) => `
       height: 100%; background: var(--md-sys-color-primary); transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Stats Accent Colors */
-    .stat-blue { background: rgba(209, 228, 255, 0.08); color: #d1e4ff; }
-    .stat-green { background: rgba(129, 199, 132, 0.08); color: #81c784; }
-    .stat-red { background: rgba(229, 115, 115, 0.08); color: #e57373; }
-    .stat-neutral { background: rgba(255, 255, 255, 0.05); color: #e2e2e6; }
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--md-sys-color-surface); }
+    ::-webkit-scrollbar-thumb { background: var(--md-sys-color-outline); border-radius: 10px; border: 2px solid var(--md-sys-color-surface); }
+    ::-webkit-scrollbar-thumb:hover { background: var(--md-sys-color-primary); }
+
+    .error-box {
+      background: #93000a; color: #ffdad6; border-radius: 16px; padding: 16px; margin-bottom: 24px;
+      display: none; align-items: start; gap: 12px; border: 1px solid #ffb4ab;
+      animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+    }
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-1px, 0, 0); }
+      20%, 80% { transform: translate3d(2px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+      40%, 60% { transform: translate3d(4px, 0, 0); }
+    }
+
+    .m3-button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+    .spinner { width: 18px; height: 18px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body class="p-4 lg:p-12">
@@ -201,6 +217,16 @@ const getDashboardUI = (password: string) => `
 
       <!-- Main: Terminal Logs -->
       <div class="lg:col-span-2">
+        <!-- Global Error Box -->
+        <div id="global-error" class="error-box">
+          <span class="text-xl">⚠</span>
+          <div class="flex-grow">
+            <div class="font-bold">System Alert</div>
+            <div id="error-msg" class="text-sm opacity-90"></div>
+          </div>
+          <button onclick="closeError()" class="opacity-50 hover:opacity-100 text-xl leading-none">&times;</button>
+        </div>
+
         <section class="m3-card h-full flex flex-col">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-bold">Execution Stream</h2>
@@ -248,8 +274,27 @@ const getDashboardUI = (password: string) => `
       delayRange: document.getElementById('input-delay-range'),
       delayVal: document.getElementById('delay-val'),
       modal: document.getElementById('modal-overlay'),
-      failsList: document.getElementById('fails-list')
+      failsList: document.getElementById('fails-list'),
+      errorBox: document.getElementById('global-error'),
+      errorMsg: document.getElementById('error-msg')
     };
+
+    function showError(msg) {
+      dom.errorMsg.textContent = msg;
+      dom.errorBox.style.display = 'flex';
+    }
+    window.closeError = () => dom.errorBox.style.display = 'none';
+
+    function setBtnLoading(btn, isLoading, originalHtml) {
+      if (isLoading) {
+        btn.disabled = true;
+        btn.dataset.original = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner"></span> Working...';
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = btn.dataset.original || originalHtml;
+      }
+    }
 
     function addLog(msg, type = 'info', input = '', output = '') {
       const item = document.createElement('div');
@@ -357,7 +402,10 @@ const getDashboardUI = (password: string) => `
     }
 
     dom.btnStart.onclick = async () => {
+      setBtnLoading(dom.btnStart, true);
       const res = await callApi('start');
+      setBtnLoading(dom.btnStart, false);
+      if (res.error) return showError(res.error);
       if (res.success) {
         state.status = 'running';
         updateUI();
@@ -366,7 +414,10 @@ const getDashboardUI = (password: string) => `
     };
 
     dom.btnPause.onclick = async () => {
+      setBtnLoading(dom.btnPause, true);
       const res = await callApi('pause');
+      setBtnLoading(dom.btnPause, false);
+      if (res.error) return showError(res.error);
       if (res.success) {
         state.status = 'paused';
         updateUI();
@@ -375,9 +426,13 @@ const getDashboardUI = (password: string) => `
 
     dom.btnStop.onclick = async () => {
       if (!confirm('Are you sure? This will wipe ALL progress and logs from the database.')) return;
+      setBtnLoading(dom.btnStop, true);
       const res = await callApi('stop');
       if (res.success) {
         location.reload();
+      } else {
+        setBtnLoading(dom.btnStop, false);
+        showError(res.error || 'Reset failed');
       }
     };
 
@@ -387,23 +442,49 @@ const getDashboardUI = (password: string) => `
 
     dom.btnFails.onclick = async () => {
       dom.modal.style.display = 'flex';
-      dom.failsList.innerHTML = '<div class="text-slate-400 animate-pulse">Loading failure logs...</div>';
+      dom.failsList.innerHTML = '<div class="text-slate-400 animate-pulse text-center py-8">Auditing failure logs...</div>';
       const res = await callApi('get_failures');
       if (res.fails && Object.keys(res.fails).length > 0) {
         dom.failsList.innerHTML = Object.entries(res.fails).map(([model, data]) => {
           const lastError = Array.isArray(data.errors) ? data.errors[data.errors.length - 1] : 'Unknown error';
-          return \`
-            <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
-              <div class="flex justify-between items-start mb-2">
-                <span class="font-bold text-blue-200">\${model}</span>
-                <span class="px-2 py-0.5 bg-red-900/40 text-red-300 text-[10px] font-bold rounded uppercase">\${data.count} Retries</span>
+          return `
+            <div class="p-4 bg-white/5 rounded-2xl border border-white/10 hover:border-white/20 transition-colors">
+              <div class="flex justify-between items-center mb-3">
+                <span class="font-bold text-blue-200 tracking-tight text-lg">\${model}</span>
+                <button onclick="retrySingle('\${model}', this)" class="text-[10px] px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-bold uppercase transition-all active:scale-95">Retry Now</button>
               </div>
-              <div class="text-xs text-slate-400 font-mono">\${lastError}</div>
+              <div class="space-y-2">
+                <div class="flex items-center gap-2">
+                   <span class="px-2 py-0.5 bg-red-900/40 text-red-300 text-[10px] font-bold rounded uppercase">\${data.count} Fails</span>
+                   <span class="h-px bg-white/5 flex-grow"></span>
+                </div>
+                <div class="text-xs text-slate-400 font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed">\${lastError}</div>
+              </div>
             </div>
-          \`;
+          `;
         }).join('');
       } else {
         dom.failsList.innerHTML = '<p class="text-slate-500 italic text-center py-8">No failed devices found.</p>';
+      }
+    };
+
+    window.retrySingle = async (model, btn) => {
+      const originalHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = 'Retrying...';
+      const res = await callApi('retry_model', { model });
+      if (res.success) {
+        btn.innerHTML = 'Success!';
+        btn.className = btn.className.replace('bg-blue-600', 'bg-green-600');
+        addLog(\`Manual Retry Success: \${model}\`, 'success', model, res.output);
+        setTimeout(() => {
+          // Re-load failures to remove fixed item
+          dom.btnFails.click();
+        }, 1000);
+      } else {
+        btn.innerHTML = 'Failed Again';
+        btn.disabled = false;
+        showError(\`Retry Failed for \${model}: \${res.error}\`);
       }
     };
 
@@ -472,9 +553,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const isLocal = process.env.NODE_ENV === 'development';
 
   const providedPw = req.method === 'POST' ? req.body?.pw : req.query?.pw;
-  let authenticated = isLocal;
+  let authenticated = false; // Always force authentication
 
-  if (!authenticated && providedPw && SYNC_PASSWORD) {
+  if (providedPw && SYNC_PASSWORD) {
     try {
       const bufProvided = Buffer.from(String(providedPw));
       const bufExpected = Buffer.from(SYNC_PASSWORD);
@@ -582,6 +663,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (action === 'stop') {
       await redis.del(STATE_KEY, QUEUE_KEY, LOGS_KEY, FAILURES_KEY);
       return res.status(200).json({ success: true });
+    }
+
+    if (action === 'retry_model') {
+      const model = String(req.body.model);
+      if (!model) return res.status(400).json({ error: 'Missing model' });
+
+      try {
+        const host = req.headers.host || 'localhost:3000';
+        const protocol = host.includes('localhost') ? 'http' : 'https';
+        const baseUrl = `${protocol}://${host}`;
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+
+        try {
+          const specRes = await fetch(`${baseUrl}/api/specs?model=${encodeURIComponent(model)}`, {
+            signal: controller.signal,
+            headers: { 'User-Agent': 'ToolzDeviceBot/1.0-ManualRetry' }
+          });
+
+          const data = await specRes.json();
+          if (specRes.ok) {
+            // Remove from failures on success
+            await redis.hdel(FAILURES_KEY, model);
+            return res.status(200).json({ success: true, output: data.search_name || 'Specs Cached' });
+          } else {
+            throw new Error(data.error || `HTTP ${specRes.status}`);
+          }
+        } finally {
+          clearTimeout(timeout);
+        }
+      } catch (e: any) {
+        return res.status(500).json({ error: e.message });
+      }
     }
 
     if (action === 'step') {
