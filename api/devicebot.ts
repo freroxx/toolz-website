@@ -33,8 +33,12 @@ const getDashboardUI = (password: string) => `
     }
 
     /* Custom Scrollbars */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--md-sys-color-outline) transparent;
+    }
     ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: var(--md-sys-color-surface); }
+    ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--md-sys-color-outline); border-radius: 10px; border: 2px solid var(--md-sys-color-surface); }
     ::-webkit-scrollbar-thumb:hover { background: var(--md-sys-color-primary); }
 
@@ -299,12 +303,15 @@ const getDashboardUI = (password: string) => `
 
     function setBtnLoading(btn, isLoading) {
       if (isLoading) {
+        if (btn.disabled) return;
         btn.disabled = true;
         btn.dataset.original = btn.innerHTML;
-        btn.innerHTML = '<span class="spinner"></span> Working...';
+        btn.innerHTML = '<span class="spinner"></span>';
       } else {
         btn.disabled = false;
-        btn.innerHTML = btn.dataset.original || btn.innerHTML;
+        if (btn.dataset.original) {
+          btn.innerHTML = btn.dataset.original;
+        }
       }
     }
 
