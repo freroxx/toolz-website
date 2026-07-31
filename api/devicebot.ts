@@ -32,6 +32,12 @@ const getDashboardUI = (password: string) => `
       --bg-dialog: #232528;
     }
 
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--md-sys-color-surface); }
+    ::-webkit-scrollbar-thumb { background: var(--md-sys-color-outline); border-radius: 10px; border: 2px solid var(--md-sys-color-surface); }
+    ::-webkit-scrollbar-thumb:hover { background: var(--md-sys-color-primary); }
+
     body {
       font-family: 'Google Sans', sans-serif;
       background-color: var(--md-sys-color-surface);
@@ -75,6 +81,11 @@ const getDashboardUI = (password: string) => `
     }
     .m3-button:active {
       transform: scale(0.96);
+    }
+    .m3-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
     }
 
     .terminal {
@@ -124,12 +135,6 @@ const getDashboardUI = (password: string) => `
       height: 100%; background: var(--md-sys-color-primary); transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Custom Scrollbars */
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: var(--md-sys-color-surface); }
-    ::-webkit-scrollbar-thumb { background: var(--md-sys-color-outline); border-radius: 10px; border: 2px solid var(--md-sys-color-surface); }
-    ::-webkit-scrollbar-thumb:hover { background: var(--md-sys-color-primary); }
-
     .error-box {
       background: #93000a; color: #ffdad6; border-radius: 16px; padding: 16px; margin-bottom: 24px;
       display: none; align-items: start; gap: 12px; border: 1px solid #ffb4ab;
@@ -142,9 +147,14 @@ const getDashboardUI = (password: string) => `
       40%, 60% { transform: translate3d(4px, 0, 0); }
     }
 
-    .m3-button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
     .spinner { width: 18px; height: 18px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Stats Accent Colors */
+    .stat-blue { background: rgba(209, 228, 255, 0.08); color: #d1e4ff; }
+    .stat-green { background: rgba(129, 199, 132, 0.08); color: #81c784; }
+    .stat-red { background: rgba(229, 115, 115, 0.08); color: #e57373; }
+    .stat-neutral { background: rgba(255, 255, 255, 0.05); color: #e2e2e6; }
   </style>
 </head>
 <body class="p-4 lg:p-12">
@@ -194,21 +204,23 @@ const getDashboardUI = (password: string) => `
                 <div id="stat-progress-bar" class="progress-bar-fill" style="width: 0%"></div>
               </div>
             </div>
-              <div class="stat-blue p-4 rounded-[24px] border border-blue-500/20">
-                <span class="text-[10px] uppercase font-bold tracking-widest opacity-70">Processed</span>
-                <div id="stat-processed" class="text-2xl font-bold mt-1">0</div>
-              </div>
-              <div class="stat-neutral p-4 rounded-[24px] border border-white/10 opacity-70">
-                <span class="text-[10px] uppercase font-bold tracking-widest">Queue Total</span>
-                <div id="stat-total" class="text-2xl font-bold mt-1">0</div>
-              </div>
-              <div class="stat-green p-4 rounded-[24px] border border-green-500/20">
-                <span class="text-[10px] uppercase font-bold tracking-widest opacity-70">Success</span>
-                <div id="stat-success" class="text-2xl font-bold mt-1">0</div>
-              </div>
-              <div class="stat-red p-4 rounded-[24px] border border-red-500/20">
-                <span class="text-[10px] uppercase font-bold tracking-widest opacity-70">Failures</span>
-                <div id="stat-fail" class="text-2xl font-bold mt-1">0</div>
+              <div class="grid grid-cols-2 gap-4 pt-2">
+                <div class="stat-blue p-4 rounded-[24px] border border-blue-500/20">
+                  <span class="text-[10px] uppercase font-bold tracking-widest opacity-70">Processed</span>
+                  <div id="stat-processed" class="text-2xl font-bold mt-1">0</div>
+                </div>
+                <div class="stat-neutral p-4 rounded-[24px] border border-white/10 opacity-70">
+                  <span class="text-[10px] uppercase font-bold tracking-widest">Queue Total</span>
+                  <div id="stat-total" class="text-2xl font-bold mt-1">0</div>
+                </div>
+                <div class="stat-green p-4 rounded-[24px] border border-green-500/20">
+                  <span class="text-[10px] uppercase font-bold tracking-widest opacity-70">Success</span>
+                  <div id="stat-success" class="text-2xl font-bold mt-1">0</div>
+                </div>
+                <div class="stat-red p-4 rounded-[24px] border border-red-500/20">
+                  <span class="text-[10px] uppercase font-bold tracking-widest opacity-70">Failures</span>
+                  <div id="stat-fail" class="text-2xl font-bold mt-1">0</div>
+                </div>
               </div>
             <button id="btn-view-fails" class="m3-button m3-button-outlined w-full justify-center text-xs mt-2">Open Failure Audit</button>
           </div>
@@ -285,14 +297,14 @@ const getDashboardUI = (password: string) => `
     }
     window.closeError = () => dom.errorBox.style.display = 'none';
 
-    function setBtnLoading(btn, isLoading, originalHtml) {
+    function setBtnLoading(btn, isLoading) {
       if (isLoading) {
         btn.disabled = true;
         btn.dataset.original = btn.innerHTML;
         btn.innerHTML = '<span class="spinner"></span> Working...';
       } else {
         btn.disabled = false;
-        btn.innerHTML = btn.dataset.original || originalHtml;
+        btn.innerHTML = btn.dataset.original || btn.innerHTML;
       }
     }
 
@@ -335,7 +347,9 @@ const getDashboardUI = (password: string) => `
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ pw: PW, action, ...body })
         });
-        return await res.json();
+        const data = await res.json();
+        if (!res.ok) return { error: data.error || \`HTTP \${res.status}\` };
+        return data;
       } catch (e) {
         console.error(e);
         return { error: 'Network Connection Lost' };
@@ -392,6 +406,9 @@ const getDashboardUI = (password: string) => `
           addLog(res.log.msg, res.log.type, res.log.input, res.log.output);
         } else if (res.error) {
           addLog(\`Execution Error: \${res.error}\`, 'error');
+          // Optionally pause on global errors
+          // state.status = 'paused';
+          // updateUI();
         }
       } finally {
         isRequesting = false;
@@ -447,7 +464,7 @@ const getDashboardUI = (password: string) => `
       if (res.fails && Object.keys(res.fails).length > 0) {
         dom.failsList.innerHTML = Object.entries(res.fails).map(([model, data]) => {
           const lastError = Array.isArray(data.errors) ? data.errors[data.errors.length - 1] : 'Unknown error';
-          return `
+          return \`
             <div class="p-4 bg-white/5 rounded-2xl border border-white/10 hover:border-white/20 transition-colors">
               <div class="flex justify-between items-center mb-3">
                 <span class="font-bold text-blue-200 tracking-tight text-lg">\${model}</span>
@@ -461,7 +478,7 @@ const getDashboardUI = (password: string) => `
                 <div class="text-xs text-slate-400 font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed">\${lastError}</div>
               </div>
             </div>
-          `;
+          \`;
         }).join('');
       } else {
         dom.failsList.innerHTML = '<p class="text-slate-500 italic text-center py-8">No failed devices found.</p>';
@@ -478,7 +495,6 @@ const getDashboardUI = (password: string) => `
         btn.className = btn.className.replace('bg-blue-600', 'bg-green-600');
         addLog(\`Manual Retry Success: \${model}\`, 'success', model, res.output);
         setTimeout(() => {
-          // Re-load failures to remove fixed item
           dom.btnFails.click();
         }, 1000);
       } else {
@@ -499,8 +515,10 @@ const getDashboardUI = (password: string) => `
         updateUI();
         if (res.logs) {
           res.logs.reverse().forEach(l => {
-            const p = JSON.parse(l);
-            addLog(p.msg, p.type, p.input, p.output);
+            try {
+              const p = JSON.parse(l);
+              addLog(p.msg, p.type, p.input, p.output);
+            } catch(e) {}
           });
         }
       }
@@ -518,13 +536,15 @@ const getPasswordPrompt = (error?: string) => `
   <title>Protected Access — Toolz</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #fdfcff; }
-    form { background: #232528; padding: 32px; border-radius: 28px; border: 1px solid #43474e; width: 100%; max-width: 380px; text-align: center; color: #e2e2e6; }
+    body { font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #1a1c1e; color: #e2e2e6; }
+    form { background: #232528; padding: 32px; border-radius: 28px; border: 1px solid #43474e; width: 100%; max-width: 380px; text-align: center; }
     h1 { margin: 0 0 12px 0; font-size: 1.5rem; color: #d1e4ff; }
     p { color: #c3c7d0; font-size: 0.9rem; margin-bottom: 24px; }
-    input { width: 100%; padding: 12px 16px; margin-bottom: 16px; border: 1px solid #73777f; border-radius: 8px; box-sizing: border-box; background: #1a1c1e; color: white; }
-    button { width: 100%; padding: 12px; background: #d1e4ff; color: #003258; border: none; border-radius: 100px; cursor: pointer; font-weight: 500; }
-    .error { color: #ffdad6; font-size: 0.8rem; margin-bottom: 16px; background: #93000a; padding: 8px; border-radius: 4px; }
+    input { width: 100%; padding: 12px 16px; margin-bottom: 16px; border: 1px solid #73777f; border-radius: 12px; box-sizing: border-box; background: #1a1c1e; color: white; outline: none; }
+    input:focus { border-color: #d1e4ff; }
+    button { width: 100%; padding: 14px; background: #d1e4ff; color: #003258; border: none; border-radius: 100px; cursor: pointer; font-weight: 600; transition: transform 0.1s; }
+    button:active { transform: scale(0.98); }
+    .error { color: #ffdad6; font-size: 0.8rem; margin-bottom: 16px; background: #93000a; padding: 8px; border-radius: 8px; border: 1px solid #ffb4ab; }
   </style>
 </head>
 <body>
@@ -544,42 +564,40 @@ const getPasswordPrompt = (error?: string) => `
  */
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN || !process.env.SYNC_PASSWORD) {
-    return res.status(500).json({ error: "Missing Required Environment Variables" });
-  }
-
-  const redis = Redis.fromEnv();
-  const SYNC_PASSWORD = process.env.SYNC_PASSWORD;
-  const isLocal = process.env.NODE_ENV === 'development';
-
-  const providedPw = req.method === 'POST' ? req.body?.pw : req.query?.pw;
-  let authenticated = false; // Always force authentication
-
-  if (providedPw && SYNC_PASSWORD) {
-    try {
-      const bufProvided = Buffer.from(String(providedPw));
-      const bufExpected = Buffer.from(SYNC_PASSWORD);
-      if (bufProvided.length === bufExpected.length) {
-        authenticated = crypto.timingSafeEqual(bufProvided, bufExpected);
-      }
-    } catch (e) {
-      console.error("Auth error:", e);
-    }
-  }
-
-  if (!authenticated) {
-    if (req.method === 'POST' && req.body?.action) return res.status(401).json({ error: 'Unauthorized' });
-    if (providedPw) return res.status(401).send(getPasswordPrompt('Invalid Auth Key.'));
-    return res.status(401).send(getPasswordPrompt());
-  }
-
-  if (req.method === 'GET' || (req.method === 'POST' && !req.body.action)) {
-    return res.status(200).send(getDashboardUI(String(providedPw || '')));
-  }
-
-  const action = req.body.action;
-
   try {
+    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN || !process.env.SYNC_PASSWORD) {
+      return res.status(500).json({ error: "Missing Required Environment Variables" });
+    }
+
+    const redis = Redis.fromEnv();
+    const SYNC_PASSWORD = process.env.SYNC_PASSWORD;
+
+    const providedPw = req.method === 'POST' ? req.body?.pw : req.query?.pw;
+    let authenticated = false;
+
+    if (providedPw && SYNC_PASSWORD) {
+      try {
+        const bufProvided = Buffer.from(String(providedPw));
+        const bufExpected = Buffer.from(SYNC_PASSWORD);
+        if (bufProvided.length === bufExpected.length) {
+          authenticated = crypto.timingSafeEqual(bufProvided, bufExpected);
+        }
+      } catch (e) {
+        console.error("Auth error:", e);
+      }
+    }
+
+    if (!authenticated) {
+      if (req.method === 'POST' && req.body?.action) return res.status(401).json({ error: 'Unauthorized' });
+      if (providedPw) return res.status(401).send(getPasswordPrompt('Invalid Auth Key.'));
+      return res.status(401).send(getPasswordPrompt());
+    }
+
+    if (req.method === 'GET' || (req.method === 'POST' && !req.body.action)) {
+      return res.status(200).send(getDashboardUI(String(providedPw || '')));
+    }
+
+    const action = req.body.action;
     const STATE_KEY = 'bot:state';
     const LOGS_KEY = 'bot:logs';
     const QUEUE_KEY = 'bot:queue';
@@ -592,7 +610,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     };
 
     const addLog = async (msg: string, type: string, input = '', output = '') => {
-      // Truncate output to prevent payload size issues (Vercel 4.5MB limit)
       const safeOutput = typeof output === 'string' ? (output.length > 400 ? output.slice(0, 400) + '...' : output) : JSON.stringify(output).slice(0, 400);
       const log = JSON.stringify({ msg, type, input, output: safeOutput, ts: Date.now() });
       await redis.lpush(LOGS_KEY, log);
@@ -608,7 +625,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (action === 'get_failures') {
       const fails = await redis.hgetall(FAILURES_KEY);
-      // Parse JSON strings back into objects for the UI
       const parsedFails = Object.entries(fails || {}).reduce((acc, [key, val]) => {
         try {
           acc[key] = typeof val === 'string' ? JSON.parse(val) : val;
@@ -669,33 +685,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const model = String(req.body.model);
       if (!model) return res.status(400).json({ error: 'Missing model' });
 
+      const host = req.headers.host || 'localhost:3000';
+      const protocol = host.includes('localhost') ? 'http' : 'https';
+      const baseUrl = `${protocol}://${host}`;
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+
       try {
-        const host = req.headers.host || 'localhost:3000';
-        const protocol = host.includes('localhost') ? 'http' : 'https';
-        const baseUrl = `${protocol}://${host}`;
+        const specRes = await fetch(`${baseUrl}/api/specs?model=${encodeURIComponent(model)}`, {
+          signal: controller.signal,
+          headers: { 'User-Agent': 'ToolzDeviceBot/1.0-ManualRetry' }
+        });
 
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000);
-
-        try {
-          const specRes = await fetch(`${baseUrl}/api/specs?model=${encodeURIComponent(model)}`, {
-            signal: controller.signal,
-            headers: { 'User-Agent': 'ToolzDeviceBot/1.0-ManualRetry' }
-          });
-
-          const data = await specRes.json();
-          if (specRes.ok) {
-            // Remove from failures on success
-            await redis.hdel(FAILURES_KEY, model);
-            return res.status(200).json({ success: true, output: data.search_name || 'Specs Cached' });
-          } else {
-            throw new Error(data.error || `HTTP ${specRes.status}`);
-          }
-        } finally {
-          clearTimeout(timeout);
+        const data = await specRes.json();
+        if (specRes.ok) {
+          await redis.hdel(FAILURES_KEY, model);
+          return res.status(200).json({ success: true, output: data.search_name || 'Specs Cached' });
+        } else {
+          return res.status(500).json({ error: data.error || `HTTP ${specRes.status}` });
         }
       } catch (e: any) {
         return res.status(500).json({ error: e.message });
+      } finally {
+        clearTimeout(timeout);
       }
     }
 
@@ -710,69 +723,55 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ state, log: await addLog('Operations complete!', 'success') });
       }
 
-      // Pre-emptively advance index to prevent sticking on crash-prone devices
       const input = String(model);
       state.currentIndex++;
       await redis.set(STATE_KEY, state);
 
-      let output = '';
+      const host = req.headers.host || 'localhost:3000';
+      const protocol = host.includes('localhost') ? 'http' : 'https';
+      const baseUrl = `${protocol}://${host}`;
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
 
       try {
-        const host = req.headers.host || 'localhost:3000';
-        const protocol = host.includes('localhost') ? 'http' : 'https';
-        const baseUrl = `${protocol}://${host}`;
+        const specRes = await fetch(`${baseUrl}/api/specs?model=${encodeURIComponent(input)}`, {
+          signal: controller.signal,
+          headers: { 'User-Agent': 'ToolzDeviceBot/1.0' }
+        });
 
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 8000); // 8s timeout to stay within Vercel's 10s limit
-
+        let data: any;
         try {
-          const specRes = await fetch(`${baseUrl}/api/specs?model=${encodeURIComponent(input)}`, {
-            signal: controller.signal,
-            headers: { 'User-Agent': 'ToolzDeviceBot/1.0' }
-          });
+          data = await specRes.json();
+        } catch (e) {
+          const text = await specRes.text();
+          throw new Error(`Invalid JSON: ${text.slice(0, 100)}`);
+        }
 
-          let data: any;
-          try {
-            data = await specRes.json();
-          } catch (e) {
-            const text = await specRes.text();
-            throw new Error(`Invalid JSON response: ${text.slice(0, 100)}`);
-          }
-
-          if (specRes.ok) {
-            output = data.search_name || 'Specs Cached';
-            state.successCount++;
-            // Update counts in Redis
-            await redis.set(STATE_KEY, state);
-            return res.status(200).json({ state, log: await addLog(`Success: ${input}`, 'success', input, output) });
-          } else {
-            throw new Error(data.error || `HTTP ${specRes.status}`);
-          }
-        } finally {
-          clearTimeout(timeout);
+        if (specRes.ok) {
+          state.successCount++;
+          await redis.set(STATE_KEY, state);
+          return res.status(200).json({ state, log: await addLog(`Success: ${input}`, 'success', input, data.search_name || 'Cached') });
+        } else {
+          throw new Error(data.error || `HTTP ${specRes.status}`);
         }
       } catch (e: any) {
-        output = e.message;
         state.failCount++;
-
         const rawFailData = await redis.hget(FAILURES_KEY, input);
         const failData: any = typeof rawFailData === 'string' ? JSON.parse(rawFailData) : (rawFailData || { count: 0, errors: [] });
-
         failData.count++;
-        failData.errors.push(output.slice(0, 200));
+        failData.errors.push(e.message.slice(0, 200));
         await redis.hset(FAILURES_KEY, { [input]: JSON.stringify(failData) });
-
-        // Update counts in Redis
         await redis.set(STATE_KEY, state);
-
-        const type = failData.count > 5 ? 'error' : 'warn';
-        return res.status(200).json({ state, log: await addLog(`Failed: ${input}`, type, input, output) });
+        return res.status(200).json({ state, log: await addLog(`Failed: ${input}`, failData.count > 5 ? 'error' : 'warn', input, e.message) });
+      } finally {
+        clearTimeout(timeout);
       }
     }
 
     return res.status(400).json({ error: 'Invalid operation' });
   } catch (err: any) {
-    console.error("Bot Logic Error:", err);
+    console.error("Critical Bot Error:", err);
     return res.status(500).json({ error: err.message || "Internal Server Error" });
   }
 }
