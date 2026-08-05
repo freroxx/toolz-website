@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
-import { Download, ExternalLink, Info, CheckCircle2, X, Users } from "lucide-react";
+import { Download, ExternalLink, Info, CheckCircle2, X, Users, BarChart3 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
