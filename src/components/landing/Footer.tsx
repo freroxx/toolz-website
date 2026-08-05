@@ -12,7 +12,7 @@ const Footer = () => {
           <div className="max-w-sm">
             <div className="flex items-center gap-4 mb-6 group cursor-pointer">
               <div className="w-14 h-14 rounded-[16px] bg-primary/10 flex items-center justify-center overflow-hidden transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-lg shadow-primary/5">
-                 <img src="/logo.png" alt="Toolz Logo" className="w-full h-full object-cover" />
+                 <img src="/logo.png" alt="Toolz Logo" className="w-full h-full object-cover scale-[1.35]" />
               </div>
               <span className="m3-headline-medium font-bold group-hover:text-primary transition-colors" style={{ color: "hsl(var(--md-on-surface))" }}>
                 Toolz

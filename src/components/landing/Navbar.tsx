@@ -69,7 +69,7 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 <img
                   src="/logo.png"
                   alt="Toolz"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  className="w-full h-full object-cover scale-[1.35] transition-transform duration-500 group-hover:scale-[1.5]"
                 />
               </div>
               <div className="flex flex-col leading-none">

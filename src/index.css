@@ -498,7 +498,7 @@
   .m3-phone-frame {
     border-radius: 42px;
     background: hsl(var(--md-surface-container-highest));
-    border: 4px solid hsl(var(--md-outline-variant) / 0.8);
+    border: 1.5px solid hsl(var(--md-outline-variant) / 0.5);
     box-shadow:
       0 24px 64px -12px hsl(var(--md-shadow) / 0.7),
       0 12px 24px -8px hsl(var(--md-shadow) / 0.5);
