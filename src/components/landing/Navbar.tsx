@@ -90,10 +90,12 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
               {navLinks.map((link) => {
                 const isActive = activeHref === link.href;
                 return (
-                  <a
+                  <motion.a
                     key={link.href}
                     href={link.href}
-                    className="relative px-4 py-2 rounded-full m3-label-large transition-colors duration-200"
+                    whileHover={{ y: -2 }}
+                    whileTap={{ y: 0 }}
+                    className="relative px-4 py-2 rounded-full m3-label-large transition-colors duration-200 group"
                     style={{
                       color: isActive
                         ? "hsl(var(--md-on-secondary-container))"
@@ -108,8 +110,16 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                         transition={{ type: "spring", stiffness: 400, damping: 35 }}
                       />
                     )}
-                    <span className="relative z-10">{link.label}</span>
-                  </a>
+                    <span className="relative z-10 group-hover:text-primary transition-colors">{link.label}</span>
+                    {!isActive && (
+                      <motion.div
+                        className="absolute bottom-1 left-4 right-4 h-0.5 bg-primary/40 rounded-full origin-left"
+                        initial={{ scaleX: 0 }}
+                        whileHover={{ scaleX: 1 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                      />
+                    )}
+                  </motion.a>
                 );
               })}
             </div>

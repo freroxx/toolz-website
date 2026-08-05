@@ -29,9 +29,9 @@ const principles = [
 ];
 
 const steps = [
-  { num: "01", label: "Download the Beta", sub: "Available for all major ABIs" },
-  { num: "02", label: "Enable the Modules", sub: "Pick what you need, skip what you don't" },
-  { num: "03", label: "Own Your Device", sub: "Full control, zero compromise" },
+  { num: "01", label: "Pin Your Favorites", sub: "Long-press any tool to customize your dashboard" },
+  { num: "02", label: "Enable Widgets", sub: "Add homescreen shortcuts for instant utility access" },
+  { num: "03", label: "Set Up Your Vault", sub: "Secure your data with biometric-locked local storage" },
 ];
 
 const colorMap = {

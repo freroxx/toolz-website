@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
-import { X, ZoomIn } from "lucide-react";
+import { useState, useCallback } from "react";
+import { X, ZoomIn, ChevronLeft, ChevronRight } from "lucide-react";
 
 const allScreenshots = [
   "https://i.ibb.co/JPmYCs5/Screenshot-20260801-202638-Toolz.jpg",
@@ -47,7 +47,7 @@ interface ScrollingColumnProps {
   items: string[];
   speed: number;
   reverse?: boolean;
-  onSelect: (src: string) => void;
+  onSelect: (index: number) => void;
 }
 
 const ScrollingColumn = ({ items, speed, reverse = false, onSelect }: ScrollingColumnProps) => (
@@ -57,48 +57,61 @@ const ScrollingColumn = ({ items, speed, reverse = false, onSelect }: ScrollingC
       transition={{ duration: speed, repeat: Infinity, ease: "linear" }}
       className="flex flex-col gap-3"
     >
-      {[...items, ...items].map((src, i) => (
-        <button
-          key={`${src}-${i}`}
-          onClick={() => onSelect(src)}
-          className="relative shrink-0 group overflow-hidden focus-visible:ring-2"
-          style={{
-            aspectRatio: "9/19",
-            borderRadius: "20px",
-            border: "1px solid hsl(var(--md-outline-variant) / 0.5)",
-          }}
-          aria-label="View screenshot"
-        >
-          <img
-            src={src}
-            alt="Toolz screenshot"
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
-          />
-          <div
-            className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            style={{ background: "hsl(var(--md-shadow) / 0.5)", backdropFilter: "blur(2px)" }}
+      {[...items, ...items].map((src, i) => {
+        const actualIndex = allScreenshots.indexOf(src);
+        return (
+          <button
+            key={`${src}-${i}`}
+            onClick={() => onSelect(actualIndex)}
+            className="relative shrink-0 group overflow-hidden focus-visible:ring-2"
+            style={{
+              aspectRatio: "9/19",
+              borderRadius: "20px",
+              border: "1px solid hsl(var(--md-outline-variant) / 0.5)",
+            }}
+            aria-label="View screenshot"
           >
+            <img
+              src={src}
+              alt="Toolz screenshot"
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+            />
             <div
-              className="w-10 h-10 rounded-full flex items-center justify-center"
-              style={{ background: "hsl(var(--md-surface-container-highest) / 0.9)" }}
+              className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              style={{ background: "hsl(var(--md-shadow) / 0.5)", backdropFilter: "blur(2px)" }}
             >
-              <ZoomIn size={18} style={{ color: "hsl(var(--md-on-surface))" }} />
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center"
+                style={{ background: "hsl(var(--md-surface-container-highest) / 0.9)" }}
+              >
+                <ZoomIn size={18} style={{ color: "hsl(var(--md-on-surface))" }} />
+              </div>
             </div>
-          </div>
-        </button>
-      ))}
+          </button>
+        );
+      })}
     </motion.div>
   </div>
 );
 
 const Gallery = () => {
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   const col1 = allScreenshots.slice(0, 9);
   const col2 = allScreenshots.slice(9, 18);
   const col3 = allScreenshots.slice(18, 28);
   const col4 = allScreenshots.slice(28);
+
+  const next = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedIndex((prev) => (prev !== null ? (prev + 1) % allScreenshots.length : null));
+  }, []);
+
+  const prev = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedIndex((prev) => (prev !== null ? (prev - 1 + allScreenshots.length) % allScreenshots.length : null));
+  }, []);
 
   return (
     <section
@@ -174,60 +187,86 @@ const Gallery = () => {
             transition={{ type: "spring", stiffness: 200, damping: 25, delay: 0.1 }}
             className="lg:w-3/5 grid grid-cols-2 sm:grid-cols-4 gap-3 h-[800px] overflow-hidden mask-fade-vertical"
           >
-            <ScrollingColumn items={col1} speed={38} onSelect={setSelected} />
-            <ScrollingColumn items={col2} speed={48} reverse onSelect={setSelected} />
-            <ScrollingColumn items={col3} speed={42} onSelect={setSelected} />
-            <ScrollingColumn items={col4} speed={52} reverse onSelect={setSelected} />
+            <ScrollingColumn items={col1} speed={38} onSelect={setSelectedIndex} />
+            <ScrollingColumn items={col2} speed={48} reverse onSelect={setSelectedIndex} />
+            <ScrollingColumn items={col3} speed={42} onSelect={setSelectedIndex} />
+            <ScrollingColumn items={col4} speed={52} reverse onSelect={setSelectedIndex} />
           </motion.div>
         </div>
       </div>
 
       {/* M3 Lightbox */}
       <AnimatePresence>
-        {selected && (
+        {selectedIndex !== null && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
             className="fixed inset-0 z-[100] flex items-center justify-center p-6"
-            style={{ background: "hsl(var(--md-scrim) / 0.85)", backdropFilter: "blur(12px)" }}
-            onClick={() => setSelected(null)}
+            style={{ background: "hsl(var(--md-scrim) / 0.9)", backdropFilter: "blur(20px)" }}
+            onClick={() => setSelectedIndex(null)}
           >
-            {/* Close FAB */}
+            {/* Close FAB - Improved visibility */}
             <button
-              className="absolute top-6 right-6 w-14 h-14 rounded-2xl flex items-center justify-center transition-all m3-state-layer"
+              className="absolute top-6 right-6 w-14 h-14 rounded-2xl flex items-center justify-center transition-all m3-state-layer z-[110] shadow-2xl"
               style={{
-                background: "hsl(var(--md-surface-container-highest))",
-                color: "hsl(var(--md-on-surface))",
+                background: "hsl(var(--md-primary))",
+                color: "hsl(var(--md-on-primary))",
               }}
-              onClick={() => setSelected(null)}
+              onClick={() => setSelectedIndex(null)}
               aria-label="Close"
             >
-              <X size={24} />
+              <X size={28} />
+            </button>
+
+            {/* Navigation Buttons */}
+            <button
+              className="absolute left-6 w-16 h-16 rounded-full flex items-center justify-center transition-all m3-state-layer z-[110] bg-white/10 hover:bg-white/20 text-white"
+              onClick={prev}
+              aria-label="Previous"
+            >
+              <ChevronLeft size={40} />
+            </button>
+
+            <button
+              className="absolute right-6 w-16 h-16 rounded-full flex items-center justify-center transition-all m3-state-layer z-[110] bg-white/10 hover:bg-white/20 text-white"
+              onClick={next}
+              aria-label="Next"
+            >
+              <ChevronRight size={40} />
             </button>
 
             <motion.div
-              initial={{ scale: 0.85, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.85, opacity: 0 }}
+              key={selectedIndex}
+              initial={{ scale: 0.9, opacity: 0, x: 20 }}
+              animate={{ scale: 1, opacity: 1, x: 0 }}
+              exit={{ scale: 0.9, opacity: 0, x: -20 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               onClick={(e) => e.stopPropagation()}
+              className="relative"
               style={{
-                maxHeight: "88vh",
+                maxHeight: "85vh",
                 aspectRatio: "9/19",
                 borderRadius: "28px",
                 overflow: "hidden",
-                border: "2px solid hsl(var(--md-outline-variant))",
-                boxShadow: "0 24px 64px hsl(var(--md-shadow) / 0.6)",
+                border: "4px solid hsl(var(--md-outline-variant) / 0.5)",
+                boxShadow: "0 32px 64px -12px hsl(var(--md-shadow) / 0.8)",
               }}
             >
               <img
-                src={selected}
+                src={allScreenshots[selectedIndex]}
                 alt="Toolz full screenshot"
                 className="w-full h-full object-contain"
-                style={{ background: "hsl(var(--md-surface-container-highest))" }}
+                style={{ background: "#000" }}
               />
+
+              {/* Counter overlay */}
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
+                <div className="px-4 py-1.5 rounded-full bg-black/60 backdrop-blur-md text-white m3-label-medium border border-white/10">
+                   {selectedIndex + 1} / {allScreenshots.length}
+                </div>
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -235,5 +274,7 @@ const Gallery = () => {
     </section>
   );
 };
+
+export default Gallery;
 
 export default Gallery;
