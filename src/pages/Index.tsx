@@ -6,6 +6,7 @@ import Showcase from "@/components/landing/Showcase";
 import Gallery from "@/components/landing/Gallery";
 import Discord from "@/components/landing/Discord";
 import HowItWorks from "@/components/landing/HowItWorks";
+import CTA from "@/components/landing/CTA";
 import Footer from "@/components/landing/Footer";
 import DownloadDialog from "@/components/landing/DownloadDialog";
 
@@ -22,6 +23,7 @@ const Index = () => {
           <Showcase />
           <Gallery />
           <HowItWorks />
+          <CTA onDownloadClick={() => setDownloadOpen(true)} />
           <Discord />
         </div>
       </main>

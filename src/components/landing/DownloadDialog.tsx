@@ -46,17 +46,23 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
     lines.forEach((line, i) => {
       const trimmed = line.trim();
 
-      // Handle lists
-      if (trimmed.startsWith("*") || (trimmed.startsWith("-") && !trimmed.startsWith("- ["))) {
-        const content = trimmed.substring(1).trim();
+      // Handle lists (including *- style)
+      if (trimmed.startsWith("*-") || trimmed.startsWith("*") || (trimmed.startsWith("-") && !trimmed.startsWith("- ["))) {
+        let content = trimmed;
+        if (trimmed.startsWith("*-")) content = trimmed.substring(2).trim();
+        else if (trimmed.startsWith("*") || trimmed.startsWith("-")) content = trimmed.substring(1).trim();
+
         currentList.push(
-          <li key={`li-${i}`} className="m3-body-medium ml-6 list-disc marker:text-primary my-1 leading-relaxed">
-            {renderInlineMarkdown(content)}
+          <li key={`li-${i}`} className="m3-body-medium ml-4 list-none flex gap-3 my-2 leading-relaxed group">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0 group-hover:scale-125 transition-transform" />
+            <div className="flex-1">
+              {renderInlineMarkdown(content)}
+            </div>
           </li>
         );
         return;
       } else if (currentList.length > 0) {
-        elements.push(<ul key={`ul-${i}`} className="my-2">{currentList}</ul>);
+        elements.push(<ul key={`ul-${i}`} className="my-3 space-y-1">{currentList}</ul>);
         currentList = [];
       }
 
@@ -67,11 +73,14 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
         elements.push(<h2 key={i} className="m3-title-large mt-6 mb-3 text-primary font-bold">{trimmed.replace("## ", "").trim()}</h2>);
       } else if (trimmed.startsWith("### ")) {
         elements.push(<h3 key={i} className="m3-title-medium mt-5 mb-2 text-primary/90 font-bold">{trimmed.replace("### ", "").trim()}</h3>);
+      } else if (trimmed.endsWith(":") && trimmed.length < 50) {
+        // Treat lines ending in colon as subheaders
+        elements.push(<h4 key={i} className="m3-label-large mt-6 mb-2 text-primary/80 font-bold uppercase tracking-wider">{trimmed}</h4>);
       } else if (trimmed.startsWith("- [x]") || trimmed.startsWith("- [ ]")) {
         const checked = trimmed.startsWith("- [x]");
         const content = trimmed.replace("- [x]", "").replace("- [ ]", "").trim();
         elements.push(
-          <div key={i} className="flex items-start gap-2 my-2">
+          <div key={i} className="flex items-start gap-3 my-2 bg-surface-container/30 p-2 rounded-lg">
             <CheckCircle2 size={16} className={cn("mt-1 shrink-0", checked ? "text-primary" : "text-muted-foreground opacity-40")} />
             <span className={cn("m3-body-medium", !checked && "text-muted-foreground")}>
               {renderInlineMarkdown(content)}
@@ -81,7 +90,7 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
       } else if (trimmed.startsWith(">")) {
         const content = trimmed.substring(1).trim();
         elements.push(
-          <blockquote key={i} className="border-l-4 border-primary/20 pl-4 py-2 my-6 m3-body-large text-muted-foreground bg-primary/5 rounded-r-xl">
+          <blockquote key={i} className="border-l-4 border-primary/20 pl-4 py-2 my-6 m3-body-large text-muted-foreground bg-primary/5 rounded-r-xl italic">
              {renderInlineMarkdown(content)}
           </blockquote>
         );
@@ -97,18 +106,48 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
     });
 
     if (currentList.length > 0) {
-      elements.push(<ul key="ul-final" className="my-2">{currentList}</ul>);
+      elements.push(<ul key="ul-final" className="my-3 space-y-1">{currentList}</ul>);
     }
 
     return elements;
   };
 
   const renderInlineMarkdown = (text: string) => {
+    // Regex for URLs
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+    // Split by bold markers first
     return text.split("**").map((part, index) => {
-      if (index % 2 === 1) return <strong key={index} className="text-on-surface font-bold">{part}</strong>;
-      return part.split("_").map((subPart, subIndex) =>
-        subIndex % 2 === 1 ? <em key={subIndex} className="italic text-primary/80">{subPart}</em> : subPart
-      );
+      if (index % 2 === 1) {
+        return <strong key={`bold-${index}`} className="text-on-surface font-bold text-primary/90">{part}</strong>;
+      }
+
+      // For non-bold parts, split by italics
+      return part.split("_").map((subPart, subIndex) => {
+        if (subIndex % 2 === 1) {
+          return <em key={`italic-${subIndex}`} className="italic text-primary/80">{subPart}</em>;
+        }
+
+        // For remaining text, handle URLs
+        const segments = subPart.split(urlRegex);
+        return segments.map((segment, segIndex) => {
+          if (segment.match(urlRegex)) {
+            return (
+              <a
+                key={`link-${segIndex}`}
+                href={segment}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline break-all inline-flex items-center gap-1"
+              >
+                {segment.replace("https://github.com/", "github.com/")}
+                <ExternalLink size={10} className="inline" />
+              </a>
+            );
+          }
+          return segment;
+        });
+      });
     });
   };
 

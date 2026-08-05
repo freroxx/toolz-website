@@ -262,23 +262,23 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
             initial={{ opacity: 0, x: 100, scale: 0.8, rotate: 10 }}
             animate={{ opacity: 1, x: 0, scale: 1, rotate: 0 }}
             transition={{ delay: 0.4, type: "spring", stiffness: 80, damping: 20, mass: 1.2 }}
-            className="flex-shrink-0 relative group"
+            className="flex-shrink-0 relative group mt-8 lg:mt-0"
           >
             {/* Glow behind phone */}
             <div
-              className="absolute inset-0 -m-32 rounded-full blur-[140px] opacity-40 pointer-events-none transition-all duration-1000 group-hover:opacity-60"
+              className="absolute inset-0 -m-20 sm:-m-32 rounded-full blur-[80px] sm:blur-[140px] opacity-40 pointer-events-none transition-all duration-1000 group-hover:opacity-60"
               style={{ background: "radial-gradient(circle, hsl(var(--md-primary) / 0.6), hsl(var(--md-secondary) / 0.4), transparent 70%)" }}
             />
 
             <div
-              className="relative w-[300px] sm:w-[340px]"
+              className="relative w-[260px] sm:w-[340px] mx-auto"
               onMouseEnter={() => setPaused(true)}
               onMouseLeave={() => setPaused(false)}
               onClick={nextImg}
               style={{ cursor: "pointer" }}
             >
               {/* Phone frame */}
-              <div className="m3-phone-frame p-2.5">
+              <div className="m3-phone-frame p-2.5 shadow-2xl">
                 {/* Screen */}
                 <div className="m3-phone-screen">
                   <AnimatePresence mode="wait">
@@ -307,7 +307,7 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                         <motion.div
                           initial={{ scale: 0.8, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
-                          className="px-8 py-4 rounded-3xl m3-title-medium shadow-2xl"
+                          className="px-6 py-3 rounded-2xl m3-title-small shadow-2xl"
                           style={{
                             background: "hsl(var(--md-surface-container-highest))",
                             color: "hsl(var(--md-on-surface))",
@@ -323,20 +323,21 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
 
                 {/* Home bar */}
                 <div
-                  className="absolute bottom-3 left-1/2 -translate-x-1/2 w-32 h-1.5 rounded-full z-30"
+                  className="absolute bottom-3 left-1/2 -translate-x-1/2 w-24 sm:w-32 h-1 rounded-full z-30"
                   style={{ background: "hsl(var(--md-on-surface-variant) / 0.3)", backdropFilter: "blur(4px)" }}
                 />
               </div>
 
               {/* Screenshot counter chip */}
-              <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap">
+              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
                 <motion.div
                   layoutId="counter"
-                  className="m3-chip text-xs bg-surface-container-high/90 backdrop-blur-xl border-outline-variant/30 py-2 px-4 shadow-xl"
+                  className="m3-chip text-xs bg-surface-container-high/90 backdrop-blur-xl border-outline-variant/30 py-1.5 px-4 shadow-xl flex items-center gap-2"
                 >
-                  <span className="text-primary font-bold">{imgIndex + 1}</span>
-                  <span className="opacity-30 mx-2">/</span>
-                  <span className="opacity-70">{allScreenshots.length}</span>
+                  <Sparkles size={12} className="text-primary" />
+                  <span className="text-on-surface-variant font-medium tracking-wide">
+                    Module <span className="text-primary font-bold">{imgIndex + 1}</span>
+                  </span>
                 </motion.div>
               </div>
             </div>
