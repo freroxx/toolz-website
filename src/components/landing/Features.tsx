@@ -104,11 +104,11 @@ const Features = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
           transition={{ type: "spring", stiffness: 200, damping: 25 }}
-          className="text-center mb-20"
+          className="text-center mb-12 md:mb-20"
         >
           <div className="m3-chip inline-flex mb-6">Precision Modules</div>
           <h2
-            className="m3-display-medium mb-6"
+            className="m3-display-medium text-3xl md:text-5xl lg:text-6xl mb-6"
             style={{ color: "hsl(var(--md-on-surface))" }}
           >
             Everything you{" "}
@@ -125,7 +125,7 @@ const Features = () => {
             ,<br />nothing you don't.
           </h2>
           <p
-            className="m3-body-large max-w-xl mx-auto"
+            className="m3-body-large max-w-xl mx-auto px-4"
             style={{ color: "hsl(var(--md-on-surface-variant))" }}
           >
             A massive library of 45+ precision instruments. Zero bloat, zero cloud, zero compromise.
@@ -134,7 +134,7 @@ const Features = () => {
 
         {/* Feature cards grid */}
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 lg:gap-6"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -147,20 +147,20 @@ const Features = () => {
               <motion.div
                 key={i}
                 variants={cardVariants}
-                className="m3-card-filled p-8 flex flex-col gap-6 group cursor-default"
+                className="m3-card-filled p-6 md:p-8 flex flex-col gap-5 md:gap-6 group cursor-default"
                 whileHover={{ y: -4, scale: 1.01 }}
                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
               >
                 {/* Icon + tag row */}
                 <div className="flex items-start justify-between">
                   <div
-                    className="w-14 h-14 rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
+                    className="w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-lg"
                     style={{ background: colors.container }}
                   >
-                    <Icon size={24} style={{ color: colors.icon }} />
+                    <Icon className="w-5 h-5 md:w-6 md:h-6" style={{ color: colors.icon }} />
                   </div>
                   <div
-                    className="m3-label-small px-3 py-1 rounded-full"
+                    className="m3-label-small px-3 py-1 rounded-full text-[10px] md:text-xs"
                     style={{
                       background: colors.chip,
                       color: colors.chipText,
@@ -173,13 +173,13 @@ const Features = () => {
                 {/* Content */}
                 <div className="flex flex-col gap-2">
                   <h3
-                    className="m3-title-large"
+                    className="m3-title-large text-xl md:text-2xl"
                     style={{ color: "hsl(var(--md-on-surface))" }}
                   >
                     {feature.title}
                   </h3>
                   <p
-                    className="m3-body-medium leading-relaxed"
+                    className="m3-body-medium text-sm md:text-base leading-relaxed opacity-80"
                     style={{ color: "hsl(var(--md-on-surface-variant))" }}
                   >
                     {feature.desc}
