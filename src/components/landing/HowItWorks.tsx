@@ -104,7 +104,7 @@ const HowItWorks = () => {
             className="m3-body-large max-w-xl mx-auto"
             style={{ color: "hsl(var(--md-on-surface-variant))" }}
           >
-            Toolz isn't another utility app. It's a precision toolkit for those
+            Toolz isn't another utility app. It's an orchestrated toolkit of 45+ precision instruments for those
             who want absolute control of their Android environment.
           </p>
         </motion.div>

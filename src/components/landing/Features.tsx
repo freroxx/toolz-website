@@ -4,44 +4,44 @@ import { motion } from "framer-motion";
 const features = [
   {
     icon: Shield,
-    title: "Focus Flow",
-    tag: "Security",
-    desc: "Advanced firewall and DNS blocking. Zero trackers, zero ads, zero compromise.",
+    title: "Privacy Hub",
+    tag: "Core",
+    desc: "100% offline utilities. No trackers, no telemetry. Sensitive data is stored with SQLCipher encryption.",
     color: "primary",
   },
   {
     icon: Lock,
-    title: "Vault Core",
-    tag: "Privacy",
-    desc: "Encrypted password and notification storage. 100% local, 100% yours.",
+    title: "Security Vault",
+    tag: "Hardened",
+    desc: "Encrypted storage for passwords, notes, and system notifications with biometric authentication.",
     color: "secondary",
   },
   {
     icon: RefreshCw,
-    title: "FFmpeg Engine",
-    tag: "Utility",
-    desc: "Professional-grade media conversion powered by system-native binaries.",
+    title: "FFmpeg Media",
+    tag: "Precision",
+    desc: "Studio-quality audio/video conversion and studio recording powered by system-native binaries.",
     color: "tertiary",
   },
   {
     icon: HardDrive,
-    title: "Storage Ops",
-    tag: "System",
-    desc: "Deep system cleaning and file orchestration. Reclaim every megabyte.",
+    title: "System Suite",
+    tag: "Deep Ops",
+    desc: "Advanced file cleaning, hardware diagnostics, and network optimization for power users.",
     color: "primary",
   },
   {
     icon: Bell,
-    title: "Ghost Notify",
-    tag: "Intercept",
-    desc: "Intercept and archive every notification. Never miss a deleted message.",
+    title: "Notify Vault",
+    tag: "Archival",
+    desc: "A searchable local log of all system notifications. Auditing privacy and capturing deleted history.",
     color: "secondary",
   },
   {
     icon: Settings,
-    title: "Custom Kernel",
-    tag: "Core",
-    desc: "Highly customizable UI and behavior. Built for power users who mean business.",
+    title: "45+ Instruments",
+    tag: "Toolkit",
+    desc: "From AI document summaries to GPS sensors — every tool you need in one polished APK.",
     color: "tertiary",
   },
 ];
@@ -128,7 +128,7 @@ const Features = () => {
             className="m3-body-large max-w-xl mx-auto"
             style={{ color: "hsl(var(--md-on-surface-variant))" }}
           >
-            Six specialized modules. Each one laser-focused, zero dependencies.
+            A massive library of 45+ precision instruments. Zero bloat, zero cloud, zero compromise.
           </p>
         </motion.div>
 

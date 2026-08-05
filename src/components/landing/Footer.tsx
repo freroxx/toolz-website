@@ -28,7 +28,7 @@ const Footer = () => {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-16">
             <div className="flex flex-col gap-6">
               <span className="text-technical text-primary">Deployment</span>
-              <a href="https://github.com/freroxx/toolz/releases" className="text-xs font-mono text-white/30 hover:text-primary transition-colors uppercase tactile-feedback">Fetch_Beta_v1.0.9</a>
+              <a href="https://github.com/freroxx/toolz/releases" className="text-xs font-mono text-white/30 hover:text-primary transition-colors uppercase tactile-feedback">Fetch_Beta_v1.1.0</a>
               <a href="https://github.com/freroxx/toolz" className="text-xs font-mono text-white/30 hover:text-primary transition-colors uppercase tactile-feedback">Source_Control</a>
             </div>
             <div className="flex flex-col gap-6">
@@ -50,7 +50,7 @@ const Footer = () => {
               © 2026 Toolz_Project // All_Systems_Operational
             </div>
             <div className="flex items-center gap-4 text-[8px] font-mono text-white/10 uppercase">
-              <span>Optimized for Android 15</span>
+              <span>Optimized for Android 16</span>
               <div className="w-1 h-1 bg-white/10 rounded-full" />
               <span>100% Free Utility</span>
             </div>

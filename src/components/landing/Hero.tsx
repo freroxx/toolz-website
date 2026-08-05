@@ -113,12 +113,12 @@ const Hero = () => {
               transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 30 }}
               className="inline-flex items-center gap-2 mb-8"
             >
-              <div className="m3-chip gap-2">
+              <div className="m3-chip gap-2 bg-primary/10 border-primary/20">
                 <span
                   className="w-2 h-2 rounded-full animate-pulse flex-shrink-0"
                   style={{ background: "hsl(var(--md-primary))" }}
                 />
-                {isLoading ? "Loading..." : `v${versionName} BETA · Android 12+`}
+                {isLoading ? "Loading..." : `v1.1.0 BETA · Android 12+`}
               </div>
             </motion.div>
 
@@ -130,17 +130,15 @@ const Hero = () => {
               className="m3-display-large mb-6"
               style={{ color: "hsl(var(--md-on-surface))" }}
             >
-              The Android
+              Your device,
               <br />
-              toolkit you{" "}
+              fully{" "}
               <span
                 className="m3-gradient-text"
                 style={{ display: "inline-block" }}
               >
-                actually
+                orchestrated.
               </span>
-              <br />
-              deserve.
             </motion.h1>
 
             {/* Body */}
@@ -151,9 +149,7 @@ const Hero = () => {
               className="m3-body-large mb-8 max-w-xl mx-auto lg:mx-0"
               style={{ color: "hsl(var(--md-on-surface-variant))" }}
             >
-              High-precision utility suite for Android.{" "}
-              <strong style={{ color: "hsl(var(--md-primary))", fontWeight: 600 }}>100% Free</strong>,{" "}
-              Zero Bloat, and Zero AI Slop.
+              Toolz is a modern Android toolkit that brings productivity, media, security, and system utilities into one polished, expressive home.
             </motion.p>
 
             {/* Badge pills */}
@@ -214,15 +210,16 @@ const Hero = () => {
               rotate: springPhone.rotate,
               scale: springPhone.scale,
             }}
-            initial={{ opacity: 0, x: 60, scale: 0.9 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            transition={{ delay: 0.3, type: "spring", stiffness: 150, damping: 22 }}
-            className="flex-shrink-0 relative"
+            initial={{ opacity: 0, x: 60, scale: 0.9, rotate: 5 }}
+            animate={{ opacity: 1, x: 0, scale: 1, rotate: 0 }}
+            transition={{ delay: 0.3, type: "spring", stiffness: 100, damping: 20 }}
+            className="flex-shrink-0 relative group"
+            whileHover={{ scale: 1.02, rotate: -1 }}
           >
             {/* Glow behind phone */}
             <div
-              className="absolute inset-0 -m-16 rounded-full blur-3xl opacity-30 pointer-events-none"
-              style={{ background: "radial-gradient(circle, hsl(var(--md-primary) / 0.5), hsl(var(--md-secondary) / 0.3), transparent 70%)" }}
+              className="absolute inset-0 -m-20 rounded-full blur-[100px] opacity-40 pointer-events-none transition-all duration-1000 group-hover:opacity-60"
+              style={{ background: "radial-gradient(circle, hsl(var(--md-primary) / 0.6), hsl(var(--md-secondary) / 0.4), transparent 70%)" }}
             />
 
             <div
@@ -233,28 +230,22 @@ const Hero = () => {
               style={{ cursor: "pointer" }}
             >
               {/* Phone frame */}
-              <div className="m3-phone-frame p-3">
-                {/* Notch */}
-                <div
-                  className="absolute top-4 left-1/2 -translate-x-1/2 w-24 h-5 rounded-full z-20"
-                  style={{ background: "hsl(var(--md-surface-container-highest))" }}
-                />
+              <div className="m3-phone-frame p-2.5">
+                {/* Punch-hole Camera */}
+                <div className="m3-phone-punchhole" />
 
                 {/* Screen */}
-                <div
-                  className="relative overflow-hidden bg-black"
-                  style={{ borderRadius: "38px", aspectRatio: "9/19.5" }}
-                >
+                <div className="m3-phone-screen">
                   <AnimatePresence mode="wait">
                     <motion.img
                       key={allScreenshots[imgIndex]}
                       src={allScreenshots[imgIndex]}
                       alt={`Toolz app screenshot ${imgIndex + 1}`}
                       className="absolute inset-0 w-full h-full object-cover"
-                      initial={{ opacity: 0, scale: 1.05 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.97 }}
-                      transition={{ duration: 0.35, ease: [0.2, 0, 0, 1] }}
+                      initial={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }}
+                      animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                      exit={{ opacity: 0, scale: 0.9, filter: "blur(5px)" }}
+                      transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
                     />
                   </AnimatePresence>
 
@@ -265,14 +256,15 @@ const Hero = () => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 flex items-center justify-center"
-                        style={{ background: "hsl(var(--md-shadow) / 0.3)", backdropFilter: "blur(2px)" }}
+                        className="absolute inset-0 flex items-center justify-center z-40"
+                        style={{ background: "hsl(var(--md-shadow) / 0.4)", backdropFilter: "blur(4px)" }}
                       >
                         <div
-                          className="px-5 py-2.5 rounded-full m3-label-large"
+                          className="px-6 py-3 rounded-2xl m3-label-large shadow-2xl scale-110"
                           style={{
-                            background: "hsl(var(--md-surface-container-highest) / 0.95)",
+                            background: "hsl(var(--md-surface-container-highest))",
                             color: "hsl(var(--md-on-surface))",
+                            border: "1px solid hsl(var(--md-outline-variant))"
                           }}
                         >
                           Tap to advance
@@ -284,16 +276,19 @@ const Hero = () => {
 
                 {/* Home bar */}
                 <div
-                  className="absolute bottom-2 left-1/2 -translate-x-1/2 w-24 h-1 rounded-full"
-                  style={{ background: "hsl(var(--md-on-surface-variant) / 0.4)" }}
+                  className="absolute bottom-3 left-1/2 -translate-x-1/2 w-32 h-1.5 rounded-full z-30"
+                  style={{ background: "hsl(var(--md-on-surface-variant) / 0.3)", backdropFilter: "blur(4px)" }}
                 />
               </div>
 
               {/* Screenshot counter chip */}
-              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                <div className="m3-chip text-xs">
-                  {imgIndex + 1} / {allScreenshots.length}
-                </div>
+              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                <motion.div
+                  layoutId="counter"
+                  className="m3-chip text-xs bg-surface-container-high/80 backdrop-blur-md"
+                >
+                  {imgIndex + 1} <span className="opacity-40 mx-1">/</span> {allScreenshots.length}
+                </motion.div>
               </div>
             </div>
           </motion.div>

@@ -145,8 +145,8 @@ const Gallery = () => {
             <div className="flex gap-8 mt-10">
               {[
                 { value: `${allScreenshots.length}+`, label: "Screens" },
-                { value: "6", label: "Modules" },
-                { value: "M3", label: "Design" },
+                { value: "8", label: "Categories" },
+                { value: "M3", label: "Expressive" },
               ].map(({ value, label }) => (
                 <div key={label}>
                   <div

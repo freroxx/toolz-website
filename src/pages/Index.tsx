@@ -6,7 +6,6 @@ import Gallery from "@/components/landing/Gallery";
 import Discord from "@/components/landing/Discord";
 import HowItWorks from "@/components/landing/HowItWorks";
 import Footer from "@/components/landing/Footer";
-import StatusPill from "@/components/landing/StatusPill";
 
 const Index = () => {
   return (
@@ -22,7 +21,6 @@ const Index = () => {
           <Discord />
         </div>
       </main>
-      <StatusPill />
       <Footer />
     </div>
   );
