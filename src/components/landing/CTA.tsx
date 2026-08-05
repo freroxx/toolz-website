@@ -49,16 +49,6 @@ const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="m3-chip gap-2 bg-primary/10 text-primary border-primary/20 mb-6"
-              >
-                <Sparkles size={14} />
-                Join the movement
-              </motion.div>
-
               <motion.h2
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -67,7 +57,7 @@ const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 className="m3-display-medium mb-6 text-on-surface"
               >
                 What are you <br />
-                <span className="m3-gradient-text italic font-serif">waiting for?</span>
+                <span className="m3-gradient-text italic font-serif text-6xl md:text-8xl">waiting for?</span>
               </motion.h2>
 
               <motion.p
@@ -75,9 +65,9 @@ const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.2 }}
-                className="m3-body-large text-on-surface-variant mb-10 max-w-md"
+                className="m3-body-large text-on-surface-variant mb-10 max-w-md leading-relaxed"
               >
-                Toolz is evolving every day. Get the App that respects your privacy and powers your productivity.
+                Toolz is an ever-evolving utility suite. Get the App that respects your privacy and powers your productivity.
               </motion.p>
 
               <motion.div
@@ -89,11 +79,11 @@ const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
               >
                 <button
                   onClick={onDownloadClick}
-                  className="m3-btn-filled py-6 px-10 text-xl gap-3 shadow-2xl shadow-primary/30 active:scale-95 transition-transform group"
+                  className="m3-btn-filled py-6 px-12 text-xl gap-4 shadow-2xl shadow-primary/30 active:scale-95 transition-all group rounded-[24px]"
                 >
                   <Download size={24} />
                   Get Toolz Now
-                  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform" />
                 </button>
               </motion.div>
             </div>
@@ -101,32 +91,23 @@ const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
             <div className="relative">
               {/* Big Expressive Counter */}
               <motion.div
-                initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
-                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                className="bg-surface-container-highest/50 backdrop-blur-xl border border-outline-variant/30 rounded-[40px] p-10 flex flex-col items-center text-center shadow-2xl"
+                className="bg-surface-container-highest/40 backdrop-blur-3xl border border-outline-variant/20 rounded-[48px] p-12 flex flex-col items-center text-center shadow-2xl shadow-black/10"
               >
-                <div className="w-20 h-20 rounded-3xl bg-secondary/10 flex items-center justify-center text-secondary mb-6">
-                  <Users size={40} />
+                <div className="w-24 h-24 rounded-[32%] bg-secondary/10 flex items-center justify-center text-secondary mb-8">
+                  <Users size={48} />
                 </div>
 
-                <div className="m3-display-large font-black tracking-tighter text-primary mb-2">
+                <div className="m3-display-large font-black tracking-tighter text-primary mb-3 text-7xl md:text-9xl">
                   {isLoading ? "..." : <DownloadCounter value={totalDownloads || 0} />}
                 </div>
 
-                <div className="m3-title-large font-bold text-on-surface-variant tracking-widest uppercase opacity-80">
+                <div className="m3-title-large font-bold text-on-surface-variant tracking-widest uppercase opacity-60">
                   Global Downloads
                 </div>
-
-                <div className="mt-8 flex items-center gap-2 text-primary bg-primary/10 px-4 py-2 rounded-full">
-                  <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
-                  <span className="m3-label-medium font-bold uppercase tracking-wider">Live Updates</span>
-                </div>
               </motion.div>
-
-              {/* Decorative elements around counter */}
-              <div className="absolute -top-6 -right-6 w-12 h-12 bg-tertiary rounded-2xl rotate-12 blur-[2px] opacity-20" />
-              <div className="absolute -bottom-10 -left-10 w-24 h-24 bg-primary rounded-full blur-[40px] opacity-20" />
             </div>
           </div>
         </div>
