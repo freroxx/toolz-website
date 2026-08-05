@@ -1,7 +1,7 @@
 import { Download, Github, ChevronDown, Shield, Zap, Lock } from "lucide-react";
 import { motion, useScroll, useTransform, AnimatePresence, useSpring } from "framer-motion";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useUpdateManifest } from "@/hooks/useUpdateManifest";
+import { useUpdateManifest } from "@/hooks/use-update-manifest";
 
 const allScreenshots = [
   "https://i.ibb.co/JPmYCs5/Screenshot-20260801-202638-Toolz.jpg",

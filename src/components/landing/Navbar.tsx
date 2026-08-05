@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Menu, X, Download, Github } from "lucide-react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
-import { useUpdateManifest } from "@/hooks/useUpdateManifest";
+import { useUpdateManifest } from "@/hooks/use-update-manifest";
 
 const navLinks = [
   { label: "Features", href: "#features" },
