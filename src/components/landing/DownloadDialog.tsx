@@ -1,6 +1,6 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, ExternalLink, Info, CheckCircle2 } from "lucide-react";
+import { Download, ExternalLink, Info, CheckCircle2, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -9,6 +9,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useUpdateManifest } from "@/hooks/use-update-manifest";
+import { cn } from "@/lib/utils";
 
 interface DownloadDialogProps {
   open: boolean;
@@ -158,8 +159,3 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
 };
 
 export default DownloadDialog;
-
-// Helper function for class names
-function cn(...classes: any[]) {
-  return classes.filter(Boolean).join(" ");
-}

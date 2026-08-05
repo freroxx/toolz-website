@@ -38,7 +38,7 @@ const allScreenshots = [
   "https://i.ibb.co/przVxJQw/Screenshot-20260801-205634-Toolz.jpg",
   "https://i.ibb.co/TBX23hW8/Screenshot-20260801-205655-Toolz.jpg",
   "https://i.ibb.co/6cS4Ps4k/Screenshot-20260801-205740-Toolz.jpg",
-  "https://i.ibb.co/bg8WHNyJ/Screenshot-20260801-205820-Toolz.jpg",
+  "https://i.ibb.co/bgWHNyJ/Screenshot-20260801-205820-Toolz.jpg",
   "https://i.ibb.co/BV2q8cQn/Screenshot-20260801-205902-Toolz.jpg",
   "https://i.ibb.co/C5Zk6tJB/Screenshot-20260801-205939-Toolz.jpg",
 ];

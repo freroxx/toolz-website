@@ -50,7 +50,7 @@ const modules = [
     name: "Productivity",
     tag: "Time",
     desc: "Countdown engines, stopwatches, and Pomodoro focus cycles designed for accuracy.",
-    images: allScreenshots.slice(0, 7),
+    images: allScreenshots.slice(0, 9),
     color: "primary",
   },
   {
@@ -59,7 +59,7 @@ const modules = [
     name: "Media & PDF",
     tag: "Studio",
     desc: "Local audio hub, studio-quality recording, and FFmpeg-powered media transformation.",
-    images: allScreenshots.slice(7, 14),
+    images: allScreenshots.slice(9, 18),
     color: "secondary",
   },
   {
@@ -68,7 +68,7 @@ const modules = [
     name: "Security",
     tag: "Hardened",
     desc: "SQLCipher-encrypted password vault and biometric-protected notification archives.",
-    images: allScreenshots.slice(14, 21),
+    images: allScreenshots.slice(18, 28),
     color: "tertiary",
   },
   {
@@ -77,7 +77,7 @@ const modules = [
     name: "System",
     tag: "Sensors",
     desc: "GPS-based tracking, magnetic compass, and deep hardware diagnostics suite.",
-    images: allScreenshots.slice(21),
+    images: allScreenshots.slice(28),
     color: "primary",
   },
 ];

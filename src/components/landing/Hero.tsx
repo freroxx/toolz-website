@@ -2,7 +2,6 @@ import { Download, Github, ChevronDown, Shield, Zap, Lock, Sparkles } from "luci
 import { motion, useScroll, useTransform, AnimatePresence, useSpring } from "framer-motion";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useUpdateManifest } from "@/hooks/use-update-manifest";
-import DownloadDialog from "./DownloadDialog";
 
 const allScreenshots = [
   "https://i.ibb.co/JPmYCs5/Screenshot-20260801-202638-Toolz.jpg",
@@ -152,20 +151,28 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
             style={{ y: textY, opacity }}
             className="flex-1 text-center lg:text-left"
           >
-            {/* Version chip */}
+            {/* Logo */}
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1, type: "spring", stiffness: 200, damping: 20 }}
-              className="inline-flex items-center gap-2 mb-8"
+              className="inline-flex items-center gap-3 mb-8"
             >
-              <div className="m3-chip gap-2 bg-primary/10 border-primary/20 px-4 py-1.5 rounded-2xl">
-                <span
-                  className="w-2 h-2 rounded-full animate-pulse flex-shrink-0"
-                  style={{ background: "hsl(var(--md-primary))" }}
+              <div className="w-12 h-12 rounded-[22%] overflow-hidden shadow-2xl shadow-primary/20 border border-primary/20 bg-surface-container-highest flex items-center justify-center p-0">
+                <img
+                  src="/logo.png"
+                  alt="Toolz"
+                  className="w-full h-full object-cover scale-110"
                 />
-                <span className="m3-label-large font-bold">v{versionName} Beta</span>
-                <span className="opacity-40 font-mono text-[10px]">//</span>
+              </div>
+              <div className="flex flex-col items-start bg-primary/10 border border-primary/20 px-4 py-1.5 rounded-2xl">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-2 h-2 rounded-full animate-pulse flex-shrink-0"
+                    style={{ background: "hsl(var(--md-primary))" }}
+                  />
+                  <span className="m3-label-large font-bold">v{versionName} Beta</span>
+                </div>
                 <span className="m3-label-small opacity-70">Android 12+</span>
               </div>
             </motion.div>

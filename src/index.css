@@ -546,25 +546,31 @@
   .m3-elevation-2 { background: hsl(var(--md-primary) / 0.08); }
   .m3-elevation-3 { background: hsl(var(--md-primary) / 0.11); }
 
-  /* M3 Expressive Scrollbar */
+  /* M3 Expressive Scrollbar - Enhanced */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
   }
   ::-webkit-scrollbar-track {
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: hsl(var(--md-outline-variant) / 0.3);
+    background: hsl(var(--md-outline-variant) / 0.2);
     border-radius: 20px;
-    border: 2px solid transparent;
+    border: 3px solid transparent;
     background-clip: content-box;
-    transition: background var(--md-duration-short4) var(--md-easing-standard);
+    transition: background 0.3s ease;
   }
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--md-primary) / 0.4);
-    border: 0px solid transparent;
+    border: 2px solid transparent;
     background-clip: content-box;
+  }
+
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--md-outline-variant) / 0.2) transparent;
   }
 
   /* Custom scrollbar utility for containers */
