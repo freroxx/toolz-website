@@ -1,7 +1,7 @@
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useGithubDownloads, GithubRelease } from "@/hooks/use-github-downloads";
-import { Download, ArrowLeft, RefreshCw, BarChart, Clock, Package, ExternalLink, Sparkles } from "lucide-react";
+import { Download, ArrowLeft, RefreshCw, BarChart, Clock, Package, ExternalLink, Sparkles, Smartphone, Layers } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -10,11 +10,97 @@ const RollingNumber = ({ value }: { value: number }) => {
   const rounded = useTransform(count, (latest) => Math.round(latest).toLocaleString());
 
   useEffect(() => {
-    const animation = animate(count, value, { duration: 2.5, ease: [0.34, 1.56, 0.64, 1] });
+    const animation = animate(count, value, { duration: 2.5, ease: "circOut" });
     return animation.stop;
   }, [value, count]);
 
   return <motion.span>{rounded}</motion.span>;
+};
+
+const RankingSection = ({ releases }: { releases: GithubRelease[] }) => {
+  const topArchitectures = (() => {
+    const stats: Record<string, number> = {};
+    releases.forEach(r => {
+      (r.assets || []).forEach(a => {
+        const name = a.name.toLowerCase();
+        let abi = "";
+        if (name.includes("arm64")) abi = "arm64-v8a";
+        else if (name.includes("v7a") || name.includes("armv7")) abi = "armeabi-v7a";
+        else if (name.includes("x86_64")) abi = "x86_64";
+        else if (name.includes("x86")) abi = "x86";
+
+        if (abi) {
+          stats[abi] = (stats[abi] || 0) + (a.download_count || 0);
+        }
+      });
+    });
+    return Object.entries(stats).sort((a, b) => b[1] - a[1]);
+  })();
+
+  const topVersions = [...releases]
+    .map(r => ({
+      name: r.name || r.tag_name,
+      count: (r.assets || []).reduce((sum, a) => sum + (a.download_count || 0), 0)
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+      {/* Top Architectures */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true }}
+        className="m3-card-outlined p-6 flex flex-col gap-4"
+      >
+        <h3 className="m3-title-medium flex items-center gap-2 text-on-surface">
+          <Smartphone size={18} className="text-primary" />
+          Top Architectures
+        </h3>
+        <div className="space-y-3">
+          {topArchitectures.map(([abi, count], i) => (
+            <div key={abi} className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
+                  {i + 1}
+                </span>
+                <span className="m3-body-medium text-on-surface-variant font-mono">{abi}</span>
+              </div>
+              <span className="m3-label-large text-on-surface font-bold">{count.toLocaleString()}</span>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Top Versions */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true }}
+        transition={{ delay: 0.1 }}
+        className="m3-card-outlined p-6 flex flex-col gap-4"
+      >
+        <h3 className="m3-title-medium flex items-center gap-2 text-on-surface">
+          <Layers size={18} className="text-secondary" />
+          Popular Releases
+        </h3>
+        <div className="space-y-3">
+          {topVersions.map((v, i) => (
+            <div key={v.name} className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="w-6 h-6 rounded-full bg-secondary/10 flex items-center justify-center text-[10px] font-bold text-secondary">
+                  {i + 1}
+                </span>
+                <span className="m3-body-medium text-on-surface-variant">{v.name}</span>
+              </div>
+              <span className="m3-label-large text-on-surface font-bold">{v.count.toLocaleString()}</span>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  );
 };
 
 const ReleaseCard = ({ release }: { release: GithubRelease }) => {
@@ -181,6 +267,9 @@ const DownloadsPage = () => {
             </div>
           </motion.div>
         </div>
+
+        {/* Rankings Section */}
+        {!isLoading && releases && <RankingSection releases={releases} />}
 
         {/* Releases List */}
         <div className="space-y-8">

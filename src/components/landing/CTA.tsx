@@ -11,7 +11,7 @@ const DownloadCounter = ({ value }: { value: number }) => {
   useEffect(() => {
     const animation = animate(count, value, {
       duration: 3,
-      ease: [0.34, 1.56, 0.64, 1]
+      ease: "circOut"
     });
     return animation.stop;
   }, [value, count]);

@@ -22,7 +22,7 @@ const DownloadCounter = ({ value }: { value: number }) => {
   const rounded = useTransform(count, (latest) => Math.round(latest).toLocaleString());
 
   useEffect(() => {
-    const animation = animate(count, value, { duration: 2, ease: "easeOut" });
+    const animation = animate(count, value, { duration: 2, ease: "circOut" });
     return animation.stop;
   }, [value, count]);
 
