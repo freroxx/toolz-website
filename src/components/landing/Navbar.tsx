@@ -62,19 +62,19 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
             {/* Logo */}
             <a
               href="#"
-              className="flex items-center gap-3 group"
+              className="flex items-center gap-3 group active:scale-95 transition-transform"
               aria-label="Toolz home"
             >
-              <div className="relative w-9 h-9 rounded-xl overflow-hidden m3-surface-container-high flex items-center justify-center">
+              <div className="relative w-10 h-10 rounded-[12px] overflow-hidden m3-surface-container-high flex items-center justify-center p-0">
                 <img
                   src="/logo.png"
                   alt="Toolz"
-                  className="w-7 h-7 object-contain transition-transform duration-300 group-hover:scale-110"
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
               </div>
               <div className="flex flex-col leading-none">
                 <span
-                  className="font-display font-bold text-lg tracking-tight"
+                  className="m3-title-medium font-bold tracking-tight"
                   style={{ color: "hsl(var(--md-on-surface))" }}
                 >
                   Toolz

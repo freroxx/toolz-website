@@ -17,6 +17,32 @@ const allScreenshots = [
   "https://i.ibb.co/VcXgd7Ln/Screenshot-20260801-203956-Toolz.jpg",
   "https://i.ibb.co/TBWstnFX/Screenshot-20260801-204050-Toolz.jpg",
   "https://i.ibb.co/fdJTKt21/Screenshot-20260801-204136-Toolz.jpg",
+  "https://i.ibb.co/YB78db4d/Screenshot-20260801-204152-Toolz.jpg",
+  "https://i.ibb.co/QFjpfKM3/Screenshot-20260801-204227-Toolz.jpg",
+  "https://i.ibb.co/6c0JdSJb/Screenshot-20260801-204253-Toolz.jpg",
+  "https://i.ibb.co/60Y3Kfyd/Screenshot-20260801-204349-Toolz.jpg",
+  "https://i.ibb.co/gZpPwFYB/Screenshot-20260801-204451-Toolz.jpg",
+  "https://i.ibb.co/LdJkX9W8/Screenshot-20260801-204508-Toolz.jpg",
+  "https://i.ibb.co/NdV9Zvvx/Screenshot-20260801-204523-Toolz.jpg",
+  "https://i.ibb.co/7xrctBk2/Screenshot-20260801-204546-Toolz.jpg",
+  "https://i.ibb.co/3yVtRJK9/Screenshot-20260801-204556-Toolz.jpg",
+  "https://i.ibb.co/kg8DK78X/Screenshot-20260801-204625-Toolz.jpg",
+  "https://i.ibb.co/PZ5C7W3d/Screenshot-20260801-204720-Toolz.jpg",
+  "https://i.ibb.co/pjjRVt11/Screenshot-20260801-204746-Toolz.jpg",
+  "https://i.ibb.co/21KCCVnq/Screenshot-20260801-204951-Toolz.jpg",
+  "https://i.ibb.co/YFwsHXGX/Screenshot-20260801-205032-Toolz.jpg",
+  "https://i.ibb.co/Gf9G1HSD/Screenshot-20260801-205053-Toolz.jpg",
+  "https://i.ibb.co/PG37z8B9/Screenshot-20260801-205157-Toolz.jpg",
+  "https://i.ibb.co/rfHmrYzG/Screenshot-20260801-205233-Toolz.jpg",
+  "https://i.ibb.co/hFcfWbcK/Screenshot-20260801-205252-Toolz.jpg",
+  "https://i.ibb.co/vvJcqG6k/Screenshot-20260801-205311-Toolz.jpg",
+  "https://i.ibb.co/mVc23hyP/Screenshot-20260801-205448-Toolz.jpg",
+  "https://i.ibb.co/przVxJQw/Screenshot-20260801-205634-Toolz.jpg",
+  "https://i.ibb.co/TBX23hW8/Screenshot-20260801-205655-Toolz.jpg",
+  "https://i.ibb.co/6cS4Ps4k/Screenshot-20260801-205740-Toolz.jpg",
+  "https://i.ibb.co/bg8WHNyJ/Screenshot-20260801-205820-Toolz.jpg",
+  "https://i.ibb.co/BV2q8cQn/Screenshot-20260801-205902-Toolz.jpg",
+  "https://i.ibb.co/C5Zk6tJB/Screenshot-20260801-205939-Toolz.jpg",
 ];
 
 const pillBadges = [
@@ -256,9 +282,6 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
             >
               {/* Phone frame */}
               <div className="m3-phone-frame p-2.5">
-                {/* Punch-hole Camera */}
-                <div className="m3-phone-punchhole" />
-
                 {/* Screen */}
                 <div className="m3-phone-screen">
                   <AnimatePresence mode="wait">

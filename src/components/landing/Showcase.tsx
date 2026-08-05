@@ -33,6 +33,14 @@ const allScreenshots = [
   "https://i.ibb.co/PG37z8B9/Screenshot-20260801-205157-Toolz.jpg",
   "https://i.ibb.co/rfHmrYzG/Screenshot-20260801-205233-Toolz.jpg",
   "https://i.ibb.co/hFcfWbcK/Screenshot-20260801-205252-Toolz.jpg",
+  "https://i.ibb.co/vvJcqG6k/Screenshot-20260801-205311-Toolz.jpg",
+  "https://i.ibb.co/mVc23hyP/Screenshot-20260801-205448-Toolz.jpg",
+  "https://i.ibb.co/przVxJQw/Screenshot-20260801-205634-Toolz.jpg",
+  "https://i.ibb.co/TBX23hW8/Screenshot-20260801-205655-Toolz.jpg",
+  "https://i.ibb.co/6cS4Ps4k/Screenshot-20260801-205740-Toolz.jpg",
+  "https://i.ibb.co/bg8WHNyJ/Screenshot-20260801-205820-Toolz.jpg",
+  "https://i.ibb.co/BV2q8cQn/Screenshot-20260801-205902-Toolz.jpg",
+  "https://i.ibb.co/C5Zk6tJB/Screenshot-20260801-205939-Toolz.jpg",
 ];
 
 const modules = [
@@ -273,9 +281,6 @@ const Showcase = () => {
               style={{ cursor: "pointer" }}
             >
               <div className="m3-phone-frame p-2.5">
-                {/* Punch-hole Camera */}
-                <div className="m3-phone-punchhole" />
-
                 <div className="m3-phone-screen">
                   <AnimatePresence mode="wait">
                     <motion.img
@@ -289,26 +294,6 @@ const Showcase = () => {
                       transition={{ duration: 0.5, ease: [0.2, 0, 0, 1] }}
                     />
                   </AnimatePresence>
-
-                  {/* Module label overlay */}
-                  <div className="absolute top-10 left-4 right-4 z-40">
-                    <motion.div
-                      layoutId="module-label"
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl m3-label-small shadow-lg"
-                      style={{
-                        background: "hsl(var(--md-surface-container-highest) / 0.85)",
-                        color: "hsl(var(--md-on-surface))",
-                        backdropFilter: "blur(12px)",
-                        border: "1px solid hsl(var(--md-outline-variant) / 0.5)"
-                      }}
-                    >
-                      <span
-                        className="w-2 h-2 rounded-full animate-pulse"
-                        style={{ background: activeColors.indicator }}
-                      />
-                      {activeModule.name}
-                    </motion.div>
-                  </div>
 
                   {/* Progress dots */}
                   <div className="absolute bottom-10 left-0 right-0 flex justify-center gap-1.5 z-40">
