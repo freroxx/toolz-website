@@ -65,11 +65,11 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
               className="flex items-center gap-3 group active:scale-95 transition-transform"
               aria-label="Toolz home"
             >
-              <div className="relative w-10 h-10 rounded-[12px] overflow-hidden m3-surface-container-high flex items-center justify-center p-0">
+              <div className="relative w-10 h-10 rounded-[22%] overflow-hidden m3-surface-container-high flex items-center justify-center p-0 shadow-lg shadow-black/20">
                 <img
                   src="/logo.png"
                   alt="Toolz"
-                  className="w-full h-full object-cover scale-[1.35] transition-transform duration-500 group-hover:scale-[1.5]"
+                  className="w-full h-full object-cover scale-[1.6] transition-transform duration-500 group-hover:scale-[1.8]"
                 />
               </div>
               <div className="flex flex-col leading-none">
@@ -93,9 +93,13 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                   <motion.a
                     key={link.href}
                     href={link.href}
-                    whileHover={{ y: -2 }}
-                    whileTap={{ y: 0 }}
-                    className="relative px-4 py-2 rounded-full m3-label-large transition-colors duration-200 group"
+                    whileHover={{
+                      scale: 1.05,
+                      y: -2,
+                      color: "hsl(var(--md-primary))"
+                    }}
+                    whileTap={{ scale: 0.95 }}
+                    className="relative px-5 py-2 rounded-full m3-label-large transition-all duration-300 group"
                     style={{
                       color: isActive
                         ? "hsl(var(--md-on-secondary-container))"
@@ -110,10 +114,10 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                         transition={{ type: "spring", stiffness: 400, damping: 35 }}
                       />
                     )}
-                    <span className="relative z-10 group-hover:text-primary transition-colors">{link.label}</span>
+                    <span className="relative z-10">{link.label}</span>
                     {!isActive && (
                       <motion.div
-                        className="absolute bottom-1 left-4 right-4 h-0.5 bg-primary/40 rounded-full origin-left"
+                        className="absolute bottom-1.5 left-5 right-5 h-0.5 bg-primary/40 rounded-full origin-left"
                         initial={{ scaleX: 0 }}
                         whileHover={{ scaleX: 1 }}
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}

@@ -209,49 +209,45 @@ const Gallery = () => {
           >
             {/* Close FAB - Improved visibility */}
             <button
-              className="absolute top-6 right-6 w-14 h-14 rounded-2xl flex items-center justify-center transition-all m3-state-layer z-[110] shadow-2xl"
-              style={{
-                background: "hsl(var(--md-primary))",
-                color: "hsl(var(--md-on-primary))",
-              }}
-              onClick={() => setSelectedIndex(null)}
+              className="absolute top-8 right-8 w-16 h-16 rounded-[24px] flex items-center justify-center transition-all z-[120] shadow-2xl bg-white text-black hover:bg-primary hover:text-white"
+              onClick={(e) => { e.stopPropagation(); setSelectedIndex(null); }}
               aria-label="Close"
             >
-              <X size={28} />
+              <X size={32} />
             </button>
 
-            {/* Navigation Buttons */}
+            {/* Navigation Buttons - More prominent */}
             <button
-              className="absolute left-6 w-16 h-16 rounded-full flex items-center justify-center transition-all m3-state-layer z-[110] bg-white/10 hover:bg-white/20 text-white"
+              className="absolute left-12 w-20 h-20 rounded-full flex items-center justify-center transition-all z-[120] bg-black/40 backdrop-blur-xl border border-white/10 hover:bg-primary/20 text-white hover:scale-110"
               onClick={prev}
               aria-label="Previous"
             >
-              <ChevronLeft size={40} />
+              <ChevronLeft size={48} />
             </button>
 
             <button
-              className="absolute right-6 w-16 h-16 rounded-full flex items-center justify-center transition-all m3-state-layer z-[110] bg-white/10 hover:bg-white/20 text-white"
+              className="absolute right-12 w-20 h-20 rounded-full flex items-center justify-center transition-all z-[120] bg-black/40 backdrop-blur-xl border border-white/10 hover:bg-primary/20 text-white hover:scale-110"
               onClick={next}
               aria-label="Next"
             >
-              <ChevronRight size={40} />
+              <ChevronRight size={48} />
             </button>
 
             <motion.div
               key={selectedIndex}
-              initial={{ scale: 0.9, opacity: 0, x: 20 }}
-              animate={{ scale: 1, opacity: 1, x: 0 }}
-              exit={{ scale: 0.9, opacity: 0, x: -20 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: -20 }}
+              transition={{ type: "spring", stiffness: 250, damping: 30 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative"
+              className="relative z-[110]"
               style={{
-                maxHeight: "85vh",
+                maxHeight: "88vh",
                 aspectRatio: "9/19",
-                borderRadius: "28px",
+                borderRadius: "32px",
                 overflow: "hidden",
-                border: "4px solid hsl(var(--md-outline-variant) / 0.5)",
-                boxShadow: "0 32px 64px -12px hsl(var(--md-shadow) / 0.8)",
+                border: "1.5px solid rgba(255,255,255,0.1)",
+                boxShadow: "0 40px 100px -12px rgba(0,0,0,0.9)",
               }}
             >
               <img
@@ -262,9 +258,9 @@ const Gallery = () => {
               />
 
               {/* Counter overlay */}
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
-                <div className="px-4 py-1.5 rounded-full bg-black/60 backdrop-blur-md text-white m3-label-medium border border-white/10">
-                   {selectedIndex + 1} / {allScreenshots.length}
+              <div className="absolute bottom-10 left-1/2 -translate-x-1/2">
+                <div className="px-6 py-2 rounded-full bg-black/80 backdrop-blur-2xl text-white m3-label-large border border-white/20 shadow-2xl">
+                   {selectedIndex + 1} <span className="opacity-30 mx-2">/</span> {allScreenshots.length}
                 </div>
               </div>
             </motion.div>
@@ -274,7 +270,5 @@ const Gallery = () => {
     </section>
   );
 };
-
-export default Gallery;
 
 export default Gallery;

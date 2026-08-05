@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 const MANIFEST_URL =
-  "https://raw.githubusercontent.com/freroxx/toolz/main/update_manifest.json";
+  "https://raw.githubusercontent.com/freroxx/toolz/master/update_manifest.json?t=" + Date.now();
 
 export interface ManifestRelease {
   abi: string;

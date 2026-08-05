@@ -494,40 +494,28 @@
                 width var(--md-duration-medium2) var(--md-easing-emphasized);
   }
 
-  /* Phone mockup frame - Redesigned for Android */
+  /* Phone mockup frame - Refined Android Aesthetic */
   .m3-phone-frame {
-    border-radius: 42px;
-    background: hsl(var(--md-surface-container-highest));
-    border: 1.5px solid hsl(var(--md-outline-variant) / 0.5);
+    border-radius: 40px;
+    background: #0b0b0b;
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
     box-shadow:
-      0 24px 64px -12px hsl(var(--md-shadow) / 0.7),
-      0 12px 24px -8px hsl(var(--md-shadow) / 0.5);
+      0 32px 80px -16px rgba(0, 0, 0, 0.8),
+      0 16px 32px -8px rgba(0, 0, 0, 0.6);
     position: relative;
     overflow: hidden;
-    transition: transform var(--md-duration-medium4) var(--md-easing-emphasized),
-                box-shadow var(--md-duration-medium4) var(--md-easing-emphasized);
-  }
-
-  .m3-phone-punchhole {
-    position: absolute;
-    top: 14px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: #000;
-    z-index: 30;
-    box-shadow: inset 0 0 2px rgba(255,255,255,0.2);
+    padding: 10px;
+    transition: transform var(--md-duration-medium4) var(--md-easing-emphasized);
   }
 
   .m3-phone-screen {
     position: relative;
     overflow: hidden;
     background: #000;
-    border-radius: 34px;
+    border-radius: 30px;
     aspect-ratio: 9/19.5;
     z-index: 10;
+    border: 1px solid rgba(255, 255, 255, 0.05);
   }
 
   /* Mask fade for scroll columns */

@@ -29,9 +29,9 @@ const principles = [
 ];
 
 const steps = [
-  { num: "01", label: "Pin Your Favorites", sub: "Long-press any tool to customize your dashboard" },
-  { num: "02", label: "Enable Widgets", sub: "Add homescreen shortcuts for instant utility access" },
-  { num: "03", label: "Set Up Your Vault", sub: "Secure your data with biometric-locked local storage" },
+  { num: "01", label: "Pin Your Favorites", sub: "Long-press tools on the dashboard to keep them front and center" },
+  { num: "02", label: "Use Smart Search", sub: "Intent-matching search that routes queries directly to the correct tool" },
+  { num: "03", label: "Enable Widgets", sub: "Add homescreen shortcuts for flashlight, notes, steps, and more" },
 ];
 
 const colorMap = {

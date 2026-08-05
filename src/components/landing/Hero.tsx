@@ -162,7 +162,7 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 <img
                   src="/logo.png"
                   alt="Toolz"
-                  className="w-full h-full object-cover scale-[1.35]"
+                  className="w-full h-full object-cover scale-[1.6]"
                 />
               </div>
               <div className="flex flex-col items-start bg-primary/10 border border-primary/20 px-4 py-1.5 rounded-2xl">
