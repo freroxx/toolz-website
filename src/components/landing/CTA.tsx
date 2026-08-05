@@ -118,7 +118,7 @@ const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                   className="mt-8 flex items-center gap-2 text-primary bg-primary/10 hover:bg-primary/20 px-6 py-3 rounded-full transition-all active:scale-95 group"
                 >
                   <BarChart size={16} />
-                  <span className="m3-label-large font-bold uppercase tracking-wider">Detailed Stats</span>
+                  <span className="m3-label-large font-bold uppercase tracking-wider">Stats</span>
                   <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                 </button>
               </motion.div>
