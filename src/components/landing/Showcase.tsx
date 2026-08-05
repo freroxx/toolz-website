@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Smartphone, Layers, Cpu } from "lucide-react";
+import { Smartphone, Layers, Cpu, Shield, Sparkles, Clock, Music, Gauge } from "lucide-react";
 
 const allScreenshots = [
   "https://i.ibb.co/JPmYCs5/Screenshot-20260801-202638-Toolz.jpg",
@@ -37,31 +37,40 @@ const allScreenshots = [
 
 const modules = [
   {
-    id: "ui",
-    icon: Smartphone,
-    name: "Expressive UI",
-    tag: "Interface",
-    desc: "Material 3 Expressive throughout — dynamic color, fluid transitions, optimized for speed.",
-    images: allScreenshots.slice(0, 10),
+    id: "productivity",
+    icon: Clock,
+    name: "Productivity",
+    tag: "Time",
+    desc: "Countdown engines, stopwatches, and Pomodoro focus cycles designed for accuracy.",
+    images: allScreenshots.slice(0, 7),
     color: "primary",
   },
   {
-    id: "vault",
-    icon: Layers,
-    name: "Hardened Vault",
-    tag: "Security",
-    desc: "Military-grade local encryption for passwords, notes, and archived notifications.",
-    images: allScreenshots.slice(10, 20),
+    id: "media",
+    icon: Music,
+    name: "Media & PDF",
+    tag: "Studio",
+    desc: "Local audio hub, studio-quality recording, and FFmpeg-powered media transformation.",
+    images: allScreenshots.slice(7, 14),
     color: "secondary",
   },
   {
-    id: "engine",
-    icon: Cpu,
-    name: "Media Engine",
-    tag: "Utility",
-    desc: "Lossless FFmpeg conversion and real-time media orchestration, system-native.",
-    images: allScreenshots.slice(20),
+    id: "security",
+    icon: Shield,
+    name: "Security",
+    tag: "Hardened",
+    desc: "SQLCipher-encrypted password vault and biometric-protected notification archives.",
+    images: allScreenshots.slice(14, 21),
     color: "tertiary",
+  },
+  {
+    id: "system",
+    icon: Gauge,
+    name: "System",
+    tag: "Sensors",
+    desc: "GPS-based tracking, magnetic compass, and deep hardware diagnostics suite.",
+    images: allScreenshots.slice(21),
+    color: "primary",
   },
 ];
 
@@ -103,7 +112,7 @@ const Showcase = () => {
 
   useEffect(() => {
     if (paused) return;
-    const t = setInterval(nextImage, 2600);
+    const t = setInterval(nextImage, 2800);
     return () => clearInterval(t);
   }, [paused, nextImage]);
 
@@ -117,10 +126,25 @@ const Showcase = () => {
       className="py-32 relative overflow-hidden"
       style={{ background: "hsl(var(--md-surface-container-low))" }}
     >
-      {/* Background blob */}
-      <div
-        className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full opacity-10 pointer-events-none blur-3xl"
-        style={{ background: activeColors.indicator }}
+      {/* Background blobs with shared motion */}
+      <AnimatePresence mode="popLayout">
+        <motion.div
+          key={activeModule.id + "-blob"}
+          layoutId="showcase-glow"
+          className="absolute -top-40 -right-40 w-[800px] h-[800px] rounded-full opacity-20 pointer-events-none blur-[120px]"
+          style={{ background: activeColors.indicator }}
+          transition={{ type: "spring", stiffness: 80, damping: 20 }}
+        />
+      </AnimatePresence>
+      <motion.div
+         animate={{
+           scale: [1, 1.1, 1],
+           x: [0, 20, 0],
+           y: [0, -30, 0]
+         }}
+         transition={{ duration: 10, repeat: Infinity }}
+         className="absolute top-1/2 left-0 w-96 h-96 rounded-full opacity-[0.05] pointer-events-none blur-[100px]"
+         style={{ background: activeColors.indicator }}
       />
 
       <div className="container mx-auto px-4 relative z-10">
@@ -132,22 +156,24 @@ const Showcase = () => {
           transition={{ type: "spring", stiffness: 200, damping: 25 }}
           className="text-center mb-16"
         >
-          <div className="m3-chip inline-flex mb-6">System Modules</div>
+          <div className="m3-chip inline-flex mb-6 bg-secondary/10 border-secondary/20 text-secondary">
+             App Modules
+          </div>
           <h2
-            className="m3-display-medium"
+            className="m3-display-medium font-bold"
             style={{ color: "hsl(var(--md-on-surface))" }}
           >
-            See it in{" "}
+            Experience pure{" "}
             <span
               style={{
                 background: `linear-gradient(135deg, ${activeColors.indicator}, hsl(var(--md-secondary)))`,
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
-                transition: "all 0.5s ease",
+                transition: "all 0.8s ease",
               }}
             >
-              action.
+              precision.
             </span>
           </h2>
         </motion.div>

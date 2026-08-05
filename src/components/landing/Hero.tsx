@@ -1,7 +1,8 @@
-import { Download, Github, ChevronDown, Shield, Zap, Lock } from "lucide-react";
+import { Download, Github, ChevronDown, Shield, Zap, Lock, Sparkles } from "lucide-react";
 import { motion, useScroll, useTransform, AnimatePresence, useSpring } from "framer-motion";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useUpdateManifest } from "@/hooks/use-update-manifest";
+import DownloadDialog from "./DownloadDialog";
 
 const allScreenshots = [
   "https://i.ibb.co/JPmYCs5/Screenshot-20260801-202638-Toolz.jpg",
@@ -19,42 +20,47 @@ const allScreenshots = [
 ];
 
 const pillBadges = [
-  { icon: Shield, label: "Privacy First" },
-  { icon: Zap,    label: "Zero Trackers" },
+  { icon: Shield, label: "Privacy as standard" },
+  { icon: Sparkles, label: "Zero Slop" },
   { icon: Lock,   label: "100% Local" },
 ];
 
-const Hero = () => {
+const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
   const [imgIndex, setImgIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const heroRef = useRef<HTMLElement>(null);
 
-  const { versionName, bestRelease, releasesPageUrl, isLoading } = useUpdateManifest();
-  const downloadUrl = bestRelease?.downloadUrl ?? releasesPageUrl;
+  const { versionName, isLoading } = useUpdateManifest();
 
   // Parallax via scroll
   const { scrollYProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"],
   });
-  const phoneY = useTransform(scrollYProgress, [0, 1], [0, 80]);
-  const phoneRotate = useTransform(scrollYProgress, [0, 1], [0, 6]);
-  const phoneScale = useTransform(scrollYProgress, [0, 0.6], [1, 0.88]);
-  const blob1Y = useTransform(scrollYProgress, [0, 1], [0, -60]);
-  const blob2Y = useTransform(scrollYProgress, [0, 1], [0, 40]);
-  const textY = useTransform(scrollYProgress, [0, 1], [0, -40]);
+
+  const phoneY = useTransform(scrollYProgress, [0, 1], [0, 120]);
+  const phoneRotate = useTransform(scrollYProgress, [0, 1], [0, 12]);
+  const phoneScale = useTransform(scrollYProgress, [0, 0.6], [1, 0.85]);
+
+  const blob1Y = useTransform(scrollYProgress, [0, 1], [0, -100]);
+  const blob1X = useTransform(scrollYProgress, [0, 1], [0, 50]);
+  const blob2Y = useTransform(scrollYProgress, [0, 1], [0, 80]);
+  const blob2X = useTransform(scrollYProgress, [0, 1], [0, -40]);
+
+  const textY = useTransform(scrollYProgress, [0, 1], [0, -60]);
   const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
 
+  const springConfig = { stiffness: 100, damping: 25, mass: 1 };
   const springPhone = {
-    y: useSpring(phoneY, { stiffness: 80, damping: 20 }),
-    rotate: useSpring(phoneRotate, { stiffness: 80, damping: 20 }),
-    scale: useSpring(phoneScale, { stiffness: 80, damping: 20 }),
+    y: useSpring(phoneY, springConfig),
+    rotate: useSpring(phoneRotate, springConfig),
+    scale: useSpring(phoneScale, springConfig),
   };
 
   const nextImg = useCallback(() => setImgIndex((p) => (p + 1) % allScreenshots.length), []);
   useEffect(() => {
     if (paused) return;
-    const t = setInterval(nextImg, 2800);
+    const t = setInterval(nextImg, 3200);
     return () => clearInterval(t);
   }, [paused, nextImg]);
 
@@ -67,39 +73,53 @@ const Hero = () => {
       {/* ── Decorative blobs ── */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
         <motion.div
-          style={{ y: blob1Y }}
-          className="absolute -top-40 -left-40 w-[700px] h-[700px] m3-blob opacity-25"
-          animate={{ scale: [1, 1.08, 1] }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+          style={{ y: blob1Y, x: blob1X }}
+          className="absolute -top-40 -left-40 w-[800px] h-[800px] m3-blob opacity-[0.15]"
+          animate={{ scale: [1, 1.1, 1], rotate: [0, 5, 0] }}
+          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
         >
           <div
             className="w-full h-full rounded-[inherit]"
-            style={{ background: "radial-gradient(circle, hsl(var(--md-primary) / 0.35) 0%, hsl(var(--md-primary) / 0) 70%)" }}
+            style={{ background: "radial-gradient(circle, hsl(var(--md-primary) / 0.4) 0%, transparent 70%)" }}
           />
         </motion.div>
+
         <motion.div
-          style={{ y: blob2Y }}
-          className="absolute -bottom-20 -right-40 w-[600px] h-[600px] m3-blob-2 opacity-20"
-          animate={{ scale: [1, 1.12, 1] }}
-          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+          style={{ y: blob2Y, x: blob2X }}
+          className="absolute -bottom-40 -right-40 w-[700px] h-[700px] m3-blob-2 opacity-[0.12]"
+          animate={{ scale: [1, 1.15, 1], rotate: [0, -5, 0] }}
+          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
         >
           <div
             className="w-full h-full rounded-[inherit]"
-            style={{ background: "radial-gradient(circle, hsl(var(--md-secondary) / 0.35) 0%, hsl(var(--md-secondary) / 0) 70%)" }}
+            style={{ background: "radial-gradient(circle, hsl(var(--md-secondary) / 0.4) 0%, transparent 70%)" }}
           />
         </motion.div>
+
+        {/* Floating background elements */}
+        <motion.div
+          animate={{ y: [0, -20, 0], opacity: [0.05, 0.1, 0.05] }}
+          transition={{ duration: 8, repeat: Infinity }}
+          className="absolute top-1/4 right-1/4 w-32 h-32 rounded-full border border-primary/20"
+        />
+        <motion.div
+          animate={{ y: [0, 30, 0], opacity: [0.03, 0.08, 0.03] }}
+          transition={{ duration: 10, repeat: Infinity, delay: 1 }}
+          className="absolute bottom-1/4 left-1/3 w-48 h-48 rounded-full border border-secondary/20"
+        />
+
         {/* Subtle grid */}
         <div
-          className="absolute inset-0 opacity-[0.025]"
+          className="absolute inset-0 opacity-[0.03]"
           style={{
             backgroundImage: "linear-gradient(hsl(var(--md-outline)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--md-outline)) 1px, transparent 1px)",
-            backgroundSize: "64px 64px",
+            backgroundSize: "80px 80px",
           }}
         />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
-        <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-20">
+        <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
 
           {/* ── Left: Text ── */}
           <motion.div
@@ -108,97 +128,103 @@ const Hero = () => {
           >
             {/* Version chip */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 30 }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1, type: "spring", stiffness: 200, damping: 20 }}
               className="inline-flex items-center gap-2 mb-8"
             >
-              <div className="m3-chip gap-2 bg-primary/10 border-primary/20">
+              <div className="m3-chip gap-2 bg-primary/10 border-primary/20 px-4 py-1.5 rounded-2xl">
                 <span
                   className="w-2 h-2 rounded-full animate-pulse flex-shrink-0"
                   style={{ background: "hsl(var(--md-primary))" }}
                 />
-                {isLoading ? "Loading..." : `v1.1.0 BETA · Android 12+`}
+                <span className="m3-label-large font-bold">v{versionName} Beta</span>
+                <span className="opacity-40 font-mono text-[10px]">//</span>
+                <span className="m3-label-small opacity-70">Android 12+</span>
               </div>
             </motion.div>
 
             {/* Display heading */}
             <motion.h1
-              initial={{ opacity: 0, y: 32 }}
+              initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.18, type: "spring", stiffness: 200, damping: 25 }}
-              className="m3-display-large mb-6"
+              transition={{ delay: 0.2, type: "spring", stiffness: 150, damping: 22 }}
+              className="m3-display-large mb-8"
               style={{ color: "hsl(var(--md-on-surface))" }}
             >
-              Your device,
+              One home.
               <br />
-              fully{" "}
-              <span
-                className="m3-gradient-text"
-                style={{ display: "inline-block" }}
-              >
-                orchestrated.
+              All your{" "}
+              <span className="relative">
+                 <span className="relative z-10 m3-gradient-text">tools.</span>
+                 <motion.div
+                   initial={{ scaleX: 0 }}
+                   animate={{ scaleX: 1 }}
+                   transition={{ delay: 0.8, duration: 0.8, ease: "circOut" }}
+                   className="absolute bottom-2 left-0 right-0 h-4 bg-primary/10 -z-10 origin-left rounded-sm"
+                 />
               </span>
             </motion.h1>
 
             {/* Body */}
             <motion.p
-              initial={{ opacity: 0, y: 24 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.26, type: "spring", stiffness: 200, damping: 25 }}
-              className="m3-body-large mb-8 max-w-xl mx-auto lg:mx-0"
+              transition={{ delay: 0.3, type: "spring", stiffness: 150, damping: 25 }}
+              className="m3-body-large mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed text-balance"
               style={{ color: "hsl(var(--md-on-surface-variant))" }}
             >
-              Toolz is a modern Android toolkit that brings productivity, media, security, and system utilities into one polished, expressive home.
+              Ditch the folder of single-purpose apps. Toolz is a modern utility suite that brings productivity, media, security, and system tools into one polished, expressive home.
             </motion.p>
 
             {/* Badge pills */}
             <motion.div
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.34, type: "spring", stiffness: 200, damping: 25 }}
-              className="flex flex-wrap gap-2 justify-center lg:justify-start mb-10"
+              transition={{ delay: 0.4, type: "spring", stiffness: 150, damping: 25 }}
+              className="flex flex-wrap gap-3 justify-center lg:justify-start mb-12"
             >
-              {pillBadges.map(({ icon: Icon, label }) => (
-                <div key={label} className="m3-chip gap-2">
-                  <Icon size={14} style={{ color: "hsl(var(--md-secondary))" }} />
-                  <span>{label}</span>
-                </div>
+              {pillBadges.map(({ icon: Icon, label }, i) => (
+                <motion.div
+                  key={label}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 + (i * 0.1) }}
+                  className="m3-chip gap-2 bg-surface-container-high border-outline-variant/30"
+                >
+                  <Icon size={14} className="text-secondary" />
+                  <span className="font-medium">{label}</span>
+                </motion.div>
               ))}
             </motion.div>
 
             {/* CTAs */}
             <motion.div
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.42, type: "spring", stiffness: 200, damping: 25 }}
-              className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start"
+              transition={{ delay: 0.6, type: "spring", stiffness: 150, damping: 25 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
             >
-              <a
-                href={downloadUrl}
-                className="m3-btn-filled py-4 px-8 text-base gap-3"
-                aria-label={`Download Toolz v${versionName} BETA`}
+              <button
+                onClick={onDownloadClick}
+                className="m3-btn-filled py-5 px-10 text-lg gap-3 shadow-2xl shadow-primary/20 active:scale-95 transition-transform"
               >
-                <Download size={20} />
-                Download v{versionName}
-                <span
-                  className="m3-label-small px-2 py-0.5 rounded-full"
-                  style={{
-                    background: "hsl(var(--md-on-primary) / 0.15)",
-                    color: "hsl(var(--md-on-primary))",
-                  }}
-                >
-                  BETA
-                </span>
-              </a>
+                <Download size={24} />
+                Get Toolz
+                <div className="flex flex-col items-start leading-none border-l border-on-primary/20 pl-3 ml-1">
+                   <span className="text-[10px] opacity-70 uppercase tracking-widest font-bold">Latest</span>
+                   <span className="text-xs">v{versionName}</span>
+                </div>
+              </button>
+
               <a
                 href="https://github.com/freroxx/toolz"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="m3-btn-outlined py-4 px-8 text-base gap-3"
+                className="m3-btn-outlined py-5 px-10 text-lg gap-3 active:scale-95 transition-transform"
               >
-                <Github size={20} />
-                View Source
+                <Github size={24} />
+                Explore Source
               </a>
             </motion.div>
           </motion.div>
@@ -210,20 +236,19 @@ const Hero = () => {
               rotate: springPhone.rotate,
               scale: springPhone.scale,
             }}
-            initial={{ opacity: 0, x: 60, scale: 0.9, rotate: 5 }}
+            initial={{ opacity: 0, x: 100, scale: 0.8, rotate: 10 }}
             animate={{ opacity: 1, x: 0, scale: 1, rotate: 0 }}
-            transition={{ delay: 0.3, type: "spring", stiffness: 100, damping: 20 }}
+            transition={{ delay: 0.4, type: "spring", stiffness: 80, damping: 20, mass: 1.2 }}
             className="flex-shrink-0 relative group"
-            whileHover={{ scale: 1.02, rotate: -1 }}
           >
             {/* Glow behind phone */}
             <div
-              className="absolute inset-0 -m-20 rounded-full blur-[100px] opacity-40 pointer-events-none transition-all duration-1000 group-hover:opacity-60"
+              className="absolute inset-0 -m-32 rounded-full blur-[140px] opacity-40 pointer-events-none transition-all duration-1000 group-hover:opacity-60"
               style={{ background: "radial-gradient(circle, hsl(var(--md-primary) / 0.6), hsl(var(--md-secondary) / 0.4), transparent 70%)" }}
             />
 
             <div
-              className="relative w-[280px] sm:w-[320px]"
+              className="relative w-[300px] sm:w-[340px]"
               onMouseEnter={() => setPaused(true)}
               onMouseLeave={() => setPaused(false)}
               onClick={nextImg}
@@ -242,10 +267,10 @@ const Hero = () => {
                       src={allScreenshots[imgIndex]}
                       alt={`Toolz app screenshot ${imgIndex + 1}`}
                       className="absolute inset-0 w-full h-full object-cover"
-                      initial={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }}
+                      initial={{ opacity: 0, scale: 1.2, filter: "blur(20px)" }}
                       animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-                      exit={{ opacity: 0, scale: 0.9, filter: "blur(5px)" }}
-                      transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
+                      exit={{ opacity: 0, scale: 0.8, filter: "blur(10px)" }}
+                      transition={{ duration: 0.8, ease: [0.34, 1.56, 0.64, 1] }}
                     />
                   </AnimatePresence>
 
@@ -257,18 +282,20 @@ const Hero = () => {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         className="absolute inset-0 flex items-center justify-center z-40"
-                        style={{ background: "hsl(var(--md-shadow) / 0.4)", backdropFilter: "blur(4px)" }}
+                        style={{ background: "hsl(var(--md-shadow) / 0.4)", backdropFilter: "blur(6px)" }}
                       >
-                        <div
-                          className="px-6 py-3 rounded-2xl m3-label-large shadow-2xl scale-110"
+                        <motion.div
+                          initial={{ scale: 0.8, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          className="px-8 py-4 rounded-3xl m3-title-medium shadow-2xl"
                           style={{
                             background: "hsl(var(--md-surface-container-highest))",
                             color: "hsl(var(--md-on-surface))",
-                            border: "1px solid hsl(var(--md-outline-variant))"
+                            border: "1px solid hsl(var(--md-outline-variant) / 0.5)"
                           }}
                         >
-                          Tap to advance
-                        </div>
+                          Tap to flip
+                        </motion.div>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -282,16 +309,45 @@ const Hero = () => {
               </div>
 
               {/* Screenshot counter chip */}
-              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
+              <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap">
                 <motion.div
                   layoutId="counter"
-                  className="m3-chip text-xs bg-surface-container-high/80 backdrop-blur-md"
+                  className="m3-chip text-xs bg-surface-container-high/90 backdrop-blur-xl border-outline-variant/30 py-2 px-4 shadow-xl"
                 >
-                  {imgIndex + 1} <span className="opacity-40 mx-1">/</span> {allScreenshots.length}
+                  <span className="text-primary font-bold">{imgIndex + 1}</span>
+                  <span className="opacity-30 mx-2">/</span>
+                  <span className="opacity-70">{allScreenshots.length}</span>
                 </motion.div>
               </div>
             </div>
           </motion.div>
+        </div>
+
+        {/* Scroll indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.5 }}
+          style={{ opacity }}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+        >
+          <span className="m3-label-medium uppercase tracking-[0.2em]" style={{ color: "hsl(var(--md-on-surface-variant) / 0.6)" }}>
+            Explore
+          </span>
+          <motion.div
+            animate={{ y: [0, 8, 0] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            style={{ color: "hsl(var(--md-primary))" }}
+          >
+            <ChevronDown size={24} />
+          </motion.div>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+export default Hero;
         </div>
 
         {/* Scroll indicator */}

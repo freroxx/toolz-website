@@ -10,15 +10,13 @@ const navLinks = [
   { label: "Community", href: "#discord" },
 ];
 
-const Navbar = () => {
+const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeHref, setActiveHref] = useState("");
   const indicatorRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLDivElement>(null);
-  const { versionName, bestRelease, releasesPageUrl } = useUpdateManifest();
-
-  const downloadUrl = bestRelease?.downloadUrl ?? releasesPageUrl;
+  const { versionName } = useUpdateManifest();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -128,14 +126,14 @@ const Navbar = () => {
                 <Github size={16} />
                 Source
               </a>
-              <a
-                href={downloadUrl}
+              <button
+                onClick={onDownloadClick}
                 className="m3-btn-filled h-9 px-5 text-sm gap-2"
                 aria-label={`Download Toolz v${versionName}`}
               >
                 <Download size={16} />
                 Download
-              </a>
+              </button>
             </div>
 
             {/* Mobile trigger */}
@@ -244,13 +242,13 @@ const Navbar = () => {
                 className="p-6 flex flex-col gap-3 border-t"
                 style={{ borderColor: "hsl(var(--md-outline-variant))" }}
               >
-                <a
-                  href={downloadUrl}
+                <button
+                  onClick={() => { setMobileOpen(false); onDownloadClick(); }}
                   className="m3-btn-filled w-full justify-center py-3 text-sm gap-2"
                 >
                   <Download size={16} />
                   Download v{versionName}
-                </a>
+                </button>
                 <a
                   href="https://github.com/freroxx/toolz"
                   target="_blank"

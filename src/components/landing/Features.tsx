@@ -1,47 +1,47 @@
-import { Shield, Lock, RefreshCw, HardDrive, Bell, Settings } from "lucide-react";
+import { Shield, Lock, RefreshCw, HardDrive, Bell, Settings, Clock, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 
 const features = [
   {
-    icon: Shield,
-    title: "Privacy Hub",
-    tag: "Core",
-    desc: "100% offline utilities. No trackers, no telemetry. Sensitive data is stored with SQLCipher encryption.",
+    icon: Clock,
+    title: "Time & Productivity",
+    tag: "Essential",
+    desc: "Countdown engines, high-resolution stopwatches, and Pomodoro focus cycles with background persistence.",
     color: "primary",
   },
   {
     icon: Lock,
-    title: "Security Vault",
+    title: "Security & Privacy",
     tag: "Hardened",
-    desc: "Encrypted storage for passwords, notes, and system notifications with biometric authentication.",
+    desc: "SQLCipher-encrypted password vault and notifications. Core tools work 100% offline.",
     color: "secondary",
   },
   {
     icon: RefreshCw,
-    title: "FFmpeg Media",
-    tag: "Precision",
-    desc: "Studio-quality audio/video conversion and studio recording powered by system-native binaries.",
+    title: "Media & PDF",
+    tag: "Utility",
+    desc: "FFmpeg-powered media conversion and studio-quality recording. Native PDF viewer with extraction.",
     color: "tertiary",
   },
   {
     icon: HardDrive,
-    title: "System Suite",
-    tag: "Deep Ops",
-    desc: "Advanced file cleaning, hardware diagnostics, and network optimization for power users.",
+    title: "Device & System",
+    tag: "Advanced",
+    desc: "Deep hardware diagnostics, storage management, and network optimization tools.",
     color: "primary",
   },
   {
     icon: Bell,
-    title: "Notify Vault",
-    tag: "Archival",
-    desc: "A searchable local log of all system notifications. Auditing privacy and capturing deleted history.",
+    title: "Notification History",
+    tag: "Privacy",
+    desc: "A searchable local log of all system notifications. Audit privacy and retrieve deleted messages.",
     color: "secondary",
   },
   {
-    icon: Settings,
-    title: "45+ Instruments",
-    tag: "Toolkit",
-    desc: "From AI document summaries to GPS sensors — every tool you need in one polished APK.",
+    icon: Sparkles,
+    title: "AI Utilities",
+    tag: "Smart",
+    desc: "Optional conversational agents for document summaries and contextual search guidance.",
     color: "tertiary",
   },
 ];

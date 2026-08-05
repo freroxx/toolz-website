@@ -4,26 +4,26 @@ import { motion } from "framer-motion";
 const principles = [
   {
     icon: Shield,
-    title: "100% Local",
-    desc: "Your data never leaves your device. No cloud, no tracking, no exceptions.",
+    title: "Privacy First",
+    desc: "Core tools work 100% offline. Sensitive data is stored locally using industrial-grade SQLCipher encryption.",
     color: "primary",
   },
   {
     icon: Zap,
     title: "Zero Bloat",
-    desc: "Minimal battery drain, maximum performance. Precision code, no filler.",
+    desc: "One optimized APK replaces dozens of single-purpose apps. Minimal footprint, maximum precision.",
     color: "secondary",
+  },
+  {
+    icon: Cpu,
+    title: "Deep Integration",
+    desc: "Native Quick Settings tiles, Homescreen Widgets, and Autofill support for a seamless system experience.",
+    color: "tertiary",
   },
   {
     icon: Terminal,
     title: "Open Source",
-    desc: "Fully auditable. Built by the community, for the community, forever.",
-    color: "tertiary",
-  },
-  {
-    icon: Cpu,
-    title: "Pro-Level Tools",
-    desc: "Real controls for real users. No simplified menus, no hand-holding.",
+    desc: "Fully auditable. Built for transparency and performance, with zero tracking or data collection.",
     color: "primary",
   },
 ];
@@ -112,10 +112,10 @@ const HowItWorks = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
           {/* Steps */}
           <motion.div
-            initial={{ opacity: 0, x: -32 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-80px" }}
-            transition={{ type: "spring", stiffness: 200, damping: 25 }}
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ type: "spring", stiffness: 150, damping: 25 }}
           >
             <h3
               className="m3-headline-medium mb-8"
@@ -127,11 +127,11 @@ const HowItWorks = () => {
               {steps.map((step, i) => (
                 <motion.div
                   key={i}
-                  initial={{ opacity: 0, x: -24 }}
+                  initial={{ opacity: 0, x: -30 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: i * 0.1, type: "spring", stiffness: 250, damping: 28 }}
-                  className="flex items-center gap-5 p-5 rounded-2xl"
+                  transition={{ delay: 0.2 + (i * 0.1), type: "spring", stiffness: 200, damping: 25 }}
+                  className="flex items-center gap-6 p-6 rounded-[28px] transition-transform hover:scale-[1.02]"
                   style={{
                     background: i === 0
                       ? "hsl(var(--md-primary-container))"
@@ -139,7 +139,7 @@ const HowItWorks = () => {
                   }}
                 >
                   <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 font-display font-bold text-lg"
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 font-display font-bold text-xl shadow-lg shadow-black/10"
                     style={{
                       background: i === 0
                         ? "hsl(var(--md-primary))"
@@ -153,7 +153,7 @@ const HowItWorks = () => {
                   </div>
                   <div>
                     <div
-                      className="m3-title-medium font-semibold"
+                      className="m3-title-large mb-1"
                       style={{
                         color: i === 0
                           ? "hsl(var(--md-on-primary-container))"
@@ -166,7 +166,7 @@ const HowItWorks = () => {
                       className="m3-body-medium"
                       style={{
                         color: i === 0
-                          ? "hsl(var(--md-on-primary-container) / 0.7)"
+                          ? "hsl(var(--md-on-primary-container) / 0.8)"
                           : "hsl(var(--md-on-surface-variant))",
                       }}
                     >
@@ -187,29 +187,28 @@ const HowItWorks = () => {
                 <motion.div
                   key={i}
                   custom={i}
-                  variants={cardVariants}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, margin: "-60px" }}
-                  className="m3-card-outlined p-6 flex flex-col gap-4 group cursor-default"
-                  whileHover={{ y: -3 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ delay: 0.3 + (i * 0.1), type: "spring", stiffness: 200, damping: 25 }}
+                  className="m3-card-outlined p-7 flex flex-col gap-6 group cursor-default h-full border-outline-variant/50"
+                  whileHover={{ y: -8, scale: 1.02, borderColor: colors.accent }}
                 >
                   <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 shadow-lg shadow-black/5"
                     style={{ background: colors.container }}
                   >
-                    <Icon size={22} style={{ color: colors.on }} />
+                    <Icon size={26} style={{ color: colors.on }} />
                   </div>
                   <div>
                     <h4
-                      className="m3-title-medium font-semibold mb-1"
+                      className="m3-title-large mb-2"
                       style={{ color: "hsl(var(--md-on-surface))" }}
                     >
                       {p.title}
                     </h4>
                     <p
-                      className="m3-body-medium"
+                      className="m3-body-medium leading-relaxed"
                       style={{ color: "hsl(var(--md-on-surface-variant))" }}
                     >
                       {p.desc}
