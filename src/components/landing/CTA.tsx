@@ -68,7 +68,7 @@ const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
               >
                 What are you <br />
                 <span className="m3-gradient-text italic font-serif">waiting for?</span>
-              </h2 >
+              </motion.h2>
 
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
