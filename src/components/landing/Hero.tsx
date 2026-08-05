@@ -1,6 +1,7 @@
-import { Github, Terminal, Activity, Cpu, Heart, Zap, MousePointer2, Shield, Download } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useCallback } from "react";
+import { Download, Github, ChevronDown, Shield, Zap, Lock } from "lucide-react";
+import { motion, useScroll, useTransform, AnimatePresence, useSpring } from "framer-motion";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useUpdateManifest } from "@/hooks/useUpdateManifest";
 
 const allScreenshots = [
   "https://i.ibb.co/JPmYCs5/Screenshot-20260801-202638-Toolz.jpg",
@@ -15,161 +16,308 @@ const allScreenshots = [
   "https://i.ibb.co/VcXgd7Ln/Screenshot-20260801-203956-Toolz.jpg",
   "https://i.ibb.co/TBWstnFX/Screenshot-20260801-204050-Toolz.jpg",
   "https://i.ibb.co/fdJTKt21/Screenshot-20260801-204136-Toolz.jpg",
-  "https://i.ibb.co/YB78db4d/Screenshot-20260801-204152-Toolz.jpg",
-  "https://i.ibb.co/QFjpfKM3/Screenshot-20260801-204227-Toolz.jpg",
-  "https://i.ibb.co/6c0JdSJb/Screenshot-20260801-204253-Toolz.jpg",
-  "https://i.ibb.co/60Y3Kfyd/Screenshot-20260801-204349-Toolz.jpg",
-  "https://i.ibb.co/gZpPwFYB/Screenshot-20260801-204451-Toolz.jpg",
-  "https://i.ibb.co/LdJkX9W8/Screenshot-20260801-204508-Toolz.jpg",
-  "https://i.ibb.co/NdV9Zvvx/Screenshot-20260801-204523-Toolz.jpg",
-  "https://i.ibb.co/7xrctBk2/Screenshot-20260801-204546-Toolz.jpg",
-  "https://i.ibb.co/3yVtRJK9/Screenshot-20260801-204556-Toolz.jpg",
-  "https://i.ibb.co/kg8DK78X/Screenshot-20260801-204625-Toolz.jpg",
-  "https://i.ibb.co/PZ5C7W3d/Screenshot-20260801-204720-Toolz.jpg",
-  "https://i.ibb.co/pjjRVt11/Screenshot-20260801-204746-Toolz.jpg",
-  "https://i.ibb.co/21KCCVnq/Screenshot-20260801-204951-Toolz.jpg",
-  "https://i.ibb.co/YFwsHXGX/Screenshot-20260801-205032-Toolz.jpg",
-  "https://i.ibb.co/Gf9G1HSD/Screenshot-20260801-205053-Toolz.jpg",
-  "https://i.ibb.co/PG37z8B9/Screenshot-20260801-205157-Toolz.jpg",
-  "https://i.ibb.co/rfHmrYzG/Screenshot-20260801-205233-Toolz.jpg",
-  "https://i.ibb.co/hFcfWbcK/Screenshot-20260801-205252-Toolz.jpg",
-  "https://i.ibb.co/vvJcqG6k/Screenshot-20260801-205311-Toolz.jpg",
-  "https://i.ibb.co/mVc23hyP/Screenshot-20260801-205448-Toolz.jpg",
-  "https://i.ibb.co/przVxJQw/Screenshot-20260801-205634-Toolz.jpg",
-  "https://i.ibb.co/TBX23hW8/Screenshot-20260801-205655-Toolz.jpg",
-  "https://i.ibb.co/6cS4Ps4k/Screenshot-20260801-205740-Toolz.jpg",
-  "https://i.ibb.co/bg8WHNyJ/Screenshot-20260801-205820-Toolz.jpg",
-  "https://i.ibb.co/BV2q8cQn/Screenshot-20260801-205902-Toolz.jpg",
-  "https://i.ibb.co/C5Zk6tJB/Screenshot-20260801-205939-Toolz.jpg",
+];
+
+const pillBadges = [
+  { icon: Shield, label: "Privacy First" },
+  { icon: Zap,    label: "Zero Trackers" },
+  { icon: Lock,   label: "100% Local" },
 ];
 
 const Hero = () => {
-  const [index, setIndex] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
+  const [imgIndex, setImgIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const heroRef = useRef<HTMLElement>(null);
 
-  const nextImage = useCallback(() => {
-    setIndex((prev) => (prev + 1) % allScreenshots.length);
-  }, []);
+  const { versionName, bestRelease, releasesPageUrl, isLoading } = useUpdateManifest();
+  const downloadUrl = bestRelease?.downloadUrl ?? releasesPageUrl;
 
+  // Parallax via scroll
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"],
+  });
+  const phoneY = useTransform(scrollYProgress, [0, 1], [0, 80]);
+  const phoneRotate = useTransform(scrollYProgress, [0, 1], [0, 6]);
+  const phoneScale = useTransform(scrollYProgress, [0, 0.6], [1, 0.88]);
+  const blob1Y = useTransform(scrollYProgress, [0, 1], [0, -60]);
+  const blob2Y = useTransform(scrollYProgress, [0, 1], [0, 40]);
+  const textY = useTransform(scrollYProgress, [0, 1], [0, -40]);
+  const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
+
+  const springPhone = {
+    y: useSpring(phoneY, { stiffness: 80, damping: 20 }),
+    rotate: useSpring(phoneRotate, { stiffness: 80, damping: 20 }),
+    scale: useSpring(phoneScale, { stiffness: 80, damping: 20 }),
+  };
+
+  const nextImg = useCallback(() => setImgIndex((p) => (p + 1) % allScreenshots.length), []);
   useEffect(() => {
-    const timer = setInterval(() => {
-      if (!isHovered) nextImage();
-    }, 3000);
-    return () => clearInterval(timer);
-  }, [isHovered, nextImage]);
+    if (paused) return;
+    const t = setInterval(nextImg, 2800);
+    return () => clearInterval(t);
+  }, [paused, nextImg]);
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-32 pb-24 bg-blueprint tactile-feedback">
-      <div className="scanline" />
-      <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black" />
-      
+    <section
+      ref={heroRef}
+      className="relative min-h-screen flex items-center overflow-hidden pt-24 pb-20"
+      style={{ background: "hsl(var(--md-surface))" }}
+    >
+      {/* ── Decorative blobs ── */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <motion.div
+          style={{ y: blob1Y }}
+          className="absolute -top-40 -left-40 w-[700px] h-[700px] m3-blob opacity-25"
+          animate={{ scale: [1, 1.08, 1] }}
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <div
+            className="w-full h-full rounded-[inherit]"
+            style={{ background: "radial-gradient(circle, hsl(var(--md-primary) / 0.35) 0%, hsl(var(--md-primary) / 0) 70%)" }}
+          />
+        </motion.div>
+        <motion.div
+          style={{ y: blob2Y }}
+          className="absolute -bottom-20 -right-40 w-[600px] h-[600px] m3-blob-2 opacity-20"
+          animate={{ scale: [1, 1.12, 1] }}
+          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <div
+            className="w-full h-full rounded-[inherit]"
+            style={{ background: "radial-gradient(circle, hsl(var(--md-secondary) / 0.35) 0%, hsl(var(--md-secondary) / 0) 70%)" }}
+          />
+        </motion.div>
+        {/* Subtle grid */}
+        <div
+          className="absolute inset-0 opacity-[0.025]"
+          style={{
+            backgroundImage: "linear-gradient(hsl(var(--md-outline)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--md-outline)) 1px, transparent 1px)",
+            backgroundSize: "64px 64px",
+          }}
+        />
+      </div>
+
       <div className="container mx-auto px-4 relative z-10">
-        <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
-          <div className="flex-1 text-center lg:text-left">
+        <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-20">
+
+          {/* ── Left: Text ── */}
+          <motion.div
+            style={{ y: textY, opacity }}
+            className="flex-1 text-center lg:text-left"
+          >
+            {/* Version chip */}
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="inline-flex items-center gap-4 mb-10 border border-primary/20 bg-primary/5 px-4 py-2 hover:border-primary transition-colors cursor-default"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 30 }}
+              className="inline-flex items-center gap-2 mb-8"
             >
-              <div className="w-2 h-2 bg-primary animate-pulse" />
-              <span className="text-technical text-primary uppercase tracking-[0.3em]">BETA // ANDROID_12+</span>
+              <div className="m3-chip gap-2">
+                <span
+                  className="w-2 h-2 rounded-full animate-pulse flex-shrink-0"
+                  style={{ background: "hsl(var(--md-primary))" }}
+                />
+                {isLoading ? "Loading..." : `v${versionName} BETA · Android 12+`}
+              </div>
             </motion.div>
 
+            {/* Display heading */}
             <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-huge font-black uppercase mb-12 group cursor-default"
+              initial={{ opacity: 0, y: 32 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.18, type: "spring", stiffness: 200, damping: 25 }}
+              className="m3-display-large mb-6"
+              style={{ color: "hsl(var(--md-on-surface))" }}
             >
-              <span className="inline-block group-hover:animate-glitch transition-all group-hover:text-primary">Toolz</span> <br />
-              <span className="text-primary italic group-hover:animate-glitch group-hover:text-white transition-all">Orchestrated.</span>
+              The Android
+              <br />
+              toolkit you{" "}
+              <span
+                className="m3-gradient-text"
+                style={{ display: "inline-block" }}
+              >
+                actually
+              </span>
+              <br />
+              deserve.
             </motion.h1>
 
-            <div className="flex flex-col gap-8 mb-16 max-w-2xl mx-auto lg:mx-0">
-              <p className="text-xl md:text-2xl text-white/70 leading-relaxed font-mono">
-                High-precision utility suite for Android. <span className="text-primary font-black hover:text-white transition-colors cursor-default">100% FREE</span>, <span className="text-white font-black hover:text-primary transition-colors cursor-default">Zero Bloat</span>, and <span className="text-white font-black hover:text-primary transition-colors cursor-default">Zero AI Slop</span>.
-              </p>
-              
-              <div className="flex flex-wrap justify-center lg:justify-start gap-8 text-technical text-white/30">
-                <div className="flex items-center gap-3 hover:text-primary transition-colors cursor-default group">
-                  <Shield className="w-4 h-4 text-primary/60 group-hover:text-primary transition-colors" />
-                  <span>Privacy_First</span>
-                </div>
-                <div className="flex items-center gap-3 hover:text-primary transition-colors cursor-default group">
-                  <Zap className="w-4 h-4 text-primary/60 group-hover:text-primary transition-colors" />
-                  <span>Zero_Trackers</span>
-                </div>
-                <div className="flex items-center gap-3 hover:text-primary transition-colors cursor-default group">
-                  <Cpu className="w-4 h-4 text-primary/60 group-hover:text-primary transition-colors" />
-                  <span>System_Native</span>
-                </div>
-              </div>
-            </div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.3 }}
-              className="flex flex-col sm:flex-row gap-6 justify-center lg:justify-start"
+            {/* Body */}
+            <motion.p
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.26, type: "spring", stiffness: 200, damping: 25 }}
+              className="m3-body-large mb-8 max-w-xl mx-auto lg:mx-0"
+              style={{ color: "hsl(var(--md-on-surface-variant))" }}
             >
-              <a href="https://github.com/freroxx/toolz/releases" className="btn-technical h-16 px-12 group">
-                <span className="relative z-10">Fetch_v1.0.9_BETA</span>
-                <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+              High-precision utility suite for Android.{" "}
+              <strong style={{ color: "hsl(var(--md-primary))", fontWeight: 600 }}>100% Free</strong>,{" "}
+              Zero Bloat, and Zero AI Slop.
+            </motion.p>
+
+            {/* Badge pills */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.34, type: "spring", stiffness: 200, damping: 25 }}
+              className="flex flex-wrap gap-2 justify-center lg:justify-start mb-10"
+            >
+              {pillBadges.map(({ icon: Icon, label }) => (
+                <div key={label} className="m3-chip gap-2">
+                  <Icon size={14} style={{ color: "hsl(var(--md-secondary))" }} />
+                  <span>{label}</span>
+                </div>
+              ))}
+            </motion.div>
+
+            {/* CTAs */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.42, type: "spring", stiffness: 200, damping: 25 }}
+              className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start"
+            >
+              <a
+                href={downloadUrl}
+                className="m3-btn-filled py-4 px-8 text-base gap-3"
+                aria-label={`Download Toolz v${versionName} BETA`}
+              >
+                <Download size={20} />
+                Download v{versionName}
+                <span
+                  className="m3-label-small px-2 py-0.5 rounded-full"
+                  style={{
+                    background: "hsl(var(--md-on-primary) / 0.15)",
+                    color: "hsl(var(--md-on-primary))",
+                  }}
+                >
+                  BETA
+                </span>
               </a>
-              <a href="https://github.com/freroxx/toolz" className="btn-outline-technical h-16 px-12 group">
-                <span className="relative z-10">Source_Control</span>
-                <div className="absolute inset-0 bg-primary/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+              <a
+                href="https://github.com/freroxx/toolz"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="m3-btn-outlined py-4 px-8 text-base gap-3"
+              >
+                <Github size={20} />
+                View Source
               </a>
             </motion.div>
-          </div>
+          </motion.div>
 
+          {/* ── Right: Phone mockup ── */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="flex-1 relative w-full max-w-[400px]"
+            style={{
+              y: springPhone.y,
+              rotate: springPhone.rotate,
+              scale: springPhone.scale,
+            }}
+            initial={{ opacity: 0, x: 60, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            transition={{ delay: 0.3, type: "spring", stiffness: 150, damping: 22 }}
+            className="flex-shrink-0 relative"
           >
-            <div 
-              className="relative z-10 bg-black border-4 border-white/10 p-2 shadow-2xl group cursor-pointer overflow-hidden tactile-feedback"
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-              onClick={nextImage}
+            {/* Glow behind phone */}
+            <div
+              className="absolute inset-0 -m-16 rounded-full blur-3xl opacity-30 pointer-events-none"
+              style={{ background: "radial-gradient(circle, hsl(var(--md-primary) / 0.5), hsl(var(--md-secondary) / 0.3), transparent 70%)" }}
+            />
+
+            <div
+              className="relative w-[280px] sm:w-[320px]"
+              onMouseEnter={() => setPaused(true)}
+              onMouseLeave={() => setPaused(false)}
+              onClick={nextImg}
+              style={{ cursor: "pointer" }}
             >
-              <div className="absolute -top-2 -left-2 w-10 h-10 border-t-4 border-l-4 border-primary group-hover:w-full group-hover:h-full transition-all duration-700 opacity-50" />
-              <div className="absolute -bottom-2 -right-2 w-10 h-10 border-b-4 border-r-4 border-primary group-hover:w-full group-hover:h-full transition-all duration-700 opacity-50" />
-              
-              <div className="relative aspect-[9/19] overflow-hidden bg-zinc-900">
-                <AnimatePresence mode="wait">
-                  <motion.img
-                    key={allScreenshots[index]}
-                    src={allScreenshots[index]}
-                    initial={{ opacity: 0, scale: 1.1 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.4 }}
-                    className="absolute inset-0 w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-700"
-                  />
-                </AnimatePresence>
-                
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/20 backdrop-blur-[2px]">
-                  <div className="bg-black/80 border border-primary/50 px-6 py-3 flex items-center gap-3">
-                    <MousePointer2 className="w-4 h-4 text-primary animate-bounce" />
-                    <span className="text-technical text-primary">Next_Buffer</span>
-                  </div>
+              {/* Phone frame */}
+              <div className="m3-phone-frame p-3">
+                {/* Notch */}
+                <div
+                  className="absolute top-4 left-1/2 -translate-x-1/2 w-24 h-5 rounded-full z-20"
+                  style={{ background: "hsl(var(--md-surface-container-highest))" }}
+                />
+
+                {/* Screen */}
+                <div
+                  className="relative overflow-hidden bg-black"
+                  style={{ borderRadius: "38px", aspectRatio: "9/19.5" }}
+                >
+                  <AnimatePresence mode="wait">
+                    <motion.img
+                      key={allScreenshots[imgIndex]}
+                      src={allScreenshots[imgIndex]}
+                      alt={`Toolz app screenshot ${imgIndex + 1}`}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      initial={{ opacity: 0, scale: 1.05 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.97 }}
+                      transition={{ duration: 0.35, ease: [0.2, 0, 0, 1] }}
+                    />
+                  </AnimatePresence>
+
+                  {/* Tap hint overlay */}
+                  <AnimatePresence>
+                    {paused && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 flex items-center justify-center"
+                        style={{ background: "hsl(var(--md-shadow) / 0.3)", backdropFilter: "blur(2px)" }}
+                      >
+                        <div
+                          className="px-5 py-2.5 rounded-full m3-label-large"
+                          style={{
+                            background: "hsl(var(--md-surface-container-highest) / 0.95)",
+                            color: "hsl(var(--md-on-surface))",
+                          }}
+                        >
+                          Tap to advance
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
-                <div className="absolute top-4 left-4 text-[8px] font-mono text-primary uppercase animate-pulse">
-                  UI_Buffer_Active
-                </div>
-                <div className="absolute bottom-4 right-4 text-[8px] font-mono text-primary uppercase">
-                  Frame: {index + 1} // v1.0.9b
+                {/* Home bar */}
+                <div
+                  className="absolute bottom-2 left-1/2 -translate-x-1/2 w-24 h-1 rounded-full"
+                  style={{ background: "hsl(var(--md-on-surface-variant) / 0.4)" }}
+                />
+              </div>
+
+              {/* Screenshot counter chip */}
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                <div className="m3-chip text-xs">
+                  {imgIndex + 1} / {allScreenshots.length}
                 </div>
               </div>
             </div>
           </motion.div>
         </div>
+
+        {/* Scroll indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2 }}
+          style={{ opacity }}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+        >
+          <span className="m3-label-small" style={{ color: "hsl(var(--md-on-surface-variant))" }}>
+            Explore
+          </span>
+          <motion.div
+            animate={{ y: [0, 6, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+            style={{ color: "hsl(var(--md-primary))" }}
+          >
+            <ChevronDown size={20} />
+          </motion.div>
+        </motion.div>
       </div>
     </section>
   );

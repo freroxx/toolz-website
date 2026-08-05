@@ -1,100 +1,208 @@
-import { 
-  Shield, Zap, Cpu, Lock, Smartphone, 
-  Terminal, HardDrive, Bell, Settings, 
-  Eye, RefreshCw, Layers
-} from "lucide-react";
+import { Shield, Lock, RefreshCw, HardDrive, Bell, Settings } from "lucide-react";
+import { motion } from "framer-motion";
 
 const features = [
   {
     icon: Shield,
-    title: "Focus_Flow",
-    desc: "Advanced firewall and DNS blocking. Zero trackers, zero ads, zero bloat.",
-    tag: "Security"
+    title: "Focus Flow",
+    tag: "Security",
+    desc: "Advanced firewall and DNS blocking. Zero trackers, zero ads, zero compromise.",
+    color: "primary",
   },
   {
     icon: Lock,
-    title: "Vault_Core",
-    desc: "Encrypted password and notification storage. 100% local, 100% private.",
-    tag: "Privacy"
+    title: "Vault Core",
+    tag: "Privacy",
+    desc: "Encrypted password and notification storage. 100% local, 100% yours.",
+    color: "secondary",
   },
   {
     icon: RefreshCw,
-    title: "FFmpeg_Engine",
-    desc: "Professional-grade media conversion. Powered by system-native binaries.",
-    tag: "Utility"
+    title: "FFmpeg Engine",
+    tag: "Utility",
+    desc: "Professional-grade media conversion powered by system-native binaries.",
+    color: "tertiary",
   },
   {
     icon: HardDrive,
-    title: "Storage_Ops",
+    title: "Storage Ops",
+    tag: "System",
     desc: "Deep system cleaning and file orchestration. Reclaim every megabyte.",
-    tag: "System"
+    color: "primary",
   },
   {
     icon: Bell,
-    title: "Ghost_Notify",
+    title: "Ghost Notify",
+    tag: "Intercept",
     desc: "Intercept and archive every notification. Never miss a deleted message.",
-    tag: "Intercept"
+    color: "secondary",
   },
   {
     icon: Settings,
-    title: "Custom_Kernel",
-    desc: "Highly customizable UI and behavior. Built for power users and operators.",
-    tag: "Core"
-  }
+    title: "Custom Kernel",
+    tag: "Core",
+    desc: "Highly customizable UI and behavior. Built for power users who mean business.",
+    color: "tertiary",
+  },
 ];
+
+const colorMap = {
+  primary: {
+    icon: "hsl(var(--md-on-primary-container))",
+    container: "hsl(var(--md-primary-container))",
+    chip: "hsl(var(--md-primary) / 0.12)",
+    chipText: "hsl(var(--md-primary))",
+  },
+  secondary: {
+    icon: "hsl(var(--md-on-secondary-container))",
+    container: "hsl(var(--md-secondary-container))",
+    chip: "hsl(var(--md-secondary) / 0.12)",
+    chipText: "hsl(var(--md-secondary))",
+  },
+  tertiary: {
+    icon: "hsl(var(--md-on-tertiary-container))",
+    container: "hsl(var(--md-tertiary-container))",
+    chip: "hsl(var(--md-tertiary) / 0.12)",
+    chipText: "hsl(var(--md-tertiary))",
+  },
+};
+
+const containerVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.1 } },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 40, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { type: "spring", stiffness: 200, damping: 25 },
+  },
+};
 
 const Features = () => {
   return (
-    <section id="features" className="py-32 bg-black relative">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row justify-between items-end mb-24 gap-8">
-          <div className="max-w-2xl">
-            <div className="text-technical text-primary mb-4">Module_Inventory</div>
-            <h2 className="text-6xl font-black uppercase tracking-tighter">
-              Precision <span className="text-white/20">Modules_</span>
-            </h2>
-          </div>
-          <div className="text-right hidden md:block">
-            <div className="text-technical text-white/20 mb-2">Build_Status</div>
-            <div className="text-xl font-mono font-bold text-primary animate-pulse">BETA_v1.0.9</div>
-          </div>
-        </div>
+    <section
+      id="features"
+      className="py-32 relative overflow-hidden"
+      style={{ background: "hsl(var(--md-surface))" }}
+    >
+      {/* Background accent */}
+      <div
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] opacity-10 pointer-events-none"
+        style={{
+          background: "radial-gradient(ellipse, hsl(var(--md-primary) / 0.4) 0%, transparent 70%)",
+        }}
+      />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-white/5 border border-white/5">
-          {features.map((feature, i) => (
-            <div 
-              key={i} 
-              className="bg-black p-12 tactile-feedback group hover:z-10 transition-all duration-500"
+      <div className="container mx-auto px-4 relative z-10">
+        {/* Section header */}
+        <motion.div
+          initial={{ opacity: 0, y: 32 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ type: "spring", stiffness: 200, damping: 25 }}
+          className="text-center mb-20"
+        >
+          <div className="m3-chip inline-flex mb-6">Precision Modules</div>
+          <h2
+            className="m3-display-medium mb-6"
+            style={{ color: "hsl(var(--md-on-surface))" }}
+          >
+            Everything you{" "}
+            <span
+              style={{
+                background: "linear-gradient(135deg, hsl(var(--md-primary)), hsl(var(--md-tertiary)))",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
             >
-              <div className="flex justify-between items-start mb-12">
-                <div className="p-4 bg-primary/5 border border-primary/20 group-hover:border-primary/50 transition-colors">
-                  <feature.icon className="w-8 h-8 text-primary" />
-                </div>
-                <span className="text-[10px] font-mono text-white/20 group-hover:text-primary/40 transition-colors">
-                  [MOD_{String(i + 1).padStart(2, '0')}]
-                </span>
-              </div>
-              
-              <div className="mb-6">
-                <span className="text-[10px] font-mono text-primary/60 uppercase tracking-widest mb-2 block">
-                  {feature.tag}
-                </span>
-                <h3 className="text-2xl font-black uppercase tracking-tight group-hover:text-primary transition-colors">
-                  {feature.title}
-                </h3>
-              </div>
-              
-              <p className="text-white/40 font-mono text-sm leading-relaxed group-hover:text-white/60 transition-colors">
-                {feature.desc}
-              </p>
+              need
+            </span>
+            ,<br />nothing you don't.
+          </h2>
+          <p
+            className="m3-body-large max-w-xl mx-auto"
+            style={{ color: "hsl(var(--md-on-surface-variant))" }}
+          >
+            Six specialized modules. Each one laser-focused, zero dependencies.
+          </p>
+        </motion.div>
 
-              <div className="mt-12 pt-8 border-t border-white/5 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
-                <span className="text-[10px] font-mono text-white/20 uppercase">Status: Ready</span>
-                <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-              </div>
-            </div>
-          ))}
-        </div>
+        {/* Feature cards grid */}
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-60px" }}
+        >
+          {features.map((feature, i) => {
+            const colors = colorMap[feature.color as keyof typeof colorMap];
+            const Icon = feature.icon;
+            return (
+              <motion.div
+                key={i}
+                variants={cardVariants}
+                className="m3-card-filled p-8 flex flex-col gap-6 group cursor-default"
+                whileHover={{ y: -4, scale: 1.01 }}
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              >
+                {/* Icon + tag row */}
+                <div className="flex items-start justify-between">
+                  <div
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
+                    style={{ background: colors.container }}
+                  >
+                    <Icon size={24} style={{ color: colors.icon }} />
+                  </div>
+                  <div
+                    className="m3-label-small px-3 py-1 rounded-full"
+                    style={{
+                      background: colors.chip,
+                      color: colors.chipText,
+                    }}
+                  >
+                    {feature.tag}
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="flex flex-col gap-2">
+                  <h3
+                    className="m3-title-large"
+                    style={{ color: "hsl(var(--md-on-surface))" }}
+                  >
+                    {feature.title}
+                  </h3>
+                  <p
+                    className="m3-body-medium leading-relaxed"
+                    style={{ color: "hsl(var(--md-on-surface-variant))" }}
+                  >
+                    {feature.desc}
+                  </p>
+                </div>
+
+                {/* Status indicator */}
+                <div
+                  className="flex items-center gap-2 mt-auto pt-4 border-t opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  style={{ borderColor: "hsl(var(--md-outline-variant))" }}
+                >
+                  <span
+                    className="w-2 h-2 rounded-full animate-pulse"
+                    style={{ background: colors.chipText }}
+                  />
+                  <span className="m3-label-small" style={{ color: "hsl(var(--md-on-surface-variant))" }}>
+                    Active
+                  </span>
+                </div>
+              </motion.div>
+            );
+          })}
+        </motion.div>
       </div>
     </section>
   );

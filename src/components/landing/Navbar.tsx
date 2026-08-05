@@ -1,146 +1,271 @@
-import { useState, useEffect } from "react";
-import { Menu, X, Terminal, Download, Cpu, Shield } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { Menu, X, Download, Github } from "lucide-react";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { useUpdateManifest } from "@/hooks/useUpdateManifest";
 
 const navLinks = [
-  { label: "Modules", href: "#features" },
-  { label: "Interface", href: "#showcase" },
-  { label: "Audit", href: "#gallery" },
-  { label: "Node", href: "#discord" },
+  { label: "Features", href: "#features" },
+  { label: "Showcase", href: "#showcase" },
+  { label: "Gallery", href: "#gallery" },
+  { label: "Community", href: "#discord" },
 ];
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeHref, setActiveHref] = useState("");
+  const indicatorRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLDivElement>(null);
+  const { versionName, bestRelease, releasesPageUrl } = useUpdateManifest();
+
+  const downloadUrl = bestRelease?.downloadUrl ?? releasesPageUrl;
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll);
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Active section tracker
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setActiveHref(`#${entry.target.id}`);
+          }
+        }
+      },
+      { rootMargin: "-40% 0px -55% 0px" }
+    );
+    navLinks.forEach(({ href }) => {
+      const el = document.querySelector(href);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-      scrolled ? "bg-black/95 border-b border-primary/20 py-3 backdrop-blur-md" : "bg-transparent py-6"
-    }`}>
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between">
-          <a href="#" className="flex items-center gap-4 group tactile-feedback p-2">
-            <div className="relative w-10 h-10 flex items-center justify-center overflow-hidden border border-white/10 group-hover:border-primary/50 transition-colors">
-              <img src="/logo.png" alt="Toolz Logo" className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xl font-black tracking-tighter uppercase leading-none group-hover:animate-glitch">
-                Toolz<span className="text-primary">_</span>
-              </span>
-              <div className="flex items-center gap-2 mt-1">
-                <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
-                <span className="text-technical text-white/40 leading-none uppercase">v1.0.9_BETA</span>
+    <>
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300`}
+        style={{
+          background: scrolled
+            ? "hsl(var(--md-surface-container) / 0.92)"
+            : "transparent",
+          backdropFilter: scrolled ? "blur(20px) saturate(180%)" : "none",
+          borderBottom: scrolled
+            ? "1px solid hsl(var(--md-outline-variant) / 0.5)"
+            : "1px solid transparent",
+        }}
+      >
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+            <a
+              href="#"
+              className="flex items-center gap-3 group"
+              aria-label="Toolz home"
+            >
+              <div className="relative w-9 h-9 rounded-xl overflow-hidden m3-surface-container-high flex items-center justify-center">
+                <img
+                  src="/logo.png"
+                  alt="Toolz"
+                  className="w-7 h-7 object-contain transition-transform duration-300 group-hover:scale-110"
+                />
               </div>
-            </div>
-          </a>
-
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="px-6 py-2 text-technical text-white/50 hover:text-primary hover:bg-primary/5 transition-all relative group tactile-feedback"
-              >
-                <span className="relative z-10">[{link.label}]</span>
-                <div className="absolute inset-0 border-x border-primary/0 group-hover:border-primary/20 transition-all" />
-              </a>
-            ))}
-          </div>
-
-          <div className="hidden md:flex items-center gap-6">
-            <div className="flex items-center gap-2 text-[10px] font-mono text-white/20">
-              <Shield className="w-3 h-3 text-primary/30" />
-              <span>100%_SECURE</span>
-            </div>
-            <a href="https://github.com/freroxx/toolz/releases" className="btn-technical h-10 px-6 group">
-              <span className="relative z-10">Fetch_Build</span>
-              <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+              <div className="flex flex-col leading-none">
+                <span
+                  className="font-display font-bold text-lg tracking-tight"
+                  style={{ color: "hsl(var(--md-on-surface))" }}
+                >
+                  Toolz
+                </span>
+                <span className="m3-label-small" style={{ color: "hsl(var(--md-primary))" }}>
+                  v{versionName} BETA
+                </span>
+              </div>
             </a>
-          </div>
 
-          {/* Mobile Trigger */}
-          <button 
-            className="md:hidden w-12 h-12 flex items-center justify-center text-primary border border-primary/20 bg-black tactile-feedback" 
-            onClick={() => setMobileOpen(!mobileOpen)}
-          >
-            {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Mechanical Menu */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-50 md:hidden bg-black flex flex-col"
-          >
-            <div className="p-6 border-b border-white/10 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <img src="/logo.png" alt="Toolz Logo" className="w-8 h-8 object-contain" />
-                <span className="text-technical text-primary uppercase tracking-widest">Sys_Drawer_Active</span>
-              </div>
-              <button onClick={() => setMobileOpen(false)} className="w-10 h-10 border border-white/10 flex items-center justify-center text-white tactile-feedback">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-6 bg-blueprint">
-              <div className="flex flex-col gap-2">
-                {navLinks.map((link, i) => (
-                  <motion.a
+            {/* Desktop Nav with M3 indicator pill */}
+            <div ref={navRef} className="hidden md:flex items-center gap-1 relative">
+              {navLinks.map((link) => {
+                const isActive = activeHref === link.href;
+                return (
+                  <a
                     key={link.href}
                     href={link.href}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    className="group py-6 border-b border-white/5 flex items-center justify-between tactile-feedback"
-                    onClick={() => setMobileOpen(false)}
+                    className="relative px-4 py-2 rounded-full m3-label-large transition-colors duration-200"
+                    style={{
+                      color: isActive
+                        ? "hsl(var(--md-on-secondary-container))"
+                        : "hsl(var(--md-on-surface-variant))",
+                    }}
                   >
-                    <span className="text-3xl font-black uppercase tracking-tighter text-white/40 group-hover:text-primary transition-colors">
-                      {link.label}
+                    {isActive && (
+                      <motion.div
+                        layoutId="nav-indicator"
+                        className="absolute inset-0 rounded-full"
+                        style={{ background: "hsl(var(--md-secondary-container))" }}
+                        transition={{ type: "spring", stiffness: 400, damping: 35 }}
+                      />
+                    )}
+                    <span className="relative z-10">{link.label}</span>
+                  </a>
+                );
+              })}
+            </div>
+
+            {/* Desktop CTA */}
+            <div className="hidden md:flex items-center gap-3">
+              <a
+                href="https://github.com/freroxx/toolz"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="m3-btn-outlined h-9 px-4 text-sm gap-2"
+                aria-label="View source on GitHub"
+              >
+                <Github size={16} />
+                Source
+              </a>
+              <a
+                href={downloadUrl}
+                className="m3-btn-filled h-9 px-5 text-sm gap-2"
+                aria-label={`Download Toolz v${versionName}`}
+              >
+                <Download size={16} />
+                Download
+              </a>
+            </div>
+
+            {/* Mobile trigger */}
+            <button
+              className="md:hidden w-10 h-10 flex items-center justify-center rounded-full m3-state-layer"
+              style={{ color: "hsl(var(--md-on-surface-variant))" }}
+              onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            >
+              <AnimatePresence mode="wait">
+                {mobileOpen ? (
+                  <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}>
+                    <X size={20} />
+                  </motion.div>
+                ) : (
+                  <motion.div key="open" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.15 }}>
+                    <Menu size={20} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Mobile Navigation Drawer */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            {/* Scrim */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="fixed inset-0 z-40 md:hidden"
+              style={{ background: "hsl(var(--md-scrim) / 0.5)" }}
+              onClick={() => setMobileOpen(false)}
+            />
+
+            {/* Drawer */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 300, damping: 35 }}
+              className="fixed top-0 right-0 bottom-0 z-50 md:hidden w-80 flex flex-col"
+              style={{
+                background: "hsl(var(--md-surface-container))",
+                boxShadow: "-4px 0 24px hsl(var(--md-shadow) / 0.4)",
+              }}
+            >
+              {/* Drawer header */}
+              <div
+                className="flex items-center justify-between px-6 py-4 border-b"
+                style={{ borderColor: "hsl(var(--md-outline-variant))" }}
+              >
+                <div className="flex items-center gap-3">
+                  <img src="/logo.png" alt="Toolz" className="w-8 h-8 object-contain" />
+                  <div className="flex flex-col">
+                    <span className="m3-title-medium font-bold" style={{ color: "hsl(var(--md-on-surface))" }}>
+                      Toolz
                     </span>
-                    <Terminal className="w-6 h-6 text-white/10 group-hover:text-primary transition-colors" />
-                  </motion.a>
-                ))}
-              </div>
-              
-              <div className="mt-12 flex flex-col gap-4">
-                <a href="https://github.com/freroxx/toolz/releases" className="btn-technical h-16 text-lg group">
-                  <span className="relative z-10 flex items-center gap-2">
-                    <Download className="w-5 h-5" />
-                    Download_v1.0.9
-                  </span>
-                  <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-                </a>
-                <div className="flex items-center justify-center gap-2 text-technical text-white/20 mt-4">
-                  <Shield className="w-4 h-4 text-primary/40" />
-                  <span>SECURE_BY_DESIGN</span>
+                    <span className="m3-label-small" style={{ color: "hsl(var(--md-primary))" }}>
+                      v{versionName} BETA
+                    </span>
+                  </div>
                 </div>
+                <button
+                  onClick={() => setMobileOpen(false)}
+                  className="w-10 h-10 flex items-center justify-center rounded-full m3-state-layer"
+                  style={{ color: "hsl(var(--md-on-surface-variant))" }}
+                >
+                  <X size={20} />
+                </button>
               </div>
-            </div>
-            
-            <div className="p-6 border-t border-white/10 bg-zinc-950 flex items-center justify-between text-technical text-white/20">
-              <span>BUILD: 1.0.9_BETA</span>
-              <div className="flex items-center gap-2">
-                <span className="text-primary">100% FREE</span>
-                <Cpu className="w-4 h-4" />
+
+              {/* Drawer links */}
+              <div className="flex-1 overflow-y-auto py-3 px-3">
+                {navLinks.map((link, i) => {
+                  const isActive = activeHref === link.href;
+                  return (
+                    <motion.a
+                      key={link.href}
+                      href={link.href}
+                      initial={{ x: 40, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ delay: i * 0.06, type: "spring", stiffness: 400, damping: 35 }}
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-4 px-4 py-3 rounded-full mb-1 m3-title-medium transition-colors"
+                      style={{
+                        background: isActive ? "hsl(var(--md-secondary-container))" : "transparent",
+                        color: isActive
+                          ? "hsl(var(--md-on-secondary-container))"
+                          : "hsl(var(--md-on-surface-variant))",
+                      }}
+                    >
+                      {link.label}
+                    </motion.a>
+                  );
+                })}
               </div>
-            </div>
-          </motion.div>
+
+              {/* Drawer footer CTAs */}
+              <div
+                className="p-6 flex flex-col gap-3 border-t"
+                style={{ borderColor: "hsl(var(--md-outline-variant))" }}
+              >
+                <a
+                  href={downloadUrl}
+                  className="m3-btn-filled w-full justify-center py-3 text-sm gap-2"
+                >
+                  <Download size={16} />
+                  Download v{versionName}
+                </a>
+                <a
+                  href="https://github.com/freroxx/toolz"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="m3-btn-outlined w-full justify-center py-3 text-sm gap-2"
+                >
+                  <Github size={16} />
+                  View Source
+                </a>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
-    </nav>
+    </>
   );
 };
 

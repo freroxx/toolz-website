@@ -1,6 +1,6 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X, ZoomIn } from "lucide-react";
 
 const allScreenshots = [
   "https://i.ibb.co/JPmYCs5/Screenshot-20260801-202638-Toolz.jpg",
@@ -43,97 +43,195 @@ const allScreenshots = [
   "https://i.ibb.co/C5Zk6tJB/Screenshot-20260801-205939-Toolz.jpg",
 ];
 
-const Gallery = () => {
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+interface ScrollingColumnProps {
+  items: string[];
+  speed: number;
+  reverse?: boolean;
+  onSelect: (src: string) => void;
+}
 
-  const column1 = [...allScreenshots].slice(0, 9);
-  const column2 = [...allScreenshots].slice(9, 18);
-  const column3 = [...allScreenshots].slice(18, 27);
-  const column4 = [...allScreenshots].slice(27);
-
-  const ScrollingColumn = ({ items, speed, reverse = false }: { items: string[], speed: number, reverse?: boolean }) => (
-    <div className="flex flex-col gap-4 relative h-[800px] overflow-hidden">
-      <motion.div
-        animate={{
-          y: reverse ? ["-50%", "0%"] : ["0%", "-50%"],
-        }}
-        transition={{
-          duration: speed,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-        className="flex flex-col gap-4"
-      >
-        {[...items, ...items].map((src, i) => (
+const ScrollingColumn = ({ items, speed, reverse = false, onSelect }: ScrollingColumnProps) => (
+  <div className="flex flex-col gap-3 relative h-[800px] overflow-hidden">
+    <motion.div
+      animate={{ y: reverse ? ["-50%", "0%"] : ["0%", "-50%"] }}
+      transition={{ duration: speed, repeat: Infinity, ease: "linear" }}
+      className="flex flex-col gap-3"
+    >
+      {[...items, ...items].map((src, i) => (
+        <button
+          key={`${src}-${i}`}
+          onClick={() => onSelect(src)}
+          className="relative shrink-0 group overflow-hidden focus-visible:ring-2"
+          style={{
+            aspectRatio: "9/19",
+            borderRadius: "20px",
+            border: "1px solid hsl(var(--md-outline-variant) / 0.5)",
+          }}
+          aria-label="View screenshot"
+        >
+          <img
+            src={src}
+            alt="Toolz screenshot"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+          />
           <div
-            key={`${src}-${i}`}
-            onClick={() => setSelectedImage(src)}
-            className="relative aspect-[9/19] w-full bg-black border border-white/10 cursor-zoom-in group shrink-0 tactile-feedback"
+            className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            style={{ background: "hsl(var(--md-shadow) / 0.5)", backdropFilter: "blur(2px)" }}
           >
-            <img
-              src={src}
-              alt="Toolz_Buffer"
-              className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 border-2 border-primary/0 group-hover:border-primary/50 transition-all" />
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center"
+              style={{ background: "hsl(var(--md-surface-container-highest) / 0.9)" }}
+            >
+              <ZoomIn size={18} style={{ color: "hsl(var(--md-on-surface))" }} />
+            </div>
           </div>
-        ))}
-      </motion.div>
-    </div>
-  );
+        </button>
+      ))}
+    </motion.div>
+  </div>
+);
+
+const Gallery = () => {
+  const [selected, setSelected] = useState<string | null>(null);
+
+  const col1 = allScreenshots.slice(0, 9);
+  const col2 = allScreenshots.slice(9, 18);
+  const col3 = allScreenshots.slice(18, 28);
+  const col4 = allScreenshots.slice(28);
 
   return (
-    <section id="gallery" className="relative py-32 bg-black border-y border-white/5">
+    <section
+      id="gallery"
+      className="py-32 relative overflow-hidden"
+      style={{ background: "hsl(var(--md-surface))" }}
+    >
       <div className="container mx-auto px-4 relative z-10">
-        <div className="flex flex-col lg:flex-row gap-20 items-center">
-          <div className="lg:w-2/5">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-12 h-px bg-primary" />
-              <span className="text-technical text-primary">Visual_Assets</span>
-            </div>
-            <h2 className="text-5xl md:text-8xl font-black uppercase tracking-tighter leading-none mb-10">
-              Interface <br />
-              Audit<span className="text-primary">_</span>
+        <div className="flex flex-col lg:flex-row gap-16 items-center">
+          {/* Left text */}
+          <motion.div
+            initial={{ opacity: 0, x: -32 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ type: "spring", stiffness: 200, damping: 25 }}
+            className="lg:w-2/5"
+          >
+            <div className="m3-chip inline-flex mb-6">Visual Tour</div>
+            <h2
+              className="m3-display-medium mb-6"
+              style={{ color: "hsl(var(--md-on-surface))" }}
+            >
+              Every pixel,{" "}
+              <span
+                style={{
+                  background: "linear-gradient(135deg, hsl(var(--md-secondary)), hsl(var(--md-primary)))",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                intentional.
+              </span>
             </h2>
-            <p className="text-xl font-mono text-white/50 leading-relaxed">
-              Every pixel of the Toolz UI is optimized for technical clarity and operational efficiency. No bloat, just performance.
+            <p
+              className="m3-body-large"
+              style={{ color: "hsl(var(--md-on-surface-variant))" }}
+            >
+              {allScreenshots.length}+ screens. Every single one built from scratch
+              with Material 3 Expressive components. No templates, no recycled UIs.
             </p>
-          </div>
 
-          <div className="lg:w-3/5 grid grid-cols-2 sm:grid-cols-4 gap-4 h-[800px] overflow-hidden mask-fade-vertical grayscale hover:grayscale-0 transition-all duration-700">
-            <ScrollingColumn items={column1} speed={40} />
-            <ScrollingColumn items={column2} speed={50} reverse />
-            <ScrollingColumn items={column3} speed={45} />
-            <ScrollingColumn items={column4} speed={55} reverse />
-          </div>
+            {/* Stats */}
+            <div className="flex gap-8 mt-10">
+              {[
+                { value: `${allScreenshots.length}+`, label: "Screens" },
+                { value: "6", label: "Modules" },
+                { value: "M3", label: "Design" },
+              ].map(({ value, label }) => (
+                <div key={label}>
+                  <div
+                    className="m3-display-small"
+                    style={{ color: "hsl(var(--md-primary))" }}
+                  >
+                    {value}
+                  </div>
+                  <div
+                    className="m3-label-medium"
+                    style={{ color: "hsl(var(--md-on-surface-variant))" }}
+                  >
+                    {label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Scrolling columns */}
+          <motion.div
+            initial={{ opacity: 0, x: 32 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ type: "spring", stiffness: 200, damping: 25, delay: 0.1 }}
+            className="lg:w-3/5 grid grid-cols-2 sm:grid-cols-4 gap-3 h-[800px] overflow-hidden mask-fade-vertical"
+          >
+            <ScrollingColumn items={col1} speed={38} onSelect={setSelected} />
+            <ScrollingColumn items={col2} speed={48} reverse onSelect={setSelected} />
+            <ScrollingColumn items={col3} speed={42} onSelect={setSelected} />
+            <ScrollingColumn items={col4} speed={52} reverse onSelect={setSelected} />
+          </motion.div>
         </div>
       </div>
 
-      {/* Lightbox */}
-      {selectedImage && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95"
-          onClick={() => setSelectedImage(null)}
-        >
-          <button 
-            className="absolute top-8 right-8 p-4 border border-white/10 text-primary hover:bg-primary hover:text-black transition-all"
-            onClick={() => setSelectedImage(null)}
+      {/* M3 Lightbox */}
+      <AnimatePresence>
+        {selected && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-6"
+            style={{ background: "hsl(var(--md-scrim) / 0.85)", backdropFilter: "blur(12px)" }}
+            onClick={() => setSelected(null)}
           >
-            <X className="w-6 h-6" />
-          </button>
-          <div
-            className="relative max-w-full max-h-[85vh] aspect-[9/19] border-2 border-white/10 p-2 bg-black"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <img
-              src={selectedImage}
-              alt="Toolz_Full_Buffer"
-              className="w-full h-full object-contain"
-            />
-          </div>
-        </div>
-      )}
+            {/* Close FAB */}
+            <button
+              className="absolute top-6 right-6 w-14 h-14 rounded-2xl flex items-center justify-center transition-all m3-state-layer"
+              style={{
+                background: "hsl(var(--md-surface-container-highest))",
+                color: "hsl(var(--md-on-surface))",
+              }}
+              onClick={() => setSelected(null)}
+              aria-label="Close"
+            >
+              <X size={24} />
+            </button>
+
+            <motion.div
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.85, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                maxHeight: "88vh",
+                aspectRatio: "9/19",
+                borderRadius: "28px",
+                overflow: "hidden",
+                border: "2px solid hsl(var(--md-outline-variant))",
+                boxShadow: "0 24px 64px hsl(var(--md-shadow) / 0.6)",
+              }}
+            >
+              <img
+                src={selected}
+                alt="Toolz full screenshot"
+                className="w-full h-full object-contain"
+                style={{ background: "hsl(var(--md-surface-container-highest))" }}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 };

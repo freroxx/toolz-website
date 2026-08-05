@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MousePointer2, Smartphone, Terminal, Cpu } from "lucide-react";
+import { Smartphone, Layers, Cpu } from "lucide-react";
 
 const allScreenshots = [
   "https://i.ibb.co/JPmYCs5/Screenshot-20260801-202638-Toolz.jpg",
@@ -33,143 +33,285 @@ const allScreenshots = [
   "https://i.ibb.co/PG37z8B9/Screenshot-20260801-205157-Toolz.jpg",
   "https://i.ibb.co/rfHmrYzG/Screenshot-20260801-205233-Toolz.jpg",
   "https://i.ibb.co/hFcfWbcK/Screenshot-20260801-205252-Toolz.jpg",
-  "https://i.ibb.co/vvJcqG6k/Screenshot-20260801-205311-Toolz.jpg",
-  "https://i.ibb.co/mVc23hyP/Screenshot-20260801-205448-Toolz.jpg",
-  "https://i.ibb.co/przVxJQw/Screenshot-20260801-205634-Toolz.jpg",
-  "https://i.ibb.co/TBX23hW8/Screenshot-20260801-205655-Toolz.jpg",
-  "https://i.ibb.co/6cS4Ps4k/Screenshot-20260801-205740-Toolz.jpg",
-  "https://i.ibb.co/bg8WHNyJ/Screenshot-20260801-205820-Toolz.jpg",
-  "https://i.ibb.co/BV2q8cQn/Screenshot-20260801-205902-Toolz.jpg",
-  "https://i.ibb.co/C5Zk6tJB/Screenshot-20260801-205939-Toolz.jpg",
 ];
 
 const modules = [
   {
-    id: "tactical",
-    name: "Tactical_UI",
-    desc: "Optimized for high-speed operation and zero-latency feedback.",
-    images: allScreenshots.slice(0, 12)
+    id: "ui",
+    icon: Smartphone,
+    name: "Expressive UI",
+    tag: "Interface",
+    desc: "Material 3 Expressive throughout — dynamic color, fluid transitions, optimized for speed.",
+    images: allScreenshots.slice(0, 10),
+    color: "primary",
   },
   {
     id: "vault",
-    name: "Hardened_Vault",
-    desc: "Military-grade encryption for your most sensitive local data.",
-    images: allScreenshots.slice(12, 24)
+    icon: Layers,
+    name: "Hardened Vault",
+    tag: "Security",
+    desc: "Military-grade local encryption for passwords, notes, and archived notifications.",
+    images: allScreenshots.slice(10, 20),
+    color: "secondary",
   },
   {
     id: "engine",
-    name: "Media_Engine",
-    desc: "Lossless conversion and orchestration of system media assets.",
-    images: allScreenshots.slice(24)
-  }
+    icon: Cpu,
+    name: "Media Engine",
+    tag: "Utility",
+    desc: "Lossless FFmpeg conversion and real-time media orchestration, system-native.",
+    images: allScreenshots.slice(20),
+    color: "tertiary",
+  },
 ];
+
+const colorMap = {
+  primary: {
+    active: "hsl(var(--md-primary-container))",
+    activeText: "hsl(var(--md-on-primary-container))",
+    icon: "hsl(var(--md-primary))",
+    tag: "hsl(var(--md-primary) / 0.15)",
+    tagText: "hsl(var(--md-primary))",
+    indicator: "hsl(var(--md-primary))",
+  },
+  secondary: {
+    active: "hsl(var(--md-secondary-container))",
+    activeText: "hsl(var(--md-on-secondary-container))",
+    icon: "hsl(var(--md-secondary))",
+    tag: "hsl(var(--md-secondary) / 0.15)",
+    tagText: "hsl(var(--md-secondary))",
+    indicator: "hsl(var(--md-secondary))",
+  },
+  tertiary: {
+    active: "hsl(var(--md-tertiary-container))",
+    activeText: "hsl(var(--md-on-tertiary-container))",
+    icon: "hsl(var(--md-tertiary))",
+    tag: "hsl(var(--md-tertiary) / 0.15)",
+    tagText: "hsl(var(--md-tertiary))",
+    indicator: "hsl(var(--md-tertiary))",
+  },
+};
 
 const Showcase = () => {
   const [activeModule, setActiveModule] = useState(modules[0]);
   const [imageIndex, setImageIndex] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
+  const [paused, setPaused] = useState(false);
 
   const nextImage = useCallback(() => {
-    setImageIndex((prev) => (prev + 1) % activeModule.images.length);
+    setImageIndex((p) => (p + 1) % activeModule.images.length);
   }, [activeModule.images.length]);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      if (!isHovered) nextImage();
-    }, 3000);
-    return () => clearInterval(timer);
-  }, [isHovered, nextImage]);
+    if (paused) return;
+    const t = setInterval(nextImage, 2600);
+    return () => clearInterval(t);
+  }, [paused, nextImage]);
 
-  useEffect(() => {
-    setImageIndex(0);
-  }, [activeModule]);
+  useEffect(() => { setImageIndex(0); }, [activeModule]);
+
+  const activeColors = colorMap[activeModule.color as keyof typeof colorMap];
 
   return (
-    <section id="showcase" className="py-32 bg-black relative border-t border-white/5">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col lg:flex-row gap-24 items-center">
-          <div className="lg:w-1/2">
-            <div className="text-technical text-primary mb-6">Interface_Protocol</div>
-            <h2 className="text-6xl font-black uppercase tracking-tighter mb-12">
-              System <br />
-              <span className="text-primary">Modules_</span>
-            </h2>
-            
-            <div className="flex flex-col gap-4">
-              {modules.map((m) => (
+    <section
+      id="showcase"
+      className="py-32 relative overflow-hidden"
+      style={{ background: "hsl(var(--md-surface-container-low))" }}
+    >
+      {/* Background blob */}
+      <div
+        className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full opacity-10 pointer-events-none blur-3xl"
+        style={{ background: activeColors.indicator }}
+      />
+
+      <div className="container mx-auto px-4 relative z-10">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 32 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ type: "spring", stiffness: 200, damping: 25 }}
+          className="text-center mb-16"
+        >
+          <div className="m3-chip inline-flex mb-6">System Modules</div>
+          <h2
+            className="m3-display-medium"
+            style={{ color: "hsl(var(--md-on-surface))" }}
+          >
+            See it in{" "}
+            <span
+              style={{
+                background: `linear-gradient(135deg, ${activeColors.indicator}, hsl(var(--md-secondary)))`,
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                transition: "all 0.5s ease",
+              }}
+            >
+              action.
+            </span>
+          </h2>
+        </motion.div>
+
+        <div className="flex flex-col lg:flex-row gap-12 items-center">
+          {/* Module selector – M3 Navigation Rail style */}
+          <motion.div
+            initial={{ opacity: 0, x: -32 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ type: "spring", stiffness: 200, damping: 25, delay: 0.1 }}
+            className="lg:w-2/5 flex flex-row lg:flex-col gap-3 w-full overflow-x-auto pb-2 lg:pb-0"
+          >
+            {modules.map((m) => {
+              const isActive = activeModule.id === m.id;
+              const colors = colorMap[m.color as keyof typeof colorMap];
+              const Icon = m.icon;
+              return (
                 <button
                   key={m.id}
                   onClick={() => setActiveModule(m)}
-                  className={`p-8 border text-left transition-all duration-500 tactile-feedback group relative ${
-                    activeModule.id === m.id 
-                      ? "border-primary bg-primary/5" 
-                      : "border-white/5 bg-transparent hover:border-white/20"
-                  }`}
+                  className="flex-shrink-0 lg:flex-shrink text-left p-5 rounded-2xl transition-all duration-300 relative overflow-hidden group w-64 lg:w-auto"
+                  style={{
+                    background: isActive
+                      ? colors.active
+                      : "hsl(var(--md-surface-container))",
+                  }}
                 >
-                  {activeModule.id === m.id && (
-                    <div className="absolute top-0 left-0 w-1 h-full bg-primary" />
+                  {/* Active indicator bar */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="module-indicator"
+                      className="absolute left-0 top-0 bottom-0 w-1 rounded-r-full"
+                      style={{ background: colors.indicator }}
+                      transition={{ type: "spring", stiffness: 400, damping: 35 }}
+                    />
                   )}
-                  <div className="flex items-center justify-between mb-2">
-                    <span className={`text-technical ${activeModule.id === m.id ? "text-primary" : "text-white/20"}`}>
-                      {m.id.toUpperCase()}_SYS
-                    </span>
-                    <Terminal className={`w-4 h-4 ${activeModule.id === m.id ? "text-primary" : "text-white/10"}`} />
+
+                  <div className="flex items-center gap-4">
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ background: isActive ? colors.indicator + "22" : "hsl(var(--md-surface-container-high))" }}
+                    >
+                      <Icon
+                        size={20}
+                        style={{ color: isActive ? colors.indicator : "hsl(var(--md-on-surface-variant))" }}
+                      />
+                    </div>
+                    <div>
+                      <div
+                        className="m3-label-small mb-0.5"
+                        style={{ color: isActive ? colors.activeText : "hsl(var(--md-on-surface-variant))" }}
+                      >
+                        {m.tag}
+                      </div>
+                      <div
+                        className="m3-title-medium font-semibold"
+                        style={{ color: isActive ? colors.activeText : "hsl(var(--md-on-surface))" }}
+                      >
+                        {m.name}
+                      </div>
+                      <p
+                        className="m3-body-medium mt-1 hidden lg:block"
+                        style={{ color: isActive ? colors.activeText + "bb" : "hsl(var(--md-on-surface-variant))" }}
+                      >
+                        {m.desc}
+                      </p>
+                    </div>
                   </div>
-                  <h3 className={`text-2xl font-black uppercase mb-2 ${activeModule.id === m.id ? "text-white" : "text-white/40"}`}>
-                    {m.name}
-                  </h3>
-                  <p className="text-sm font-mono text-white/20 group-hover:text-white/40 transition-colors">
-                    {m.desc}
-                  </p>
                 </button>
-              ))}
-            </div>
-          </div>
+              );
+            })}
+          </motion.div>
 
-          <div className="lg:w-1/2 relative flex justify-center">
-            <div 
-              className="relative w-full max-w-[320px] aspect-[9/19] bg-black border-4 border-white/10 p-2 shadow-2xl group cursor-pointer overflow-hidden tactile-feedback"
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
+          {/* Phone mockup */}
+          <motion.div
+            initial={{ opacity: 0, x: 32 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ type: "spring", stiffness: 200, damping: 25, delay: 0.2 }}
+            className="lg:w-3/5 flex justify-center relative"
+          >
+            {/* Glow */}
+            <div
+              className="absolute inset-0 -m-8 rounded-full blur-3xl opacity-20 pointer-events-none transition-all duration-700"
+              style={{ background: activeColors.indicator }}
+            />
+
+            <div
+              className="relative w-[280px]"
+              onMouseEnter={() => setPaused(true)}
+              onMouseLeave={() => setPaused(false)}
               onClick={nextImage}
+              style={{ cursor: "pointer" }}
             >
-              <div className="absolute inset-0 bg-blueprint opacity-20 pointer-events-none" />
-              <div className="relative w-full h-full overflow-hidden bg-zinc-900">
-                <AnimatePresence mode="wait">
-                  <motion.img
-                    key={`${activeModule.id}-${imageIndex}`}
-                    src={activeModule.images[imageIndex]}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3 }}
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                </AnimatePresence>
-                
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/20 backdrop-blur-[2px]">
-                  <div className="bg-black/80 border border-primary/50 px-4 py-2 flex items-center gap-2">
-                    <MousePointer2 className="w-4 h-4 text-primary animate-bounce" />
-                    <span className="text-technical text-primary">Skip_Buffer</span>
+              <div className="m3-phone-frame p-3">
+                {/* Notch */}
+                <div
+                  className="absolute top-4 left-1/2 -translate-x-1/2 w-24 h-5 rounded-full z-20"
+                  style={{ background: "hsl(var(--md-surface-container-highest))" }}
+                />
+
+                <div
+                  className="relative overflow-hidden bg-black"
+                  style={{ borderRadius: "38px", aspectRatio: "9/19.5" }}
+                >
+                  <AnimatePresence mode="wait">
+                    <motion.img
+                      key={`${activeModule.id}-${imageIndex}`}
+                      src={activeModule.images[imageIndex]}
+                      alt={`${activeModule.name} screenshot`}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.3, ease: [0.2, 0, 0, 1] }}
+                    />
+                  </AnimatePresence>
+
+                  {/* Module label overlay */}
+                  <div className="absolute top-8 left-4 right-4">
+                    <div
+                      className="inline-flex items-center gap-2 px-3 py-1 rounded-full m3-label-small"
+                      style={{
+                        background: "hsl(var(--md-surface-container-highest) / 0.92)",
+                        color: "hsl(var(--md-on-surface))",
+                        backdropFilter: "blur(8px)",
+                      }}
+                    >
+                      <span
+                        className="w-1.5 h-1.5 rounded-full"
+                        style={{ background: activeColors.indicator }}
+                      />
+                      {activeModule.name}
+                    </div>
+                  </div>
+
+                  {/* Progress dots */}
+                  <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-1">
+                    {activeModule.images.slice(0, 10).map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={(e) => { e.stopPropagation(); setImageIndex(i); }}
+                        className="transition-all duration-300 rounded-full"
+                        style={{
+                          width: i === imageIndex % 10 ? "16px" : "4px",
+                          height: "4px",
+                          background: i === imageIndex % 10
+                            ? activeColors.indicator
+                            : "hsl(var(--md-on-surface) / 0.3)",
+                        }}
+                      />
+                    ))}
                   </div>
                 </div>
 
-                <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/80 border border-primary/20 px-2 py-1">
-                  <Smartphone className="w-3 h-3 text-primary" />
-                  <span className="text-[8px] font-mono text-primary uppercase">v1.0.9_LIVE</span>
-                </div>
-                
-                <div className="absolute bottom-4 right-4 bg-black/80 border border-white/10 px-2 py-1">
-                  <span className="text-[8px] font-mono text-white/40 uppercase">
-                    Buffer: {imageIndex + 1}/{activeModule.images.length}
-                  </span>
-                </div>
+                {/* Home bar */}
+                <div
+                  className="absolute bottom-2 left-1/2 -translate-x-1/2 w-24 h-1 rounded-full"
+                  style={{ background: "hsl(var(--md-on-surface-variant) / 0.4)" }}
+                />
               </div>
             </div>
-            
-            {/* Background decorative elements */}
-            <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-primary/5 blur-[120px] rounded-full" />
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>
