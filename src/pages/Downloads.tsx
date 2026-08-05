@@ -1,7 +1,7 @@
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useGithubDownloads, GithubRelease } from "@/hooks/use-github-downloads";
-import { Download, ArrowLeft, RefreshCw, BarChart3, Clock, Package, ExternalLink, Sparkles } from "lucide-react";
+import { Download, ArrowLeft, RefreshCw, BarChart, Clock, Package, ExternalLink, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +18,8 @@ const RollingNumber = ({ value }: { value: number }) => {
 };
 
 const ReleaseCard = ({ release }: { release: GithubRelease }) => {
-  const releaseTotal = release.assets.reduce((sum, asset) => sum + asset.download_count, 0);
+  const assets = release.assets || [];
+  const releaseTotal = assets.reduce((sum, asset) => sum + (asset.download_count || 0), 0);
   const date = new Date(release.published_at).toLocaleDateString(undefined, {
     year: 'numeric', month: 'long', day: 'numeric'
   });
@@ -53,7 +54,7 @@ const ReleaseCard = ({ release }: { release: GithubRelease }) => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {release.assets.map((asset) => (
+        {(release.assets || []).map((asset) => (
           <div
             key={asset.name}
             className="flex items-center justify-between p-4 rounded-xl bg-surface-container transition-all hover:bg-surface-container-high group"
@@ -135,7 +136,7 @@ const DownloadsPage = () => {
               animate={{ opacity: 1, y: 0 }}
               className="m3-chip gap-2 bg-primary/10 text-primary border-primary/20"
             >
-              <BarChart3 size={16} />
+              <BarChart size={16} />
               Live Insights
             </motion.div>
             <motion.h1

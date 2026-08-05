@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
-import { Download, ExternalLink, Info, CheckCircle2, X, Users, BarChart3 } from "lucide-react";
+import { Download, ExternalLink, Info, CheckCircle2, X, Users, BarChart } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -31,7 +31,7 @@ const DownloadCounter = ({ value }: { value: number }) => {
 
 const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
   const { manifest, isLoading } = useUpdateManifest();
-  const { data: totalDownloads, isLoading: isDownloadsLoading } = useGithubDownloads();
+  const { totalDownloads, isLoading: isDownloadsLoading } = useGithubDownloads();
 
   // Improved markdown to JSX converter for the changelog
   const renderChangelog = (text: string) => {
@@ -216,7 +216,7 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
                     </span>
                     <span className="text-[10px] text-secondary/70 uppercase font-bold tracking-tight flex items-center gap-1">
                       Downloads
-                      <BarChart3 size={8} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <BarChart size={8} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                     </span>
                   </div>
                 </button>

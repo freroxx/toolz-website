@@ -1,5 +1,5 @@
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { Download, Users, ArrowRight, Sparkles, BarChart3 } from "lucide-react";
+import { Download, Users, ArrowRight, Sparkles, BarChart } from "lucide-react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGithubDownloads } from "@/hooks/use-github-downloads";
@@ -117,7 +117,7 @@ const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                   onClick={() => navigate('/downloads')}
                   className="mt-8 flex items-center gap-2 text-primary bg-primary/10 hover:bg-primary/20 px-6 py-3 rounded-full transition-all active:scale-95 group"
                 >
-                  <BarChart3 size={16} />
+                  <BarChart size={16} />
                   <span className="m3-label-large font-bold uppercase tracking-wider">Detailed Stats</span>
                   <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                 </button>

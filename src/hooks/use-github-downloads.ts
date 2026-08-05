@@ -32,17 +32,20 @@ export function useGithubReleases() {
 export function useGithubDownloads() {
   const { data: releases, isLoading, refetch, isFetching } = useGithubReleases();
 
-  const totalDownloads = releases?.reduce((acc, release) => {
-    const releaseDownloads = release.assets?.reduce((sum, asset) => sum + (asset.download_count || 0), 0) || 0;
+  const safeReleases = Array.isArray(releases) ? releases : [];
+
+  const totalDownloads = safeReleases.reduce((acc, release) => {
+    const assets = Array.isArray(release.assets) ? release.assets : [];
+    const releaseDownloads = assets.reduce((sum, asset) => sum + (Number(asset.download_count) || 0), 0);
     return acc + releaseDownloads;
-  }, 0) ?? 0;
+  }, 0);
 
   return {
     totalDownloads,
     isLoading,
     isFetching,
     refetch,
-    releases,
+    releases: safeReleases,
     data: totalDownloads // for backward compatibility with existing components
   };
 }
