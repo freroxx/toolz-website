@@ -37,13 +37,15 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
   const renderChangelog = (text: string) => {
     if (!text) return null;
 
-    const lines = text.split("\n");
+    // Normalize text: fix the space in URLs and handle line endings
+    const normalized = text.replace(/(https?):\s+\/\//g, "$1://").replace(/\r\n/g, "\n");
+    const lines = normalized.split("\n");
     const elements: React.ReactNode[] = [];
     let currentList: React.ReactNode[] = [];
 
     const flushList = (key: string) => {
       if (currentList.length > 0) {
-        elements.push(<ul key={key} className="my-1.5 space-y-0.5">{currentList}</ul>);
+        elements.push(<ul key={key} className="my-3 space-y-2 pl-1">{currentList}</ul>);
         currentList = [];
       }
     };
@@ -51,17 +53,18 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
     lines.forEach((line, i) => {
       const trimmed = line.trim();
       if (!trimmed) {
-        flushList(`list-gap-${i}`);
+        flushList(`gap-${i}`);
         return;
       }
 
-      // Robust list detection
-      const listMatch = trimmed.match(/^(\*-|\*|-)\s*(.*)/);
-      if (listMatch) {
+      // Robust list detection: supports *, -, *- with optional space
+      // Escaping * correctly this time
+      const listMatch = trimmed.match(/^(\*|-|\*-)\s*(.*)/);
+      if (listMatch && !trimmed.match(/^https?:\/\//)) {
         const content = listMatch[2];
         currentList.push(
-          <li key={`li-${i}`} className="m3-body-medium ml-1 list-none flex gap-2.5 my-0.5 leading-tight group">
-            <span className="w-1 h-1 rounded-full bg-primary mt-1.5 shrink-0 opacity-40" />
+          <li key={`li-${i}`} className="m3-body-medium ml-1 list-none flex gap-3 my-1 leading-relaxed group">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary/30 mt-2 shrink-0 group-hover:bg-primary transition-all" />
             <div className="flex-1 text-on-surface/90 text-sm">
               {renderInlineMarkdown(content)}
             </div>
@@ -70,128 +73,110 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
         return;
       }
 
-      flushList(`list-before-${i}`);
+      flushList(`before-${i}`);
 
-      // Headers
-      if (trimmed.startsWith("# ")) {
-        elements.push(<h1 key={i} className="m3-title-large mt-6 mb-3 text-primary font-bold border-b border-primary/10 pb-1">{trimmed.replace("# ", "").trim()}</h1>);
-      } else if (trimmed.startsWith("## ")) {
-        elements.push(<h2 key={i} className="m3-title-medium mt-5 mb-2 text-primary font-bold">{trimmed.replace("## ", "").trim()}</h2>);
-      } else if (trimmed.replace(/\s+$/, "").endsWith(":") && trimmed.length < 60) {
-        // Handle section headers like "Changes :"
+      // Standalone Section Headers (e.g., "Changes :")
+      if (trimmed.endsWith(":") && trimmed.length < 50 && !trimmed.includes("http")) {
         elements.push(
-          <div key={i} className="mt-4 mb-2 flex items-center gap-2">
-            <h4 className="text-[10px] font-black uppercase tracking-widest text-primary/70 bg-primary/5 px-2 py-0.5 rounded border border-primary/10">
+          <div key={i} className="mt-6 mb-2 flex items-center gap-2">
+            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80 bg-primary/5 px-2.5 py-1 rounded border border-primary/10">
               {trimmed.replace(/:$/, "").trim()}
             </h4>
+            <div className="h-px flex-1 bg-gradient-to-r from-primary/20 to-transparent" />
           </div>
         );
-      } else if (trimmed.startsWith("- [x]") || trimmed.startsWith("- [ ]")) {
-        const checked = trimmed.startsWith("- [x]");
-        const content = trimmed.replace("- [x]", "").replace("- [ ]", "").trim();
-        elements.push(
-          <div key={i} className="flex items-start gap-2 my-1 bg-surface-container/20 p-2 rounded-lg border border-outline-variant/10">
-            <CheckCircle2 size={12} className={cn("mt-0.5 shrink-0", checked ? "text-primary" : "text-muted-foreground opacity-30")} />
-            <span className={cn("text-[11px] font-medium", !checked && "text-muted-foreground")}>
-              {renderInlineMarkdown(content)}
-            </span>
-          </div>
-        );
-      } else if (trimmed.startsWith(">")) {
-        const content = trimmed.substring(1).trim();
-        elements.push(
-          <blockquote key={i} className="border-l-2 border-secondary/30 pl-4 py-1 my-3 m3-body-medium text-on-surface-variant bg-secondary/5 rounded-r-lg italic text-sm">
-             {renderInlineMarkdown(content)}
-          </blockquote>
-        );
+      } else if (trimmed.startsWith("# ")) {
+        elements.push(<h1 key={i} className="text-xl font-bold mt-6 mb-3 text-primary border-b border-outline-variant/30 pb-1">{trimmed.slice(2)}</h1>);
+      } else if (trimmed.startsWith("## ")) {
+        elements.push(<h2 key={i} className="text-lg font-bold mt-5 mb-2 text-primary">{trimmed.slice(3)}</h2>);
       } else {
         elements.push(
-          <p key={i} className="m3-body-medium my-1 text-on-surface/80 leading-relaxed text-sm">
+          <p key={i} className="text-sm text-on-surface/80 my-2 leading-relaxed">
             {renderInlineMarkdown(line)}
           </p>
         );
       }
     });
 
-    flushList("list-final");
+    flushList("final");
     return elements;
   };
 
   const renderInlineMarkdown = (text: string) => {
-    // Improved regex for URLs (handles potential space typo like "https: //")
-    const urlRegex = /(https?:\s?\/\/[^\s]+)/g;
-
-    // Split text by URLs first to protect them from further markdown parsing
+    // Regex for URLs
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
     const segments = text.split(urlRegex);
 
     return segments.map((segment, segIndex) => {
-      // If this segment is a URL
       if (segment.match(urlRegex)) {
-        const cleanUrl = segment.replace(/:\s+\/\//, '://');
-        const lower = cleanUrl.toLowerCase();
+        const lower = segment.toLowerCase();
         const isDiscord = lower.includes("discord");
         const isGithub = lower.includes("github");
+
+        // Shorten URL for display
+        let displayUrl = segment.replace(/^https?:\/\//, "").replace(/\/$/, "");
+        if (displayUrl.length > 30) displayUrl = displayUrl.substring(0, 27) + "...";
 
         return (
           <a
             key={`link-${segIndex}`}
-            href={cleanUrl}
+            href={segment}
             target="_blank"
             rel="noopener noreferrer"
             className={cn(
-              "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black transition-all mx-0.5 border align-middle uppercase tracking-tighter",
+              "inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold transition-all mx-0.5 border align-middle uppercase tracking-tighter shadow-sm hover:scale-[1.02] active:scale-95",
               isDiscord ? "bg-[#5865F2]/10 border-[#5865F2]/20 text-[#5865F2] hover:bg-[#5865F2]/20" :
               isGithub ? "bg-primary/10 border-primary/20 text-primary hover:bg-primary/20" :
               "bg-secondary/10 border-secondary/20 text-secondary hover:bg-secondary/20"
             )}
           >
-            {isDiscord ? "Discord" : isGithub ? "GitHub" : "Link"}
-            <ExternalLink size={8} />
+            {isDiscord ? "Discord" : isGithub ? "GitHub" : displayUrl}
+            <ExternalLink size={10} />
           </a>
         );
       }
 
-      // Process non-URL text for Bold, Labels, and Italics
-      return segment.split("**").map((boldPart, boldIndex) => {
-        if (boldIndex % 2 === 1) {
-          return <strong key={`bold-${boldIndex}`} className="text-on-surface font-bold text-primary">{boldPart}</strong>;
-        }
+      // Process non-URL text for Bold, Italics, and Key:Value pairs
+      let content: React.ReactNode[] = [segment];
 
-        // Handle "Label : Content" pattern - only for the first colon in the start of the line
-        let contentToProcess = boldPart;
-        let labelElement: React.ReactNode = null;
-
-        const isLineStart = segIndex === 0 && boldIndex === 0;
-        if (isLineStart && boldPart.includes(":") && !boldPart.match(/https?:\s?\/\//)) {
-          const colonIndex = boldPart.indexOf(":");
-          // Only treat as label if it's reasonably short (e.g. < 50 chars)
-          if (colonIndex > 0 && colonIndex < 50) {
-            const label = boldPart.substring(0, colonIndex).trim();
-            contentToProcess = boldPart.substring(colonIndex + 1);
-            labelElement = (
-              <React.Fragment key="label-wrapper">
-                <span className="font-bold text-on-surface underline decoration-primary/10 decoration-2 underline-offset-4">{label}</span>
-                <span className="font-black text-primary/80 opacity-60 mx-0.5">: </span>
-              </React.Fragment>
-            );
-          }
-        }
-
-        // Handle Italics (underscores) - only if balanced
-        const italicParts = contentToProcess.split("_").map((italicPart, italicIndex, array) => {
-          if (italicIndex % 2 === 1 && italicIndex < array.length - 1) {
-            return <em key={`italic-${italicIndex}`} className="italic text-secondary/90">{italicPart}</em>;
-          }
-          return italicPart;
-        });
-
-        return (
-          <React.Fragment key={`part-${boldIndex}`}>
-            {labelElement}
-            {italicParts}
-          </React.Fragment>
+      // Bold **text**
+      content = content.flatMap((node, i) => {
+        if (typeof node !== 'string') return node;
+        return node.split("**").map((part, j) =>
+          j % 2 === 1 ? <strong key={j} className="text-on-surface font-black text-primary/90">{part}</strong> : part
         );
       });
+
+      // Italics _text_ (only if balanced and not just a single underscore)
+      content = content.flatMap((node, i) => {
+        if (typeof node !== 'string') return node;
+        const parts = node.split("_");
+        if (parts.length < 3) return node;
+        return parts.map((part, j) =>
+          j % 2 === 1 ? <em key={j} className="italic text-on-surface-variant/90">{part}</em> : part
+        );
+      });
+
+      // Key: Value pattern (e.g. "Bug Fixes : ...")
+      // Only check at the start of the line/segment
+      if (segIndex === 0) {
+        content = content.flatMap((node, i) => {
+          if (typeof node !== 'string' || i > 0) return node;
+          const colonMatch = node.match(/^([^:]+):\s*(.*)/);
+          // Only treat as label if it's reasonably short and doesn't look like a URL prefix
+          if (colonMatch && colonMatch[1].length < 45 && !colonMatch[1].includes("http")) {
+            return [
+              <span key="inline-label" className="font-bold text-on-surface underline decoration-primary/20 decoration-2 underline-offset-4 mr-1">
+                {colonMatch[1]}
+              </span>,
+              ": " + colonMatch[2]
+            ];
+          }
+          return node;
+        });
+      }
+
+      return <React.Fragment key={`seg-${segIndex}`}>{content}</React.Fragment>;
     });
   };
 
