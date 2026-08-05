@@ -30,10 +30,10 @@ export function useGithubReleases() {
 }
 
 export function useGithubDownloads() {
-  const { data: releases, isLoading, refetch, isFetching, data } = useGithubReleases();
+  const { data: releases, isLoading, refetch, isFetching } = useGithubReleases();
 
   const totalDownloads = releases?.reduce((acc, release) => {
-    const releaseDownloads = release.assets.reduce((sum, asset) => sum + asset.download_count, 0);
+    const releaseDownloads = release.assets?.reduce((sum, asset) => sum + (asset.download_count || 0), 0) || 0;
     return acc + releaseDownloads;
   }, 0) ?? 0;
 
