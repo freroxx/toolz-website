@@ -37,14 +37,23 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
   const renderChangelog = (text: string) => {
     if (!text) return null;
 
-    // Split into blocks first to handle lists better
     const lines = text.split("\n");
     const elements: React.ReactNode[] = [];
-
     let currentList: React.ReactNode[] = [];
+
+    const flushList = (key: string) => {
+      if (currentList.length > 0) {
+        elements.push(<ul key={key} className="my-1.5 space-y-0.5">{currentList}</ul>);
+        currentList = [];
+      }
+    };
 
     lines.forEach((line, i) => {
       const trimmed = line.trim();
+      if (!trimmed) {
+        flushList(`list-gap-${i}`);
+        return;
+      }
 
       // Handle lists (including *- style)
       if (trimmed.startsWith("*-") || trimmed.startsWith("*") || (trimmed.startsWith("-") && !trimmed.startsWith("- ["))) {
@@ -53,43 +62,38 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
         else if (trimmed.startsWith("*") || trimmed.startsWith("-")) content = trimmed.substring(1).trim();
 
         currentList.push(
-          <li key={`li-${i}`} className="m3-body-medium ml-2 list-none flex gap-3 my-2 leading-relaxed group">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2.5 shrink-0 group-hover:scale-125 transition-transform" />
+          <li key={`li-${i}`} className="m3-body-medium ml-1 list-none flex gap-2.5 my-1 leading-normal group">
+            <span className="w-1 h-1 rounded-full bg-primary mt-2 shrink-0 opacity-60" />
             <div className="flex-1 text-on-surface/90">
               {renderInlineMarkdown(content)}
             </div>
           </li>
         );
         return;
-      } else if (currentList.length > 0) {
-        elements.push(<ul key={`ul-${i}`} className="my-4 space-y-1">{currentList}</ul>);
-        currentList = [];
       }
+
+      flushList(`list-before-${i}`);
 
       // Headers
       if (trimmed.startsWith("# ")) {
-        elements.push(<h1 key={i} className="m3-headline-small mt-10 mb-5 text-primary font-bold border-b border-primary/10 pb-2">{trimmed.replace("# ", "").trim()}</h1>);
+        elements.push(<h1 key={i} className="m3-title-large mt-6 mb-3 text-primary font-bold border-b border-primary/10 pb-1">{trimmed.replace("# ", "").trim()}</h1>);
       } else if (trimmed.startsWith("## ")) {
-        elements.push(<h2 key={i} className="m3-title-large mt-8 mb-4 text-primary font-bold">{trimmed.replace("## ", "").trim()}</h2>);
-      } else if (trimmed.startsWith("### ")) {
-        elements.push(<h3 key={i} className="m3-title-medium mt-6 mb-3 text-primary/90 font-bold">{trimmed.replace("### ", "").trim()}</h3>);
+        elements.push(<h2 key={i} className="m3-title-medium mt-5 mb-2 text-primary font-bold">{trimmed.replace("## ", "").trim()}</h2>);
       } else if (trimmed.endsWith(":") && trimmed.length < 60) {
-        // Treat lines ending in colon as distinct section subheaders
         elements.push(
-          <div key={i} className="mt-8 mb-4 flex items-center gap-3">
-            <h4 className="m3-label-large text-primary font-black uppercase tracking-[0.15em] bg-primary/5 px-4 py-1.5 rounded-lg border border-primary/10">
+          <div key={i} className="mt-5 mb-2 flex items-center gap-2">
+            <h4 className="text-[10px] font-black uppercase tracking-widest text-primary/70 bg-primary/5 px-2 py-0.5 rounded border border-primary/10">
               {trimmed.replace(":", "").trim()}
             </h4>
-            <div className="h-px flex-1 bg-gradient-to-r from-primary/20 to-transparent" />
           </div>
         );
       } else if (trimmed.startsWith("- [x]") || trimmed.startsWith("- [ ]")) {
         const checked = trimmed.startsWith("- [x]");
         const content = trimmed.replace("- [x]", "").replace("- [ ]", "").trim();
         elements.push(
-          <div key={i} className="flex items-start gap-3 my-3 bg-surface-container/40 p-3 rounded-xl border border-outline-variant/30">
-            <CheckCircle2 size={18} className={cn("mt-0.5 shrink-0", checked ? "text-primary" : "text-muted-foreground opacity-40")} />
-            <span className={cn("m3-body-medium", !checked && "text-muted-foreground")}>
+          <div key={i} className="flex items-start gap-2 my-1.5 bg-surface-container/20 p-2 rounded-lg border border-outline-variant/10">
+            <CheckCircle2 size={14} className={cn("mt-0.5 shrink-0", checked ? "text-primary" : "text-muted-foreground opacity-30")} />
+            <span className={cn("text-sm", !checked && "text-muted-foreground")}>
               {renderInlineMarkdown(content)}
             </span>
           </div>
@@ -97,25 +101,20 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
       } else if (trimmed.startsWith(">")) {
         const content = trimmed.substring(1).trim();
         elements.push(
-          <blockquote key={i} className="border-l-4 border-secondary/40 pl-6 py-4 my-8 m3-body-large text-on-surface-variant bg-secondary/5 rounded-r-2xl italic leading-relaxed">
+          <blockquote key={i} className="border-l-2 border-secondary/30 pl-4 py-2 my-4 m3-body-medium text-on-surface-variant bg-secondary/5 rounded-r-xl italic">
              {renderInlineMarkdown(content)}
           </blockquote>
         );
-      } else if (trimmed === "") {
-        elements.push(<div key={i} className="h-4" />);
       } else {
         elements.push(
-          <p key={i} className="m3-body-large my-3 text-on-surface/80 leading-relaxed">
+          <p key={i} className="m3-body-medium my-1.5 text-on-surface/80 leading-relaxed">
             {renderInlineMarkdown(line)}
           </p>
         );
       }
     });
 
-    if (currentList.length > 0) {
-      elements.push(<ul key="ul-final" className="my-4 space-y-1">{currentList}</ul>);
-    }
-
+    flushList("list-final");
     return elements;
   };
 
@@ -139,8 +138,8 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
         const segments = subPart.split(urlRegex);
         return segments.map((segment, segIndex) => {
           if (segment.match(urlRegex)) {
-            const isDiscord = segment.includes("discord");
-            const isGithub = segment.includes("github");
+            const isDiscord = segment.toLowerCase().includes("discord");
+            const isGithub = segment.toLowerCase().includes("github");
 
             return (
               <a
@@ -149,14 +148,14 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className={cn(
-                  "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold transition-all mx-1 my-0.5 border",
+                  "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold transition-all mx-0.5 border align-middle",
                   isDiscord ? "bg-[#5865F2]/10 border-[#5865F2]/20 text-[#5865F2] hover:bg-[#5865F2]/20" :
                   isGithub ? "bg-primary/10 border-primary/20 text-primary hover:bg-primary/20" :
                   "bg-secondary/10 border-secondary/20 text-secondary hover:bg-secondary/20"
                 )}
               >
-                {isDiscord ? "Join Discord" : isGithub ? "View on GitHub" : "External Link"}
-                <ExternalLink size={12} />
+                {isDiscord ? "Discord" : isGithub ? "GitHub" : "Link"}
+                <ExternalLink size={10} />
               </a>
             );
           }
@@ -186,20 +185,12 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
                  <Download size={40} className="text-on-primary" />
               </div>
            </div>
-
-           {/* Close button for mobile accessibility */}
-           <button
-             onClick={() => onOpenChange(false)}
-             className="absolute top-6 right-6 p-2.5 rounded-full bg-surface-container-highest/50 backdrop-blur-md hover:bg-surface-container-highest transition-colors shadow-lg border border-outline-variant/30"
-           >
-             <X size={24} className="text-on-surface" />
-           </button>
         </div>
 
         {/* Scrollable content area */}
-        <div className="overflow-y-auto custom-scrollbar flex-1 px-6 sm:px-10 pb-10 pt-8">
+        <div className="overflow-y-auto custom-scrollbar flex-1 px-5 sm:px-8 pb-8 pt-6">
           <div className="max-w-2xl mx-auto">
-            <DialogHeader className="mb-10">
+            <DialogHeader className="mb-6">
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
                 <div>
                   <DialogTitle className="m3-headline-large mb-2">Release Notes</DialogTitle>
