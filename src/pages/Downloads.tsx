@@ -1,9 +1,10 @@
-import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import { motion, useMotionValue, useTransform, animate, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useGithubDownloads, GithubRelease } from "@/hooks/use-github-downloads";
-import { Download, ArrowLeft, RefreshCw, BarChart, Clock, Package, ExternalLink, Sparkles, Smartphone, Layers } from "lucide-react";
+import { Download, ArrowLeft, RefreshCw, BarChart, Clock, Package, ExternalLink, Sparkles, Smartphone, Layers, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import DownloadDialog from "@/components/landing/DownloadDialog";
 
 const RollingNumber = ({ value }: { value: number }) => {
   const count = useMotionValue(0);
@@ -181,6 +182,11 @@ const DownloadsPage = () => {
   const navigate = useNavigate();
   const { totalDownloads, isLoading, releases, refetch, isFetching } = useGithubDownloads();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [downloadOpen, setDownloadOpen] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -302,6 +308,23 @@ const DownloadsPage = () => {
           </p>
         </div>
       </div>
+
+      {/* Floating Action Button for Download */}
+      <motion.button
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 1, type: "spring" }}
+        onClick={() => setDownloadOpen(true)}
+        className="fixed bottom-8 right-8 w-16 h-16 rounded-[24px] bg-primary-container text-on-primary-container shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-transform z-50 group"
+        aria-label="Download Toolz"
+      >
+        <Download size={28} />
+        <div className="absolute right-full mr-4 px-4 py-2 rounded-xl bg-surface-container-highest text-on-surface text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-xl border border-outline-variant/30">
+          Get Toolz Now
+        </div>
+      </motion.button>
+
+      <DownloadDialog open={downloadOpen} onOpenChange={setDownloadOpen} />
     </div>
   );
 };
