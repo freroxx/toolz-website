@@ -55,16 +55,14 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
         return;
       }
 
-      // Handle lists (including *- style)
-      if (trimmed.startsWith("*-") || trimmed.startsWith("*") || (trimmed.startsWith("-") && !trimmed.startsWith("- ["))) {
-        let content = trimmed;
-        if (trimmed.startsWith("*-")) content = trimmed.substring(2).trim();
-        else if (trimmed.startsWith("*") || trimmed.startsWith("-")) content = trimmed.substring(1).trim();
-
+      // Robust list detection
+      const listMatch = trimmed.match(/^(\*-|\*|-)\s*(.*)/);
+      if (listMatch) {
+        const content = listMatch[2];
         currentList.push(
-          <li key={`li-${i}`} className="m3-body-medium ml-1 list-none flex gap-2.5 my-1 leading-normal group">
-            <span className="w-1 h-1 rounded-full bg-primary mt-2 shrink-0 opacity-60" />
-            <div className="flex-1 text-on-surface/90">
+          <li key={`li-${i}`} className="m3-body-medium ml-1 list-none flex gap-2.5 my-0.5 leading-tight group">
+            <span className="w-1 h-1 rounded-full bg-primary mt-1.5 shrink-0 opacity-40" />
+            <div className="flex-1 text-on-surface/90 text-sm">
               {renderInlineMarkdown(content)}
             </div>
           </li>
@@ -79,11 +77,12 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
         elements.push(<h1 key={i} className="m3-title-large mt-6 mb-3 text-primary font-bold border-b border-primary/10 pb-1">{trimmed.replace("# ", "").trim()}</h1>);
       } else if (trimmed.startsWith("## ")) {
         elements.push(<h2 key={i} className="m3-title-medium mt-5 mb-2 text-primary font-bold">{trimmed.replace("## ", "").trim()}</h2>);
-      } else if (trimmed.endsWith(":") && trimmed.length < 60) {
+      } else if (trimmed.replace(/\s+$/, "").endsWith(":") && trimmed.length < 60) {
+        // Handle section headers like "Changes :"
         elements.push(
-          <div key={i} className="mt-5 mb-2 flex items-center gap-2">
+          <div key={i} className="mt-4 mb-2 flex items-center gap-2">
             <h4 className="text-[10px] font-black uppercase tracking-widest text-primary/70 bg-primary/5 px-2 py-0.5 rounded border border-primary/10">
-              {trimmed.replace(":", "").trim()}
+              {trimmed.replace(/:$/, "").trim()}
             </h4>
           </div>
         );
@@ -91,9 +90,9 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
         const checked = trimmed.startsWith("- [x]");
         const content = trimmed.replace("- [x]", "").replace("- [ ]", "").trim();
         elements.push(
-          <div key={i} className="flex items-start gap-2 my-1.5 bg-surface-container/20 p-2 rounded-lg border border-outline-variant/10">
-            <CheckCircle2 size={14} className={cn("mt-0.5 shrink-0", checked ? "text-primary" : "text-muted-foreground opacity-30")} />
-            <span className={cn("text-sm", !checked && "text-muted-foreground")}>
+          <div key={i} className="flex items-start gap-2 my-1 bg-surface-container/20 p-2 rounded-lg border border-outline-variant/10">
+            <CheckCircle2 size={12} className={cn("mt-0.5 shrink-0", checked ? "text-primary" : "text-muted-foreground opacity-30")} />
+            <span className={cn("text-[11px] font-medium", !checked && "text-muted-foreground")}>
               {renderInlineMarkdown(content)}
             </span>
           </div>
@@ -101,13 +100,13 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
       } else if (trimmed.startsWith(">")) {
         const content = trimmed.substring(1).trim();
         elements.push(
-          <blockquote key={i} className="border-l-2 border-secondary/30 pl-4 py-2 my-4 m3-body-medium text-on-surface-variant bg-secondary/5 rounded-r-xl italic">
+          <blockquote key={i} className="border-l-2 border-secondary/30 pl-4 py-1 my-3 m3-body-medium text-on-surface-variant bg-secondary/5 rounded-r-lg italic text-sm">
              {renderInlineMarkdown(content)}
           </blockquote>
         );
       } else {
         elements.push(
-          <p key={i} className="m3-body-medium my-1.5 text-on-surface/80 leading-relaxed">
+          <p key={i} className="m3-body-medium my-1 text-on-surface/80 leading-relaxed text-sm">
             {renderInlineMarkdown(line)}
           </p>
         );
@@ -128,40 +127,56 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
         return <strong key={`bold-${index}`} className="text-on-surface font-bold text-primary">{part}</strong>;
       }
 
-      // For non-bold parts, split by italics
-      return part.split("_").map((subPart, subIndex) => {
-        if (subIndex % 2 === 1) {
-          return <em key={`italic-${subIndex}`} className="italic text-secondary/90">{subPart}</em>;
+      // Handle "Label : Content" pattern inside lines
+      const parts = part.split(/(\s?:\s?)/);
+      const renderedParts = parts.map((segment, segIndex) => {
+        const isSeparator = segment.trim() === ":";
+        if (isSeparator && segIndex > 0) {
+          return <span key={`sep-${segIndex}`} className="font-black text-primary/80 opacity-60 mx-0.5">: </span>;
         }
 
-        // For remaining text, handle URLs
-        const segments = subPart.split(urlRegex);
-        return segments.map((segment, segIndex) => {
-          if (segment.match(urlRegex)) {
-            const isDiscord = segment.toLowerCase().includes("discord");
-            const isGithub = segment.toLowerCase().includes("github");
+        const nextSegment = parts[segIndex + 1];
+        if (nextSegment && nextSegment.trim() === ":") {
+            return <span key={`label-${segIndex}`} className="font-bold text-on-surface underline decoration-primary/10 decoration-2 underline-offset-4">{segment}</span>;
+        }
 
-            return (
-              <a
-                key={`link-${segIndex}`}
-                href={segment}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={cn(
-                  "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold transition-all mx-0.5 border align-middle",
-                  isDiscord ? "bg-[#5865F2]/10 border-[#5865F2]/20 text-[#5865F2] hover:bg-[#5865F2]/20" :
-                  isGithub ? "bg-primary/10 border-primary/20 text-primary hover:bg-primary/20" :
-                  "bg-secondary/10 border-secondary/20 text-secondary hover:bg-secondary/20"
-                )}
-              >
-                {isDiscord ? "Discord" : isGithub ? "GitHub" : "Link"}
-                <ExternalLink size={10} />
-              </a>
-            );
+        // For remaining text, handle URLs and italics
+        return segment.split("_").map((subPart, subIndex) => {
+          if (subIndex % 2 === 1) {
+            return <em key={`italic-${subIndex}`} className="italic text-secondary/90">{subPart}</em>;
           }
-          return segment;
+
+          const segments = subPart.split(urlRegex);
+          return segments.map((urlSegment, urlIndex) => {
+            if (urlSegment.match(urlRegex)) {
+              const lower = urlSegment.toLowerCase();
+              const isDiscord = lower.includes("discord");
+              const isGithub = lower.includes("github");
+
+              return (
+                <a
+                  key={`link-${urlIndex}`}
+                  href={urlSegment}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black transition-all mx-0.5 border align-middle uppercase tracking-tighter",
+                    isDiscord ? "bg-[#5865F2]/10 border-[#5865F2]/20 text-[#5865F2] hover:bg-[#5865F2]/20" :
+                    isGithub ? "bg-primary/10 border-primary/20 text-primary hover:bg-primary/20" :
+                    "bg-secondary/10 border-secondary/20 text-secondary hover:bg-secondary/20"
+                  )}
+                >
+                  {isDiscord ? "Discord" : isGithub ? "GitHub" : "Link"}
+                  <ExternalLink size={8} />
+                </a>
+              );
+            }
+            return urlSegment;
+          });
         });
       });
+
+      return <React.Fragment key={`part-${index}`}>{renderedParts}</React.Fragment>;
     });
   };
 
