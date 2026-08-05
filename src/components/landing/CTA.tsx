@@ -1,6 +1,7 @@
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { Download, Users, ArrowRight, Sparkles } from "lucide-react";
+import { Download, Users, ArrowRight, Sparkles, BarChart3 } from "lucide-react";
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useGithubDownloads } from "@/hooks/use-github-downloads";
 
 const DownloadCounter = ({ value }: { value: number }) => {
@@ -8,7 +9,10 @@ const DownloadCounter = ({ value }: { value: number }) => {
   const rounded = useTransform(count, (latest) => Math.round(latest).toLocaleString());
 
   useEffect(() => {
-    const animation = animate(count, value, { duration: 3, ease: [0.34, 1.56, 0.64, 1] });
+    const animation = animate(count, value, {
+      duration: 3,
+      ease: [0.34, 1.56, 0.64, 1]
+    });
     return animation.stop;
   }, [value, count]);
 
@@ -16,7 +20,8 @@ const DownloadCounter = ({ value }: { value: number }) => {
 };
 
 const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
-  const { data: totalDownloads, isLoading } = useGithubDownloads();
+  const navigate = useNavigate();
+  const { totalDownloads, isLoading } = useGithubDownloads();
 
   return (
     <section className="py-24 relative overflow-hidden">
@@ -107,6 +112,15 @@ const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 <div className="m3-title-large font-bold text-on-surface-variant tracking-widest uppercase opacity-60">
                   Global Downloads
                 </div>
+
+                <button
+                  onClick={() => navigate('/downloads')}
+                  className="mt-8 flex items-center gap-2 text-primary bg-primary/10 hover:bg-primary/20 px-6 py-3 rounded-full transition-all active:scale-95 group"
+                >
+                  <BarChart3 size={16} />
+                  <span className="m3-label-large font-bold uppercase tracking-wider">Detailed Stats</span>
+                  <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                </button>
               </motion.div>
             </div>
           </div>

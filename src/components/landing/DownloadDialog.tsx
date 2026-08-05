@@ -199,17 +199,27 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
                 </div>
 
                 {/* Expressive Download Counter */}
-                <div className="flex items-center gap-3 bg-secondary/10 border border-secondary/20 px-4 py-2 rounded-2xl self-start sm:self-center">
+                <button
+                  onClick={() => {
+                    onOpenChange(false);
+                    // Use window.location for a direct redirect to ensure the route change triggers
+                    window.location.href = '/downloads';
+                  }}
+                  className="flex items-center gap-3 bg-secondary/10 border border-secondary/20 px-4 py-2 rounded-2xl self-start sm:self-center hover:bg-secondary/20 transition-colors group"
+                >
                   <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center text-secondary">
                     <Users size={16} />
                   </div>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col text-left">
                     <span className="m3-title-small font-bold text-secondary leading-none">
                       {isDownloadsLoading ? "..." : <DownloadCounter value={totalDownloads || 0} />}
                     </span>
-                    <span className="text-[10px] text-secondary/70 uppercase font-bold tracking-tight">Downloads</span>
+                    <span className="text-[10px] text-secondary/70 uppercase font-bold tracking-tight flex items-center gap-1">
+                      Downloads
+                      <BarChart3 size={8} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </span>
                   </div>
-                </div>
+                </button>
               </div>
             </DialogHeader>
 
