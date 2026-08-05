@@ -165,16 +165,6 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                   className="w-full h-full object-cover scale-[1.6]"
                 />
               </div>
-              <div className="flex flex-col items-start bg-primary/10 border border-primary/20 px-4 py-1.5 rounded-2xl">
-                <div className="flex items-center gap-2">
-                  <span
-                    className="w-2 h-2 rounded-full animate-pulse flex-shrink-0"
-                    style={{ background: "hsl(var(--md-primary))" }}
-                  />
-                  <span className="m3-label-large font-bold">v{versionName} Beta</span>
-                </div>
-                <span className="m3-label-small opacity-70">Android 12+</span>
-              </div>
             </motion.div>
 
             {/* Display heading */}
