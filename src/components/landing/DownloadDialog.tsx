@@ -24,34 +24,74 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
     if (!text) return null;
     return text.split("\n").map((line, i) => {
       const trimmed = line.trim();
-      if (trimmed.startsWith("###")) {
-        return <h3 key={i} className="m3-title-large mt-6 mb-2 text-primary">{trimmed.replace("###", "").trim()}</h3>;
+
+      // Headers
+      if (trimmed.startsWith("# ")) {
+        return <h1 key={i} className="m3-headline-small mt-8 mb-4 text-primary font-bold border-b border-primary/10 pb-2">{trimmed.replace("# ", "").trim()}</h1>;
       }
-      if (trimmed.startsWith("####")) {
-        return <h4 key={i} className="m3-title-medium mt-4 mb-1 text-secondary">{trimmed.replace("####", "").trim()}</h4>;
+      if (trimmed.startsWith("## ")) {
+        return <h2 key={i} className="m3-title-large mt-6 mb-3 text-primary font-bold">{trimmed.replace("## ", "").trim()}</h2>;
+      }
+      if (trimmed.startsWith("### ")) {
+        return <h3 key={i} className="m3-title-medium mt-5 mb-2 text-primary/90 font-bold">{trimmed.replace("### ", "").trim()}</h3>;
+      }
+      if (trimmed.startsWith("#### ")) {
+        return <h4 key={i} className="m3-label-large mt-4 mb-1 text-secondary font-bold uppercase tracking-wider">{trimmed.replace("#### ", "").trim()}</h4>;
       }
       if (trimmed.startsWith("- [x]") || trimmed.startsWith("- [ ]")) {
         const checked = trimmed.startsWith("- [x]");
+        const content = trimmed.replace("- [x]", "").replace("- [ ]", "").trim();
         return (
-          <div key={i} className="flex items-center gap-2 my-1">
-            <CheckCircle2 size={16} className={checked ? "text-primary" : "text-muted-foreground opacity-50"} />
+          <div key={i} className="flex items-start gap-2 my-2">
+            <CheckCircle2 size={16} className={cn("mt-1 shrink-0", checked ? "text-primary" : "text-muted-foreground opacity-40")} />
             <span className={cn("m3-body-medium", !checked && "text-muted-foreground")}>
-              {trimmed.replace("- [x]", "").replace("- [ ]", "").trim()}
+              {content.split("**").map((part, index) => {
+                if (index % 2 === 1) return <strong key={index} className="text-on-surface font-bold">{part}</strong>;
+                return part.split("_").map((subPart, subIndex) =>
+                  subIndex % 2 === 1 ? <em key={subIndex} className="italic text-primary/80">{subPart}</em> : subPart
+                );
+              })}
             </span>
           </div>
         );
       }
-      if (trimmed.startsWith("*") || trimmed.startsWith("-")) {
-        return <li key={i} className="m3-body-medium ml-4 list-disc">{trimmed.substring(1).trim()}</li>;
+      if (trimmed.startsWith("*") || (trimmed.startsWith("-") && !trimmed.startsWith("- ["))) {
+        return (
+          <li key={i} className="m3-body-medium ml-6 list-disc marker:text-primary my-1 leading-relaxed">
+            {trimmed.substring(1).split("**").map((part, index) => {
+              if (index % 2 === 1) return <strong key={index} className="text-on-surface font-bold">{part}</strong>;
+              return part.split("_").map((subPart, subIndex) =>
+                subIndex % 2 === 1 ? <em key={subIndex} className="italic text-primary/80">{subPart}</em> : subPart
+              );
+            })}
+          </li>
+        );
       }
       if (trimmed.startsWith(">")) {
+        const content = trimmed.substring(1).trim();
         return (
-          <blockquote key={i} className="border-l-4 border-primary/30 pl-4 py-1 my-4 italic m3-body-large text-muted-foreground">
-            {trimmed.substring(1).trim()}
+          <blockquote key={i} className="border-l-4 border-primary/20 pl-4 py-2 my-6 m3-body-large text-muted-foreground bg-primary/5 rounded-r-xl">
+             {content.split("**").map((part, index) => {
+                if (index % 2 === 1) return <strong key={index} className="text-primary/90 font-bold">{part}</strong>;
+                return part.split("_").map((subPart, subIndex) =>
+                  subIndex % 2 === 1 ? <em key={subIndex} className="italic text-primary/80">{subPart}</em> : subPart
+                );
+              })}
           </blockquote>
         );
       }
-      return <p key={i} className="m3-body-medium my-1">{line}</p>;
+      if (trimmed === "") return <div key={i} className="h-2" />;
+
+      return (
+        <p key={i} className="m3-body-medium my-2 leading-relaxed">
+          {line.split("**").map((part, index) => {
+            if (index % 2 === 1) return <strong key={index} className="text-on-surface font-bold">{part}</strong>;
+            return part.split("_").map((subPart, subIndex) =>
+              subIndex % 2 === 1 ? <em key={subIndex} className="italic text-primary/80">{subPart}</em> : subPart
+            );
+          })}
+        </p>
+      );
     });
   };
 
@@ -137,8 +177,12 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
                       >
                         <div className="flex flex-col">
                           <span className="m3-title-small font-bold text-on-surface">{release.abi}</span>
-                          <span className="m3-label-small text-on-surface-variant">
-                            {release.abi === "arm64-v8a" ? "Recommended for most devices" : "Legacy architecture"}
+                          <span className="m3-label-small text-on-surface-variant opacity-70">
+                            {release.abi === "arm64-v8a" ? "Modern Android (Recommended)" :
+                             release.abi === "armeabi-v7a" ? "Older 32-bit devices" :
+                             release.abi === "x86_64" ? "High-perf emulators & tablets" :
+                             release.abi === "x86" ? "Older emulators & ChromeOS" :
+                             "Generic architecture"}
                           </span>
                         </div>
                         <Download size={18} className="text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
