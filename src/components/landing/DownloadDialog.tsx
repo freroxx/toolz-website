@@ -244,6 +244,3 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
 };
 
 export default DownloadDialog;
-
-
-export default DownloadDialog;
