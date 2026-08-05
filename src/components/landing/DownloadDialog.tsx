@@ -118,65 +118,80 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
   };
 
   const renderInlineMarkdown = (text: string) => {
-    // Regex for URLs
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    // Improved regex for URLs (handles potential space typo like "https: //")
+    const urlRegex = /(https?:\s?\/\/[^\s]+)/g;
 
-    // Split by bold markers first
-    return text.split("**").map((part, index) => {
-      if (index % 2 === 1) {
-        return <strong key={`bold-${index}`} className="text-on-surface font-bold text-primary">{part}</strong>;
+    // Split text by URLs first to protect them from further markdown parsing
+    const segments = text.split(urlRegex);
+
+    return segments.map((segment, segIndex) => {
+      // If this segment is a URL
+      if (segment.match(urlRegex)) {
+        const cleanUrl = segment.replace(/:\s+\/\//, '://');
+        const lower = cleanUrl.toLowerCase();
+        const isDiscord = lower.includes("discord");
+        const isGithub = lower.includes("github");
+
+        return (
+          <a
+            key={`link-${segIndex}`}
+            href={cleanUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black transition-all mx-0.5 border align-middle uppercase tracking-tighter",
+              isDiscord ? "bg-[#5865F2]/10 border-[#5865F2]/20 text-[#5865F2] hover:bg-[#5865F2]/20" :
+              isGithub ? "bg-primary/10 border-primary/20 text-primary hover:bg-primary/20" :
+              "bg-secondary/10 border-secondary/20 text-secondary hover:bg-secondary/20"
+            )}
+          >
+            {isDiscord ? "Discord" : isGithub ? "GitHub" : "Link"}
+            <ExternalLink size={8} />
+          </a>
+        );
       }
 
-      // Handle "Label : Content" pattern inside lines
-      const parts = part.split(/(\s?:\s?)/);
-      const renderedParts = parts.map((segment, segIndex) => {
-        const isSeparator = segment.trim() === ":";
-        if (isSeparator && segIndex > 0) {
-          return <span key={`sep-${segIndex}`} className="font-black text-primary/80 opacity-60 mx-0.5">: </span>;
+      // Process non-URL text for Bold, Labels, and Italics
+      return segment.split("**").map((boldPart, boldIndex) => {
+        if (boldIndex % 2 === 1) {
+          return <strong key={`bold-${boldIndex}`} className="text-on-surface font-bold text-primary">{boldPart}</strong>;
         }
 
-        const nextSegment = parts[segIndex + 1];
-        if (nextSegment && nextSegment.trim() === ":") {
-            return <span key={`label-${segIndex}`} className="font-bold text-on-surface underline decoration-primary/10 decoration-2 underline-offset-4">{segment}</span>;
-        }
+        // Handle "Label : Content" pattern - only for the first colon in the start of the line
+        let contentToProcess = boldPart;
+        let labelElement: React.ReactNode = null;
 
-        // For remaining text, handle URLs and italics
-        return segment.split("_").map((subPart, subIndex) => {
-          if (subIndex % 2 === 1) {
-            return <em key={`italic-${subIndex}`} className="italic text-secondary/90">{subPart}</em>;
+        const isLineStart = segIndex === 0 && boldIndex === 0;
+        if (isLineStart && boldPart.includes(":") && !boldPart.match(/https?:\s?\/\//)) {
+          const colonIndex = boldPart.indexOf(":");
+          // Only treat as label if it's reasonably short (e.g. < 50 chars)
+          if (colonIndex > 0 && colonIndex < 50) {
+            const label = boldPart.substring(0, colonIndex).trim();
+            contentToProcess = boldPart.substring(colonIndex + 1);
+            labelElement = (
+              <React.Fragment key="label-wrapper">
+                <span className="font-bold text-on-surface underline decoration-primary/10 decoration-2 underline-offset-4">{label}</span>
+                <span className="font-black text-primary/80 opacity-60 mx-0.5">: </span>
+              </React.Fragment>
+            );
           }
+        }
 
-          const segments = subPart.split(urlRegex);
-          return segments.map((urlSegment, urlIndex) => {
-            if (urlSegment.match(urlRegex)) {
-              const lower = urlSegment.toLowerCase();
-              const isDiscord = lower.includes("discord");
-              const isGithub = lower.includes("github");
-
-              return (
-                <a
-                  key={`link-${urlIndex}`}
-                  href={urlSegment}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={cn(
-                    "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black transition-all mx-0.5 border align-middle uppercase tracking-tighter",
-                    isDiscord ? "bg-[#5865F2]/10 border-[#5865F2]/20 text-[#5865F2] hover:bg-[#5865F2]/20" :
-                    isGithub ? "bg-primary/10 border-primary/20 text-primary hover:bg-primary/20" :
-                    "bg-secondary/10 border-secondary/20 text-secondary hover:bg-secondary/20"
-                  )}
-                >
-                  {isDiscord ? "Discord" : isGithub ? "GitHub" : "Link"}
-                  <ExternalLink size={8} />
-                </a>
-              );
-            }
-            return urlSegment;
-          });
+        // Handle Italics (underscores) - only if balanced
+        const italicParts = contentToProcess.split("_").map((italicPart, italicIndex, array) => {
+          if (italicIndex % 2 === 1 && italicIndex < array.length - 1) {
+            return <em key={`italic-${italicIndex}`} className="italic text-secondary/90">{italicPart}</em>;
+          }
+          return italicPart;
         });
-      });
 
-      return <React.Fragment key={`part-${index}`}>{renderedParts}</React.Fragment>;
+        return (
+          <React.Fragment key={`part-${boldIndex}`}>
+            {labelElement}
+            {italicParts}
+          </React.Fragment>
+        );
+      });
     });
   };
 
