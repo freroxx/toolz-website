@@ -297,10 +297,10 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                       src={allScreenshots[imgIndex]}
                       alt={`Toolz app screenshot ${imgIndex + 1}`}
                       className="absolute inset-0 w-full h-full object-cover"
-                      initial={{ opacity: 0, scale: 1.2, filter: "blur(20px)" }}
-                      animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-                      exit={{ opacity: 0, scale: 0.8, filter: "blur(10px)" }}
-                      transition={{ duration: 0.8, ease: [0.34, 1.56, 0.64, 1] }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.4 }}
                     />
                   </AnimatePresence>
 

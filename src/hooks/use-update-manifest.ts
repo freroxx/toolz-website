@@ -1,7 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 
-const MANIFEST_URL =
-  "https://raw.githubusercontent.com/freroxx/toolz/master/update_manifest.json?t=" + Date.now();
 
 export interface ManifestRelease {
   abi: string;
@@ -35,7 +33,8 @@ function detectAbi(): string {
 }
 
 async function fetchManifest(): Promise<UpdateManifest> {
-  const res = await fetch(MANIFEST_URL, { cache: "no-cache" });
+  const url = `https://raw.githubusercontent.com/freroxx/toolz/master/update_manifest.json?t=${Date.now()}`;
+  const res = await fetch(url, { cache: "no-cache" });
   if (!res.ok) throw new Error(`Failed to fetch manifest: ${res.status}`);
   return res.json();
 }
