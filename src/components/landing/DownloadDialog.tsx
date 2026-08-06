@@ -41,18 +41,33 @@ const DownloadCounter = ({ value }: { value: number }) => {
 // force-fit; the parser matches what the source actually produces.
 // ---------------------------------------------------------------------------
 
+// Leaf tokens (never contain nested markup themselves).
 type InlineToken =
   | { type: "text"; content: string }
-  | { type: "bold"; content: string }
   | { type: "italic"; content: string }
   | { type: "link"; content: string };
 
-function tokenizeInline(text: string): InlineToken[] {
-  const tokens: InlineToken[] = [];
+// A bold span's own content is re-scanned by the same tokenizer, since
+// GitHub release bodies nest `_italic_` and raw URLs inside `**bold**`
+// (e.g. "**thanks to _name_, _other_**"). Without this recursion the whole
+// bold span was swallowed as one flat string and the inner underscores
+// rendered as literal text instead of <em>. Bold itself can't nest inside
+// bold in this source format, so it's the only branch carrying children.
+type InlineNode = InlineToken | { type: "bold"; content: string; children: InlineToken[] };
+
+function isLeafToken(node: InlineNode): node is InlineToken {
+  return node.type !== "bold";
+}
+
+function tokenizeInline(text: string): InlineNode[] {
+  const tokens: InlineNode[] = [];
   // Bold and links are matched before italic; the italic branch requires
   // non-word boundaries on both sides so it never fires inside identifiers
   // like "Professional_Day8792".
-  const pattern = /(\*\*(.+?)\*\*)|(\bhttps?:\/\/[^\s]+\b)|(?<![\w])_([^_\n]+?)_(?![\w])/g;
+  // Italic content may itself contain underscores (e.g. "_Professional_Day8792_"),
+  // so the body is `.+?` rather than `[^_]+?` — only the outer pair needs
+  // non-word boundaries to avoid matching inside bare identifiers.
+  const pattern = /(\*\*(.+?)\*\*)|(\bhttps?:\/\/[^\s]+\b)|(?<![\w])_(.+?)_(?![\w])/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
@@ -61,7 +76,10 @@ function tokenizeInline(text: string): InlineToken[] {
       tokens.push({ type: "text", content: text.slice(lastIndex, match.index) });
     }
     if (match[1] !== undefined) {
-      tokens.push({ type: "bold", content: match[2] });
+      // Bold content is re-tokenized; the result can't itself contain a
+      // nested bold branch (regex already consumed the outer ** pair), so
+      // the recursive call's output is safely narrowed to leaf tokens.
+      tokens.push({ type: "bold", content: match[2], children: tokenizeInline(match[2]).filter(isLeafToken) });
     } else if (match[3] !== undefined) {
       tokens.push({ type: "link", content: match[3] });
     } else if (match[4] !== undefined) {
@@ -75,20 +93,46 @@ function tokenizeInline(text: string): InlineToken[] {
   return tokens;
 }
 
-const renderInline = (text: string, keyPrefix: string): React.ReactNode => {
-  return tokenizeInline(text).map((token, i) => {
+const renderInline = (text: string, keyPrefix: string): React.ReactNode =>
+  renderTokens(tokenizeInline(text), keyPrefix);
+
+// Italic spans in this source only ever wrap a bare URL, never nested
+// bold/italic markup, so this only needs to split out links rather than
+// running the full tokenizer.
+const renderUrlsOnly = (text: string, keyPrefix: string): React.ReactNode => {
+  const parts = text.split(/(\bhttps?:\/\/[^\s]+\b)/g);
+  return parts.map((part, i) =>
+    /^https?:\/\//.test(part) ? (
+      <a
+        key={`${keyPrefix}-url-${i}`}
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors inline-flex items-center gap-1"
+      >
+        {part.replace(/^https?:\/\/(www\.)?/, "").split("/").slice(0, 2).join("/")}
+        <ExternalLink size={11} className="opacity-70 shrink-0" />
+      </a>
+    ) : (
+      <React.Fragment key={`${keyPrefix}-txt-${i}`}>{part}</React.Fragment>
+    )
+  );
+};
+
+const renderTokens = (tokens: InlineNode[], keyPrefix: string): React.ReactNode => {
+  return tokens.map((token, i) => {
     const key = `${keyPrefix}-${i}`;
     switch (token.type) {
       case "bold":
         return (
           <strong key={key} className="font-extrabold text-on-surface">
-            {token.content}
+            {renderTokens(token.children, key)}
           </strong>
         );
       case "italic":
         return (
           <em key={key} className="italic text-on-surface-variant not-italic font-semibold opacity-80">
-            {token.content}
+            {renderUrlsOnly(token.content, key)}
           </em>
         );
       case "link":
@@ -189,38 +233,38 @@ const ChangelogView = ({ raw }: { raw: string }) => {
   if (blocks.length === 0) return null;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 sm:space-y-8">
       {blocks.map((block, bi) => (
         <motion.div
           key={bi}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...SPRING_STANDARD, delay: bi * 0.06 }}
-          className="space-y-4"
+          className="space-y-3 sm:space-y-4"
         >
           {block.label && (
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-tertiary-container rounded-full">
-              <Sparkles size={13} className="text-on-tertiary-container" />
-              <span className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-on-tertiary-container">
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 bg-tertiary-container rounded-full">
+              <Sparkles size={11} className="text-on-tertiary-container sm:w-[13px] sm:h-[13px]" />
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-[0.14em] sm:tracking-[0.16em] text-on-tertiary-container">
                 {block.label}
               </span>
             </div>
           )}
 
           {block.items.length > 0 && (
-            <div className="grid gap-3">
+            <div className="grid gap-2.5 sm:gap-3">
               {block.items.map((item, ii) => (
                 <div
                   key={ii}
-                  className="rounded-[28px] bg-surface-container p-5 border border-outline-variant/15"
-                  style={{ borderRadius: "28px 12px 28px 12px" }}
+                  className="bg-surface-container p-4 sm:p-5 border border-outline-variant/15"
+                  style={{ borderRadius: "22px 10px 22px 10px" }}
                 >
-                  <div className="text-sm font-extrabold text-primary mb-2.5">
+                  <div className="text-xs sm:text-sm font-extrabold text-primary mb-2 sm:mb-2.5">
                     {item.label}
                   </div>
-                  <ul className="space-y-2">
+                  <ul className="space-y-1.5 sm:space-y-2">
                     {item.parts.map((part, pi) => (
-                      <li key={pi} className="flex gap-2.5 text-sm text-on-surface-variant leading-snug">
+                      <li key={pi} className="flex gap-2 sm:gap-2.5 text-[13px] sm:text-sm text-on-surface-variant leading-snug">
                         <span className="text-tertiary mt-1 shrink-0">
                           <span className="block w-1.5 h-1.5 rounded-full bg-tertiary" />
                         </span>
@@ -234,7 +278,7 @@ const ChangelogView = ({ raw }: { raw: string }) => {
           )}
 
           {block.freeText.map((line, li) => (
-            <p key={li} className="text-sm text-on-surface leading-relaxed">
+            <p key={li} className="text-[13px] sm:text-sm text-on-surface leading-relaxed">
               {renderInline(line, `${bi}-free-${li}`)}
             </p>
           ))}
@@ -256,7 +300,7 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
         {open && (
           <DialogContent
             forceMount
-            className="max-w-2xl bg-transparent border-none p-0 overflow-hidden flex flex-col shadow-none focus:outline-none bottom-0 sm:bottom-auto translate-y-0 sm:-translate-y-1/2 h-[92vh] sm:h-auto sm:max-h-[85vh]"
+            className="max-w-2xl bg-transparent border-none p-0 overflow-hidden flex flex-col shadow-none focus:outline-none bottom-0 sm:bottom-auto translate-y-0 sm:-translate-y-1/2 max-h-[88vh] sm:max-h-[85vh]"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.92, y: 24 }}
@@ -264,59 +308,59 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
               exit={{ opacity: 0, scale: 0.95, y: 12 }}
               transition={SPRING_BOUNCY}
               className="bg-surface-container-low flex flex-col h-full overflow-hidden shadow-2xl"
-              style={{ borderRadius: "36px 36px 12px 12px" }}
+              style={{ borderRadius: "28px 28px 0px 0px" }}
             >
               {/* Mobile drag handle */}
-              <div className="w-12 h-1.5 bg-outline-variant/30 rounded-full mx-auto mt-4 mb-1 sm:hidden shrink-0" />
+              <div className="w-10 h-1.5 bg-outline-variant/30 rounded-full mx-auto mt-3 mb-0.5 sm:hidden shrink-0" />
 
-              {/* Header */}
-              <div className="px-8 pt-10 pb-8 sm:px-12 sm:pt-12 text-center shrink-0 bg-primary-container/40">
+              {/* Header — compact on mobile, roomier from sm: up */}
+              <div className="px-5 pt-4 pb-5 sm:px-12 sm:pt-12 sm:pb-8 text-center shrink-0 bg-primary-container/40">
                 <motion.div
                   initial={{ scale: 0.4, rotate: -12 }}
                   animate={{ scale: 1, rotate: 0 }}
                   transition={{ ...SPRING_BOUNCY, delay: 0.05 }}
-                  className="w-16 h-16 mx-auto bg-primary flex items-center justify-center text-on-primary mb-5 shadow-lg"
-                  style={{ borderRadius: "24px 24px 8px 24px" }}
+                  className="w-11 h-11 sm:w-16 sm:h-16 mx-auto bg-primary flex items-center justify-center text-on-primary mb-2.5 sm:mb-5 shadow-lg"
+                  style={{ borderRadius: "18px 18px 6px 18px" }}
                 >
-                  <Download size={30} strokeWidth={2.4} />
+                  <Download size={20} strokeWidth={2.4} className="sm:w-[30px] sm:h-[30px]" />
                 </motion.div>
-                <h2 className="text-[26px] font-extrabold text-on-surface tracking-tight">
+                <h2 className="text-lg sm:text-[26px] font-extrabold text-on-surface tracking-tight">
                   Update Toolz
                 </h2>
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ ...SPRING_STANDARD, delay: 0.12 }}
-                  className="mt-3 inline-flex px-4 py-1.5 bg-primary rounded-full"
+                  className="mt-1.5 sm:mt-3 inline-flex px-3 py-1 sm:px-4 sm:py-1.5 bg-primary rounded-full"
                 >
-                  <span className="text-xs font-extrabold text-on-primary tracking-wide">
+                  <span className="text-[11px] sm:text-xs font-extrabold text-on-primary tracking-wide">
                     v{manifest?.versionName || "1.1.0"}
                   </span>
                 </motion.div>
               </div>
 
               {/* Content */}
-              <div className="overflow-y-auto flex-1 px-6 sm:px-12 py-8 custom-scrollbar">
-                <div className="max-w-xl mx-auto space-y-10">
+              <div className="overflow-y-auto flex-1 px-4 sm:px-12 py-5 sm:py-8 custom-scrollbar">
+                <div className="max-w-xl mx-auto space-y-6 sm:space-y-10">
 
                   {/* Stat + close row */}
-                  <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex flex-row gap-2.5 sm:gap-3">
                     <div
-                      className="flex-1 bg-secondary-container p-5 flex items-center gap-4"
-                      style={{ borderRadius: "24px 24px 24px 8px" }}
+                      className="flex-1 bg-secondary-container p-3.5 sm:p-5 flex items-center gap-3 sm:gap-4 min-w-0"
+                      style={{ borderRadius: "20px 20px 20px 6px" }}
                     >
-                      <div className="w-11 h-11 rounded-2xl bg-on-secondary-container/10 flex items-center justify-center text-on-secondary-container shrink-0">
-                        <Users size={22} />
+                      <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-on-secondary-container/10 flex items-center justify-center text-on-secondary-container shrink-0">
+                        <Users size={16} className="sm:w-[22px] sm:h-[22px]" />
                       </div>
                       <div className="min-w-0">
-                        <div className="text-xl font-extrabold text-on-secondary-container leading-none">
+                        <div className="text-base sm:text-xl font-extrabold text-on-secondary-container leading-none truncate">
                           {isDownloadsLoading ? (
                             <span className="opacity-50">···</span>
                           ) : (
                             <DownloadCounter value={totalDownloads || 0} />
                           )}
                         </div>
-                        <div className="text-[10px] uppercase tracking-wider text-on-secondary-container/70 font-bold mt-1.5">
+                        <div className="text-[9px] sm:text-[10px] uppercase tracking-wider text-on-secondary-container/70 font-bold mt-1 sm:mt-1.5 truncate">
                           Global Downloads
                         </div>
                       </div>
@@ -326,11 +370,11 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
                       whileTap={{ scale: 0.94 }}
                       transition={SPRING_BOUNCY}
                       onClick={() => onOpenChange(false)}
-                      className="bg-primary text-on-primary px-8 h-[64px] sm:h-auto font-extrabold text-sm flex items-center justify-center gap-2 touch-manipulation shrink-0"
-                      style={{ borderRadius: "24px 24px 8px 24px" }}
+                      className="bg-primary text-on-primary px-4 sm:px-8 font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 touch-manipulation shrink-0"
+                      style={{ borderRadius: "20px 20px 6px 20px" }}
                     >
                       Close
-                      <CheckCircle2 size={18} />
+                      <CheckCircle2 size={15} className="sm:w-[18px] sm:h-[18px]" />
                     </motion.button>
                   </div>
 
@@ -352,17 +396,17 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ ...SPRING_STANDARD, delay: 0.05 * i }}
                           whileTap={{ scale: 0.97 }}
-                          className="group flex items-center gap-4 p-5 bg-surface-container border border-outline-variant/15 touch-manipulation"
-                          style={{ borderRadius: "24px 24px 24px 8px" }}
+                          className="group flex items-center gap-3 sm:gap-4 p-3.5 sm:p-5 bg-surface-container border border-outline-variant/15 touch-manipulation"
+                          style={{ borderRadius: "20px 20px 20px 6px" }}
                         >
-                          <div className="w-11 h-11 rounded-2xl bg-primary/12 flex items-center justify-center text-primary group-active:bg-primary group-active:text-on-primary transition-colors shrink-0">
-                            <Download size={20} />
+                          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-primary/12 flex items-center justify-center text-primary group-active:bg-primary group-active:text-on-primary transition-colors shrink-0">
+                            <Download size={16} className="sm:w-5 sm:h-5" />
                           </div>
                           <div className="flex flex-col min-w-0">
-                            <span className="text-base font-extrabold text-on-surface truncate">
+                            <span className="text-sm sm:text-base font-extrabold text-on-surface truncate">
                               {release.abi}
                             </span>
-                            <span className="text-[10px] text-on-surface-variant font-bold uppercase tracking-tight opacity-60">
+                            <span className="text-[9px] sm:text-[10px] text-on-surface-variant font-bold uppercase tracking-tight opacity-60">
                               {release.abi === "arm64-v8a" ? "Most Devices" : "Legacy"}
                             </span>
                           </div>
@@ -394,9 +438,9 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
               </div>
 
               {/* Footer */}
-              <div className="px-8 py-6 text-center shrink-0 border-t border-outline-variant/10">
-                <div className="inline-flex items-center gap-1.5 text-[10px] font-extrabold text-on-surface-variant/40 uppercase tracking-[0.25em]">
-                  <GitCompare size={11} />
+              <div className="px-6 py-3.5 sm:px-8 sm:py-6 text-center shrink-0 border-t border-outline-variant/10">
+                <div className="inline-flex items-center gap-1.5 text-[9px] sm:text-[10px] font-extrabold text-on-surface-variant/40 uppercase tracking-[0.2em] sm:tracking-[0.25em]">
+                  <GitCompare size={10} className="sm:w-[11px] sm:h-[11px]" />
                   Toolz Open Source Ecosystem
                 </div>
               </div>
