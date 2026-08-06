@@ -300,14 +300,14 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
         {open && (
           <DialogContent
             forceMount
-            className="max-w-2xl bg-transparent border-none p-0 overflow-hidden flex flex-col shadow-none focus:outline-none bottom-0 sm:bottom-auto translate-y-0 sm:-translate-y-1/2 max-h-[88vh] sm:max-h-[85vh]"
+            className="max-w-2xl bg-transparent border-none p-0 overflow-hidden flex flex-col shadow-none focus:outline-none inset-x-0 bottom-0 top-auto translate-x-0 translate-y-0 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 h-[90vh] sm:h-auto sm:max-h-[85vh] [&>button]:hidden"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.92, y: 24 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 12 }}
               transition={SPRING_BOUNCY}
-              className="bg-surface-container-low flex flex-col h-full overflow-hidden shadow-2xl"
+              className="bg-surface-container-low flex flex-col h-full w-full overflow-hidden shadow-2xl"
               style={{ borderRadius: "28px 28px 0px 0px" }}
             >
               {/* Mobile drag handle */}
