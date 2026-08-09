@@ -1,7 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Redis } from '@upstash/redis';
 // @ts-ignore - The toolz-gsmarena-api library acts as a robust scraping helper
-import { discoverDevice, catalog, generateSmartStrategies } from 'gsmarena-api';
+import gsmarenaApi from 'gsmarena-api';
+
+// Safe runtime resolution supporting both CJS exports and ESM default wrapping
+const gsm = (gsmarenaApi as any)?.default || gsmarenaApi;
+const discoverDevice = gsm?.discoverDevice || (gsmarenaApi as any)?.discoverDevice;
+const catalog = gsm?.catalog || (gsmarenaApi as any)?.catalog;
+const generateSmartStrategies = gsm?.generateSmartStrategies || (gsmarenaApi as any)?.generateSmartStrategies || gsm?.utils?.generateSmartStrategies;
 
 /**
  * Device Specs Handler — Revamped
