@@ -2,12 +2,67 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Redis } from '@upstash/redis';
 // @ts-ignore - The toolz-gsmarena-api library acts as a robust scraping helper
 import gsmarenaApi from 'gsmarena-api';
+// Safe runtime module unwrapper supporting all CJS/ESM bundler wrapping patterns
+function getGsmApi(): any {
+  let mod: any = gsmarenaApi;
+  if (mod && typeof mod === 'object') {
+    if (mod.default && (mod.default.discoverDevice || mod.default.catalog || mod.default.generateSmartStrategies)) {
+      mod = mod.default;
+    }
+  }
+  return mod || {};
+}
 
-// Safe runtime resolution supporting both CJS exports and ESM default wrapping
-const gsm = (gsmarenaApi as any)?.default || gsmarenaApi;
-const discoverDevice = gsm?.discoverDevice || (gsmarenaApi as any)?.discoverDevice;
-const catalog = gsm?.catalog || (gsmarenaApi as any)?.catalog;
-const generateSmartStrategies = gsm?.generateSmartStrategies || (gsmarenaApi as any)?.generateSmartStrategies || gsm?.utils?.generateSmartStrategies;
+function generateSmartStrategies(input: string): string[] {
+  const api = getGsmApi();
+  const fn = api.generateSmartStrategies || api.utils?.generateSmartStrategies;
+  if (typeof fn === 'function') {
+    try {
+      return fn(input);
+    } catch { /* use local fallback */ }
+  }
+
+  // Self-contained fallback implementation
+  const raw = (input || '').trim();
+  if (!raw) return [];
+  const lower = raw.toLowerCase();
+  const strategies = [lower];
+
+  let clean = lower.replace(/[\/:,#]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (clean !== lower) strategies.push(clean);
+
+  const splitSquashed = clean.replace(/([a-z])([0-9])/g, '$1 $2').replace(/([0-9])([a-z])/g, '$1 $2');
+  if (splitSquashed !== clean) strategies.push(splitSquashed);
+
+  const stripped = lower.replace(/\b(sm-|gt-|sch-|sgh-|sph-)/gi, '');
+  if (stripped !== lower) {
+    strategies.push(stripped.trim());
+    const cleanStripped = stripped.replace(/[\/:,#]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (cleanStripped !== stripped) strategies.push(cleanStripped);
+  }
+
+  const parts = splitSquashed.split(/\s+/);
+  if (parts.length > 1) {
+    strategies.push(parts[parts.length - 1]);
+    strategies.push(parts.slice(0, -1).join(' '));
+  }
+
+  strategies.push(parts.join(''));
+  return [...new Set(strategies)].filter(q => q && q.length >= 2);
+}
+
+function getDiscoverDevice(): (query: string, signal?: AbortSignal, options?: any) => Promise<any> {
+  const api = getGsmApi();
+  const fn = api.discoverDevice || api.search?.discoverDevice;
+  if (typeof fn === 'function') return fn;
+  throw new Error(`discoverDevice not found on gsmarena-api module (available keys: ${Object.keys(api).join(', ')})`);
+}
+
+function getCatalog(): any {
+  const api = getGsmApi();
+  if (api.catalog && typeof api.catalog.getDevice === 'function') return api.catalog;
+  throw new Error(`catalog module not found on gsmarena-api module (available keys: ${Object.keys(api).join(', ')})`);
+}
 
 /**
  * Device Specs Handler — Revamped
@@ -178,7 +233,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!targetDeviceUrl) {
         console.info(`[Discovery] Starting multi-phase discovery for: "${searchName}"`);
 
-        const discovery = await discoverDevice(searchName, controller.signal, {
+        const discoverFn = getDiscoverDevice();
+        const discovery = await discoverFn(searchName, controller.signal, {
           totalBudget: TOTAL_BUDGET_MS,
           startTime
         });
@@ -217,7 +273,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       console.info(`[Extraction] Fetching specs from: ${targetDeviceUrl} (${remaining}ms remaining)`);
 
-      const extraction = await catalog.getDevice(targetDeviceUrl, {
+      const catalogObj = getCatalog();
+      const extraction = await catalogObj.getDevice(targetDeviceUrl, {
         signal: controller.signal,
         // Allow JS-render escalation if we have at least 8 s left
         allowRender: remaining > 8_000,
