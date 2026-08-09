@@ -1,8 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Redis } from '@upstash/redis';
 // @ts-ignore - The toolz-gsmarena-api library acts as a robust scraping helper
-import { discoverDevice, catalog } from 'gsmarena-api';
-import { generateSmartStrategies } from 'gsmarena-api/src/services/utils';
+import { discoverDevice, catalog, generateSmartStrategies } from 'gsmarena-api';
 
 /**
  * Device Specs Handler — Revamped
