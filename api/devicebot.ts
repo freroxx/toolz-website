@@ -410,17 +410,17 @@ const getDashboardUI = (password: string) => `
           updateUI();
         }
         if (res.log) {
-          addLog(res.log.msg, res.log.type, res.log.input, res.log.output);
+          addLog(res.log.msg, res.log.type, res.log.matched_device || res.log.input, res.log.output);
         } else if (res.error) {
           addLog(\`Execution Error: \${res.error}\`, 'error');
-          // Optionally pause on global errors
-          // state.status = 'paused';
-          // updateUI();
         }
       } finally {
         isRequesting = false;
         if (state.status === 'running') {
-          setTimeout(step, parseInt(dom.delayRange.value));
+          // Add ±20% jitter to the delay to avoid thundering-herd on the API
+          const baseDelay = parseInt(dom.delayRange.value);
+          const jitter = Math.floor(baseDelay * 0.2 * (Math.random() * 2 - 1));
+          setTimeout(step, baseDelay + jitter);
         }
       }
     }
@@ -697,18 +697,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const baseUrl = `${protocol}://${host}`;
 
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
+      const timeout = setTimeout(() => controller.abort(), 22_000);
 
       try {
         const specRes = await fetch(`${baseUrl}/api/specs?model=${encodeURIComponent(model)}`, {
           signal: controller.signal,
-          headers: { 'User-Agent': 'ToolzDeviceBot/1.0-ManualRetry' }
+          headers: { 'User-Agent': 'ToolzDeviceBot/2.0-ManualRetry' }
         });
 
         const data = await specRes.json();
         if (specRes.ok) {
           await redis.hdel(FAILURES_KEY, model);
-          return res.status(200).json({ success: true, output: data.search_name || 'Specs Cached' });
+          const displayName = data.matched_device || data.search_name || 'Cached';
+          return res.status(200).json({ success: true, output: displayName });
         } else {
           return res.status(500).json({ error: data.error || `HTTP ${specRes.status}` });
         }
@@ -739,12 +740,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const baseUrl = `${protocol}://${host}`;
 
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
+      // Increased from 8 s to 22 s to match the new specs.ts budget (25 s)
+      const timeout = setTimeout(() => controller.abort(), 22_000);
 
       try {
         const specRes = await fetch(`${baseUrl}/api/specs?model=${encodeURIComponent(input)}`, {
           signal: controller.signal,
-          headers: { 'User-Agent': 'ToolzDeviceBot/1.0' }
+          headers: { 'User-Agent': 'ToolzDeviceBot/2.0' }
         });
 
         let data: any;
@@ -758,7 +760,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (specRes.ok) {
           state.successCount++;
           await redis.set(STATE_KEY, state);
-          return res.status(200).json({ state, log: await addLog(`Success: ${input}`, 'success', input, data.search_name || 'Cached') });
+          // Log matched_device so we can verify the name is populated correctly
+          const displayName = data.matched_device || data.search_name || 'Cached';
+          return res.status(200).json({ state, log: await addLog(`✓ ${input}`, 'success', input, displayName) });
         } else {
           throw new Error(data.error || `HTTP ${specRes.status}`);
         }
@@ -770,7 +774,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         failData.errors.push(e.message.slice(0, 200));
         await redis.hset(FAILURES_KEY, { [input]: JSON.stringify(failData) });
         await redis.set(STATE_KEY, state);
-        return res.status(200).json({ state, log: await addLog(`Failed: ${input}`, failData.count > 5 ? 'error' : 'warn', input, e.message) });
+        return res.status(200).json({ state, log: await addLog(`✗ ${input}`, failData.count > 5 ? 'error' : 'warn', input, e.message) });
       } finally {
         clearTimeout(timeout);
       }
