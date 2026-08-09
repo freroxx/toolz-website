@@ -3,99 +3,107 @@ import { Redis } from '@upstash/redis';
 import * as cheerio from 'cheerio';
 
 /**
- * Device Specs Handler — Modernized Next-Gen Architecture
+ * Device Specs API — Next-Gen v2 Architecture
  *
- * Fast path: GSMArena Static Quicksearch Index (/quicksearch-*.jpg)
- * -> Instant 0ms device discovery & URL resolution!
- * Direct Spec Fetch -> 150ms spec extraction.
- * ScraperAPI proxy fallback for Turnstile challenges.
- * Upstash Redis caching & request deduplication.
+ * Discovery Strategy:
+ *  1. Redis cache hit (instant)
+ *  2. Static GSMArena Quicksearch Index — 0ms device URL resolution, no bot challenges
+ *  3. Direct spec page fetch — direct GSMArena HTML is rarely blocked (~150ms)
+ *  4. ScraperAPI proxy fallback if Turnstile detected
+ *
+ * Features:
+ *  - Infinite Redis caching (no TTL) for specs + URL maps
+ *  - Request deduplication via Redis locks
+ *  - ?refresh=1 to force-bypass cache
+ *  - Samsung SM-xxxx / model number normalization
+ *  - Brand-aware scoring in quicksearch matching
  */
 
 const TOTAL_BUDGET_MS = 25_000;
-const QUICKSEARCH_INDEX_URL = 'https://www.gsmarena.com/quicksearch-82698.jpg';
+// The quicksearch index URL is static — GSMArena updates the numeric suffix on major catalog changes.
+// We store it in Redis so we can update it without a redeploy via: redis.set('gsm:quicksearch_url', '<new_url>')
+const DEFAULT_QUICKSEARCH_URL = 'https://www.gsmarena.com/quicksearch-82698.jpg';
+const REDIS_CATALOG_KEY = 'cache:gsm_quicksearch_catalog';
+const REDIS_QUICKSEARCH_URL_KEY = 'gsm:quicksearch_url';
 
+// ──────────────────────────────────────────────────────────────────────────────
+// User-Agent rotation
+// ──────────────────────────────────────────────────────────────────────────────
 const USER_AGENTS = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:126.0) Gecko/20100101 Firefox/126.0'
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:126.0) Gecko/20100101 Firefox/126.0',
 ];
+const randomUA = () => USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 
-function getRandomUserAgent(): string {
-  return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
-}
-
+// ──────────────────────────────────────────────────────────────────────────────
+// Turnstile / anti-bot detection
+// ──────────────────────────────────────────────────────────────────────────────
 function isTurnstile(html: string): boolean {
   if (!html || typeof html !== 'string') return false;
-  const trimmed = html.trim();
-  if (trimmed.startsWith('{') || trimmed.startsWith('[')) return false;
-  const lower = html.toLowerCase();
+  const t = html.trim();
+  if (t.startsWith('{') || t.startsWith('[')) return false;
+  const lo = html.toLowerCase();
   return (
-    lower.includes('cf-turnstile') ||
-    lower.includes('turnstile') ||
-    lower.includes('turnstile-verify') ||
-    lower.includes('one quick check before you continue') ||
-    lower.includes('challenge-form') ||
-    lower.includes('verify you are human')
+    lo.includes('cf-turnstile') ||
+    lo.includes('turnstile-verify') ||
+    lo.includes('challenge-form') ||
+    lo.includes('verify you are human') ||
+    lo.includes('one quick check before you continue')
   );
 }
 
-/**
- * Fetch HTML with direct fetch first (fast & reliable for spec pages),
- * falling back to ScraperAPI proxy if Turnstile / 403 / 429 occurs.
- */
+// ──────────────────────────────────────────────────────────────────────────────
+// HTTP fetch helper — direct first, proxy fallback
+// ──────────────────────────────────────────────────────────────────────────────
+type FetchResult = { text: string | null; status: number | null; turnstile?: boolean };
+
 async function fetchHtml(
   targetUrl: string,
   signal: AbortSignal | null = null,
-  options: { render?: boolean; timeoutMs?: number } = {}
-): Promise<{ text: string | null; status: number | null; turnstile?: boolean }> {
-  const { render = false, timeoutMs = (render ? 12000 : 5000) } = options;
+  options: { render?: boolean; timeoutMs?: number; forceProxy?: boolean } = {}
+): Promise<FetchResult> {
+  const { render = false, timeoutMs = render ? 12_000 : 6_000, forceProxy = false } = options;
 
-  const primaryKey = process.env.SCRAPER_API_KEY;
-  const backupKey = process.env.SCRAPER_API_KEY_1;
-  const tertiaryKey = process.env.SCRAPER_API_KEY_2;
-  const proxyKeys = [primaryKey, backupKey, tertiaryKey].filter(Boolean) as string[];
+  const proxyKeys = [
+    process.env.SCRAPER_API_KEY,
+    process.env.SCRAPER_API_KEY_1,
+    process.env.SCRAPER_API_KEY_2,
+  ].filter(Boolean) as string[];
 
-  const performFetch = async (fetchUrl: string, isProxy: boolean = false, extraHeaders: Record<string, string> = {}) => {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const doFetch = async (url: string, isProxy: boolean): Promise<FetchResult> => {
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), timeoutMs);
 
-    let combinedSignal: AbortSignal = controller.signal;
+    let combinedSignal: AbortSignal = ac.signal;
     if (signal) {
       try {
-        // @ts-ignore
+        // @ts-ignore — AbortSignal.any() is Node 20+
         if (typeof AbortSignal.any === 'function') {
           // @ts-ignore
-          combinedSignal = AbortSignal.any([controller.signal, signal]);
+          combinedSignal = AbortSignal.any([ac.signal, signal]);
         } else {
-          signal.addEventListener('abort', () => controller.abort());
+          signal.addEventListener('abort', () => ac.abort(), { once: true });
         }
-      } catch {
-        combinedSignal = controller.signal;
-      }
+      } catch { /* use ac.signal */ }
     }
 
     try {
-      const headers: Record<string, string> = { ...extraHeaders };
+      const headers: Record<string, string> = {};
       if (!isProxy) {
-        headers['User-Agent'] = getRandomUserAgent();
+        headers['User-Agent'] = randomUA();
         headers['Accept-Language'] = 'en-US,en;q=0.9';
         headers['Referer'] = 'https://www.gsmarena.com/';
+        headers['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
       }
 
-      const response = await fetch(fetchUrl, { headers, signal: combinedSignal });
-      const text = await response.text();
+      const resp = await fetch(url, { headers, signal: combinedSignal });
+      const text = await resp.text();
 
-      if (!response.ok) {
-        return { text: null, status: response.status };
-      }
-
-      if (isTurnstile(text)) {
-        return { text, status: response.status, turnstile: true };
-      }
-
-      return { text, status: response.status };
+      if (!resp.ok) return { text: null, status: resp.status };
+      if (isTurnstile(text)) return { text, status: resp.status, turnstile: true };
+      return { text, status: resp.status };
     } catch {
       return { text: null, status: null };
     } finally {
@@ -103,267 +111,308 @@ async function fetchHtml(
     }
   };
 
-  // 1. Try Direct Fetch first (Fast path — direct device URLs are rarely blocked)
-  const directRes = await performFetch(targetUrl, false);
-  if (directRes.text && !directRes.turnstile) {
-    return directRes;
+  // Direct fetch (skip if forceProxy set)
+  if (!forceProxy) {
+    const direct = await doFetch(targetUrl, false);
+    if (direct.text && !direct.turnstile) return direct;
   }
 
-  // 2. Fallback to ScraperAPI if direct fetch hit Turnstile or non-200
-  if (proxyKeys.length > 0) {
-    for (const key of proxyKeys) {
-      const pUrl = new URL('https://api.scraperapi.com/');
-      pUrl.searchParams.set('api_key', key);
-      pUrl.searchParams.set('url', targetUrl);
-      if (render) {
-        pUrl.searchParams.set('render', 'true');
-        pUrl.searchParams.set('premium', 'true');
-      }
+  // Proxy fallback — try each key in order
+  for (const key of proxyKeys) {
+    const pUrl = new URL('https://api.scraperapi.com/');
+    pUrl.searchParams.set('api_key', key);
+    pUrl.searchParams.set('url', targetUrl);
+    if (render) {
+      pUrl.searchParams.set('render', 'true');
+      pUrl.searchParams.set('premium', 'true');
+    }
+    const proxyRes = await doFetch(pUrl.toString(), true);
+    if (proxyRes.text && !proxyRes.turnstile) return proxyRes;
 
-      const proxyRes = await performFetch(pUrl.toString(), true);
-      if (proxyRes.text && !proxyRes.turnstile) {
-        return proxyRes;
-      }
-      if (proxyRes.turnstile && !render) {
-        // Escalate to JS render if Turnstile detected on proxy
-        pUrl.searchParams.set('render', 'true');
-        pUrl.searchParams.set('premium', 'true');
-        const renderRes = await performFetch(pUrl.toString(), true);
-        if (renderRes.text && !renderRes.turnstile) return renderRes;
-      }
+    // Escalate to JS render if still Turnstile
+    if (proxyRes.turnstile && !render) {
+      pUrl.searchParams.set('render', 'true');
+      pUrl.searchParams.set('premium', 'true');
+      const renderRes = await doFetch(pUrl.toString(), true);
+      if (renderRes.text && !renderRes.turnstile) return renderRes;
     }
   }
 
-  return directRes;
+  return { text: null, status: null };
 }
 
-/**
- * Generate query normalization strategies
- */
-function generateSmartStrategies(input: string): string[] {
+// ──────────────────────────────────────────────────────────────────────────────
+// Samsung model-number normalization
+// "SM-A366B" → ["SM-A366B", "A366B", "A36", "Galaxy A36"]
+// ──────────────────────────────────────────────────────────────────────────────
+function normalizeSamsungModel(raw: string): string[] {
+  const results: string[] = [];
+  const upper = raw.toUpperCase().trim();
+
+  // Strip known Samsung prefixes
+  const stripped = upper.replace(/^(SM-|GT-|SCH-|SGH-|SPH-|SCV|SC-|SCG|SHV-|SHW-)/, '');
+  if (stripped !== upper) results.push(stripped);
+
+  // e.g. A366B → A36 (drop suffix digits/letters after 2-digit model number)
+  const baseMatch = stripped.match(/^([A-Z]\d{2,3})/);
+  if (baseMatch) results.push(baseMatch[1]);
+
+  return results;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Multi-strategy query normalizer
+// ──────────────────────────────────────────────────────────────────────────────
+function buildStrategies(input: string): string[] {
   const raw = (input || '').trim();
   if (!raw) return [];
-  const lower = raw.toLowerCase();
-  const strategies = [lower];
 
-  let clean = lower.replace(/[\/:,#]/g, ' ').replace(/\s+/g, ' ').trim();
-  if (clean !== lower) strategies.push(clean);
+  const strategies: string[] = [];
+  const add = (s: string) => { const t = s.trim(); if (t.length >= 2) strategies.push(t); };
 
-  const splitSquashed = clean.replace(/([a-z])([0-9])/g, '$1 $2').replace(/([0-9])([a-z])/g, '$1 $2');
-  if (splitSquashed !== clean) strategies.push(splitSquashed);
+  add(raw);
+  add(raw.toLowerCase());
 
-  const stripped = lower.replace(/\b(sm-|gt-|sch-|sgh-|sph-)/gi, '');
-  if (stripped !== lower) {
-    strategies.push(stripped.trim());
-    const cleanStripped = stripped.replace(/[\/:,#]/g, ' ').replace(/\s+/g, ' ').trim();
-    if (cleanStripped !== stripped) strategies.push(cleanStripped);
+  // Remove punctuation noise
+  const clean = raw.replace(/[\/:,#()\[\]{}]/g, ' ').replace(/\s+/g, ' ').trim();
+  add(clean);
+  add(clean.toLowerCase());
+
+  // Strip Samsung prefixes and abbreviate
+  const samsungNorms = normalizeSamsungModel(raw);
+  for (const n of samsungNorms) {
+    add(n);
+    add(n.toLowerCase());
+    add(`samsung ${n}`);
+    add(`Galaxy ${n}`);
   }
 
-  const parts = splitSquashed.split(/\s+/);
+  // Split camel/number boundaries (e.g. "Pixel8" → "Pixel 8")
+  const split = clean.replace(/([a-zA-Z])(\d)/g, '$1 $2').replace(/(\d)([a-zA-Z])/g, '$1 $2');
+  add(split);
+
+  // Individual meaningful words (length > 2)
+  const parts = split.split(/\s+/).filter(w => w.length > 2);
   if (parts.length > 1) {
-    strategies.push(parts[parts.length - 1]);
-    strategies.push(parts.slice(0, -1).join(' '));
+    add(parts.slice(-1).join(' ')); // last word (often model number)
+    add(parts.join(' '));           // all words
   }
 
-  strategies.push(parts.join(''));
   return [...new Set(strategies)].filter(q => q && q.length >= 2);
 }
 
-/**
- * Fast discovery using GSMArena's static Quicksearch Index (/quicksearch-*.jpg)
- */
-async function searchQuicksearchIndex(
-  query: string,
-  redis: Redis | null
-): Promise<{ matchedUrl: string; matchedName: string; image: string } | null> {
+// ──────────────────────────────────────────────────────────────────────────────
+// GSMArena Quicksearch Index — fast 0ms device lookup
+// ──────────────────────────────────────────────────────────────────────────────
+interface QuicksearchMatch {
+  matchedUrl: string;
+  matchedName: string;
+  image: string;
+}
+
+async function getQuicksearchCatalog(redis: Redis | null): Promise<any[] | null> {
+  // Try Redis cache first (permanent storage)
+  if (redis) {
+    try {
+      const cached = await redis.get<string>(REDIS_CATALOG_KEY);
+      if (cached) {
+        return typeof cached === 'string' ? JSON.parse(cached) : cached;
+      }
+    } catch {}
+  }
+
+  // Determine the index URL (updateable via Redis key)
+  let indexUrl = DEFAULT_QUICKSEARCH_URL;
+  if (redis) {
+    try {
+      const customUrl = await redis.get<string>(REDIS_QUICKSEARCH_URL_KEY);
+      if (customUrl) indexUrl = customUrl;
+    } catch {}
+  }
+
+  console.info(`[Quicksearch] Fetching catalog from ${indexUrl}`);
   try {
-    let catalogData: any[] | null = null;
+    const resp = await fetch(indexUrl, {
+      headers: { 'User-Agent': randomUA() },
+    });
+    if (!resp.ok) return null;
 
-    // Check Redis for cached catalog index (24-hour TTL)
+    const data = await resp.json();
+    if (!Array.isArray(data)) return null;
+
+    // Store permanently (no TTL)
     if (redis) {
-      const cachedCatalog = await redis.get<string>('cache:quicksearch_catalog');
-      if (cachedCatalog) {
-        catalogData = typeof cachedCatalog === 'string' ? JSON.parse(cachedCatalog) : cachedCatalog;
-      }
+      await redis.set(REDIS_CATALOG_KEY, JSON.stringify(data)).catch(() => {});
     }
 
-    // Fetch static catalog index if not cached
-    if (!catalogData) {
-      console.info('[Quicksearch] Fetching static quicksearch index from GSMArena CDN...');
-      const response = await fetch(QUICKSEARCH_INDEX_URL, {
-        headers: { 'User-Agent': getRandomUserAgent() }
-      });
-      if (response.ok) {
-        catalogData = await response.json();
-        if (redis && catalogData) {
-          await redis.set('cache:quicksearch_catalog', JSON.stringify(catalogData), { ex: 86400 });
-        }
-      }
-    }
-
-    if (!catalogData || !Array.isArray(catalogData)) return null;
-
-    const queryTokens = query.toLowerCase().replace(/[-_\/:,#]/g, ' ').split(/\s+/).filter(t => t.length > 0);
-    if (queryTokens.length === 0) return null;
-
-    let bestMatch: { matchedUrl: string; matchedName: string; image: string } | null = null;
-    let maxScore = -1;
-
-    for (const group of catalogData) {
-      if (!Array.isArray(group)) continue;
-      for (const dev of group) {
-        if (!Array.isArray(dev) || dev.length < 5) continue;
-        const bId = dev[0];
-        const devId = dev[1];
-        const modelName = String(dev[2] || '');
-        const keywords = String(dev[3] || '');
-        const imgFile = String(dev[4] || '');
-        const altName = String(dev[5] || '');
-
-        const fullSearchable = `${modelName} ${keywords} ${altName} ${imgFile}`.toLowerCase().replace(/[-_]/g, ' ');
-
-        // Check token matching
-        const matchedTokens = queryTokens.filter(t => fullSearchable.includes(t));
-        if (matchedTokens.length === 0) continue;
-
-        let score = (matchedTokens.length / queryTokens.length) * 100;
-
-        // Exact model name match bonus
-        const modelLower = modelName.toLowerCase();
-        const queryLower = query.toLowerCase().trim();
-        if (modelLower === queryLower || fullSearchable.includes(queryLower)) {
-          score += 150;
-        }
-
-        // Prefer higher device IDs (newer models) on tie
-        score += (Number(devId) || 0) / 100000;
-
-        if (score > maxScore && matchedTokens.length === queryTokens.length) {
-          maxScore = score;
-          const imgSlug = imgFile.replace('.jpg', '').replace('-thumb2', '').replace('-new', '');
-          bestMatch = {
-            matchedUrl: `https://www.gsmarena.com/${imgSlug}-${devId}.php`,
-            matchedName: modelName,
-            image: imgFile ? `https://fdn2.gsmarena.com/vv/bigpic/${imgFile}` : ''
-          };
-        }
-      }
-    }
-
-    return bestMatch;
-  } catch (err) {
-    console.warn('[Quicksearch] Quicksearch index lookup warning:', err);
+    return data;
+  } catch {
     return null;
   }
 }
 
-/**
- * Fallback Discovery via Search Page or DuckDuckGo
- */
-async function fallbackDiscovery(query: string, signal: AbortSignal): Promise<{ matchedUrl: string | null; suggestImage: string }> {
-  let matchedUrl: string | null = null;
+function scoreMatch(tokens: string[], searchable: string, modelName: string, inputLower: string): number {
+  const sl = searchable.toLowerCase();
+  const matchedCount = tokens.filter(t => sl.includes(t.toLowerCase())).length;
+  if (matchedCount === 0) return -1;
 
-  // DuckDuckGo fallback
-  const ddgUrl = `https://html.duckduckgo.com/html/?q=site:gsmarena.com+${encodeURIComponent(query)}`;
-  const res = await fetchHtml(ddgUrl, signal, { timeoutMs: 4000 });
+  let score = (matchedCount / tokens.length) * 100;
 
-  if (res.text) {
-    const $ = cheerio.load(res.text);
-    $('a').each((_, el) => {
-      let href = $(el).attr('href');
-      if (!href || matchedUrl) return;
-      try {
-        if (href.includes('uddg=')) {
-          const uObj = new URL(href.startsWith('http') ? href : `https://duckduckgo.com${href}`);
-          href = uObj.searchParams.get('uddg') || href;
-        }
-      } catch {}
-      if (href.includes('gsmarena.com/') && href.includes('.php') && !/results|search|compare|glossary|blog/i.test(href)) {
-        matchedUrl = href.startsWith('http') ? href : `https://www.gsmarena.com/${href.replace(/^\//, '')}`;
-      }
-    });
-  }
+  // Exact model name match
+  if (modelName.toLowerCase() === inputLower) score += 200;
+  else if (sl.includes(inputLower)) score += 100;
 
-  return { matchedUrl, suggestImage: '' };
+  // Prefer completeness (fewer extra words in model = tighter match)
+  score -= Math.max(0, modelName.split(/\s+/).length - tokens.length) * 2;
+
+  return matchedCount === tokens.length ? score : -1; // require ALL tokens to match
 }
 
-/**
- * Extract full specifications from device page
- */
-async function extractDeviceSpecs(url: string, signal: AbortSignal): Promise<{ name: string; img: string; specifications: Record<string, Record<string, string>> | null }> {
-  const res = await fetchHtml(url, signal, { timeoutMs: 6000 });
+async function searchQuicksearchIndex(strategies: string[], redis: Redis | null): Promise<QuicksearchMatch | null> {
+  const catalog = await getQuicksearchCatalog(redis);
+  if (!catalog) return null;
 
-  if (!res.text || res.turnstile) {
-    return { name: '', img: '', specifications: null };
+  let best: QuicksearchMatch | null = null;
+  let bestScore = -1;
+
+  for (const query of strategies) {
+    const inputLower = query.toLowerCase();
+    const tokens = inputLower.replace(/[-_]/g, ' ').split(/\s+/).filter(t => t.length > 0);
+    if (tokens.length === 0) continue;
+
+    for (const group of catalog) {
+      if (!Array.isArray(group)) continue;
+
+      for (const dev of group) {
+        if (!Array.isArray(dev) || dev.length < 5) continue;
+        const [, devId, modelName, keywords, imgFile, altName = ''] = dev;
+
+        const searchable = `${modelName} ${keywords} ${altName} ${imgFile}`.replace(/[-_]/g, ' ');
+        const score = scoreMatch(tokens, searchable, String(modelName), inputLower);
+        if (score < 0 || score <= bestScore) continue;
+
+        const imgSlug = String(imgFile).replace('.jpg', '').replace(/-thumb2|-new$/i, '');
+        bestScore = score;
+        best = {
+          matchedUrl: `https://www.gsmarena.com/${imgSlug}-${devId}.php`,
+          matchedName: String(modelName),
+          image: imgFile ? `https://fdn2.gsmarena.com/vv/bigpic/${imgFile}` : '',
+        };
+      }
+    }
+
+    if (best && bestScore >= 200) break; // Exact match found, stop early
   }
 
-  const $ = cheerio.load(res.text);
+  return best;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Spec page extractor (Cheerio)
+// ──────────────────────────────────────────────────────────────────────────────
+interface ExtractionResult {
+  name: string;
+  img: string;
+  specifications: Record<string, Record<string, string>> | null;
+}
+
+async function extractDeviceSpecs(url: string, signal: AbortSignal): Promise<ExtractionResult> {
+  const res = await fetchHtml(url, signal, { timeoutMs: 7_000 });
+
+  if (!res.text || res.turnstile) {
+    // One more attempt with proxy if direct failed
+    const retryRes = await fetchHtml(url, signal, { timeoutMs: 10_000, forceProxy: true, render: false });
+    if (!retryRes.text || retryRes.turnstile) {
+      return { name: '', img: '', specifications: null };
+    }
+    return parseSpecPage(retryRes.text);
+  }
+
+  return parseSpecPage(res.text);
+}
+
+function parseSpecPage(html: string): ExtractionResult {
+  const $ = cheerio.load(html);
   const specs: Record<string, Record<string, string>> = {};
 
-  // Extract phone name
+  // Device name
   const name = (
-    $('.specs-phone-name-title').text().trim() ||
-    $('h1.specs-phone-name-title').text().trim() ||
-    $('meta[property="og:title"]').attr('content')?.replace('full phone specifications', '')?.replace('- Full phone specifications', '')?.trim() ||
+    $('h1.specs-phone-name-title').first().text().trim() ||
+    $('.specs-phone-name-title').first().text().trim() ||
+    $('meta[property="og:title"]').attr('content')
+      ?.replace(/- full phone specifications$/i, '')
+      ?.replace(/full phone specifications$/i, '')
+      ?.trim() ||
     ''
   );
 
-  // Extract image
+  // Device image — prefer bigpic CDN, fall back to any img on page
   let img = '';
-  const imgEl = $('.specs-photo-main img, #specs-cp-pic img, #specs-cp-main img, img[src*="/bigpic/"]').first();
-  if (imgEl.length > 0) {
-    img = imgEl.attr('src') || '';
-    if (img && !img.startsWith('http')) {
-      img = `https://www.gsmarena.com/${img.replace(/^\//, '')}`;
-    }
+  const bigpicEl = $('img[src*="/bigpic/"], .specs-photo-main img, #specs-cp-pic img').first();
+  if (bigpicEl.length) {
+    img = bigpicEl.attr('src') || '';
   }
+  if (img && !img.startsWith('http')) {
+    img = `https://www.gsmarena.com/${img.replace(/^\//, '')}`;
+  }
+  // Ensure HTTPS
+  img = img.replace(/^http:\/\//i, 'https://');
 
-  // Extract specification tables
+  // Specs tables
   $('#specs-list table').each((_, table) => {
-    const rawSection = $(table).find('th').text().trim();
-    if (!rawSection) return;
+    const section = $(table).find('th').first().text().trim();
+    if (!section) return;
 
-    specs[rawSection] = {};
+    const sectionData: Record<string, string> = {};
     $(table).find('tr').each((_, tr) => {
       const key = $(tr).find('.ttl').text().trim();
-      const value = $(tr).find('.nfo').text().trim();
-      if (key && value) {
-        specs[rawSection][key] = value;
-      }
+      const val = $(tr).find('.nfo').text().replace(/\s+/g, ' ').trim();
+      if (key && val) sectionData[key] = val;
     });
+
+    if (Object.keys(sectionData).length > 0) {
+      specs[section] = sectionData;
+    }
   });
 
   return {
     name,
     img,
-    specifications: Object.keys(specs).length > 0 ? specs : null
+    specifications: Object.keys(specs).length > 0 ? specs : null,
   };
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ──────────────────────────────────────────────────────────────────────────────
 function getDeviceId(url: string | null): string | null {
   if (!url) return null;
   try {
-    const slug = url.split('/').pop()?.replace('.php', '');
-    if (!slug) return null;
-    return slug.split('-').pop() || slug.split('-')[0] || null;
+    const slug = url.split('/').pop()?.replace('.php', '') ?? '';
+    // Last segment after final dash is numeric device ID
+    const parts = slug.split('-');
+    const id = parts[parts.length - 1];
+    return /^\d+$/.test(id) ? id : slug;
   } catch {
     return null;
   }
 }
 
 async function acquireLock(redis: Redis, key: string, ttlSeconds: number): Promise<boolean> {
-  const result = await redis.set(key, '1', { nx: true, ex: ttlSeconds });
-  return result === 'OK';
+  return (await redis.set(key, '1', { nx: true, ex: ttlSeconds })) === 'OK';
 }
 
 async function releaseLock(redis: Redis, key: string): Promise<void> {
   await redis.del(key).catch(() => {});
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+// Main Handler
+// ──────────────────────────────────────────────────────────────────────────────
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const startTime = Date.now();
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), TOTAL_BUDGET_MS);
+  const budgetTimer = setTimeout(() => controller.abort(), TOTAL_BUDGET_MS);
 
   try {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -375,147 +424,138 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const rawQuery = req.query.model;
     if (!rawQuery || typeof rawQuery !== 'string') {
-      return res.status(400).json({ error: "Missing or invalid 'model' parameter" });
+      return res.status(400).json({ error: "Missing or invalid 'model' query parameter" });
     }
 
     const cleanInput = rawQuery.trim();
+    const forceRefresh = req.query.refresh === '1';
 
+    // ── Init Redis ──────────────────────────────────────────────────────────
     let redis: Redis | null = null;
     if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
       redis = Redis.fromEnv();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Tier 1: Redis Strategy Cache Check
-    // ─────────────────────────────────────────────────────────────────────────
-    const inputStrategies = generateSmartStrategies(cleanInput);
+    const strategies = buildStrategies(cleanInput);
     let targetDeviceUrl: string | null = null;
     let searchName = cleanInput;
 
-    if (redis && inputStrategies.length > 0) {
+    // ── Tier 1: Redis Cache Hit ─────────────────────────────────────────────
+    if (redis && !forceRefresh) {
       try {
-        const urlMapKeys = inputStrategies.map(s => `url_map:${s.toLowerCase()}`);
+        // Check url_map for every strategy variant
+        const urlMapKeys = strategies.map(s => `url_map:${s.toLowerCase()}`);
         const mappedUrls = await redis.mget<(string | null)[]>(...urlMapKeys);
         targetDeviceUrl = mappedUrls.find(u => !!u) || null;
 
-        const translationKeys = inputStrategies.map(s => `device:${s.toLowerCase()}`);
-        const translations = await redis.mget<(string | null)[]>(...translationKeys);
-        const firstTranslation = translations.find(t => !!t);
-
-        if (firstTranslation) {
-          searchName = firstTranslation;
+        // Also check device name translations (from sync-devices)
+        const transKeys = strategies.map(s => `device:${s.toLowerCase()}`);
+        const translations = await redis.mget<(string | null)[]>(...transKeys);
+        const translated = translations.find(t => !!t);
+        if (translated) {
+          searchName = translated;
           if (!targetDeviceUrl) {
             targetDeviceUrl = await redis.get<string>(`url_map:${searchName.toLowerCase()}`);
           }
         }
 
+        // Full spec cache hit
         if (targetDeviceUrl) {
           const deviceId = getDeviceId(targetDeviceUrl);
           if (deviceId) {
-            const canonicalData = await redis.get<any>(`specs:url:${deviceId}`);
-            if (canonicalData) {
-              const payload = typeof canonicalData === 'string' ? JSON.parse(canonicalData) : canonicalData;
+            const cached = await redis.get<any>(`specs:url:${deviceId}`);
+            if (cached) {
+              const payload = typeof cached === 'string' ? JSON.parse(cached) : cached;
               return res.status(200).json({ ...payload, timing_ms: Date.now() - startTime, cached: true });
             }
           }
         }
-      } catch (redisError) {
-        console.error('[Cache] Strategy lookup failed:', redisError);
+      } catch (e) {
+        console.error('[Cache] Redis lookup failed:', e);
       }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Tier 2: Redis Lock Deduplication
-    // ─────────────────────────────────────────────────────────────────────────
+    // ── Tier 2: Request Deduplication Lock ──────────────────────────────────
     const lockKey = `lock:specs:${cleanInput.toLowerCase()}`;
     let lockAcquired = false;
 
-    if (redis) {
-      lockAcquired = await acquireLock(redis, lockKey, 20);
+    if (redis && !forceRefresh) {
+      lockAcquired = await acquireLock(redis, lockKey, 22);
 
       if (!lockAcquired) {
-        console.info(`[Lock] Waiting for concurrent scrape of "${cleanInput}"...`);
-        const pollStart = Date.now();
-        while (Date.now() - pollStart < 12_000) {
+        console.info(`[Lock] Waiting for concurrent scrape: "${cleanInput}"`);
+        const pollDeadline = Date.now() + 14_000;
+        while (Date.now() < pollDeadline) {
           await new Promise(r => setTimeout(r, 500));
-
           try {
-            const urlMapKeys = inputStrategies.map(s => `url_map:${s.toLowerCase()}`);
+            const urlMapKeys = strategies.map(s => `url_map:${s.toLowerCase()}`);
             const mappedUrls = await redis.mget<(string | null)[]>(...urlMapKeys);
             const polledUrl = mappedUrls.find(u => !!u) || null;
-
             if (polledUrl) {
               const deviceId = getDeviceId(polledUrl);
               if (deviceId) {
-                const canonicalData = await redis.get<any>(`specs:url:${deviceId}`);
-                if (canonicalData) {
-                  const payload = typeof canonicalData === 'string' ? JSON.parse(canonicalData) : canonicalData;
+                const cached = await redis.get<any>(`specs:url:${deviceId}`);
+                if (cached) {
+                  const payload = typeof cached === 'string' ? JSON.parse(cached) : cached;
                   return res.status(200).json({ ...payload, timing_ms: Date.now() - startTime, cached: true });
                 }
               }
             }
-          } catch {}
+          } catch { /* ignore polling errors */ }
         }
+        // Poller timed out — proceed independently
+        console.warn(`[Lock] Poll timed out for "${cleanInput}", proceeding with own scrape`);
+        lockAcquired = true; // Treat as acquired for release later
       }
     }
 
     try {
-      // ───────────────────────────────────────────────────────────────────────
-      // Tier 3: Fast Discovery via Static Quicksearch Index
-      // ───────────────────────────────────────────────────────────────────────
+      // ── Tier 3: Quicksearch Index Discovery ──────────────────────────────
       let suggestImage = '';
       let matchedDeviceName = '';
 
-      for (const strat of inputStrategies.slice(0, 3)) {
-        const quickMatch = await searchQuicksearchIndex(strat, redis);
-        if (quickMatch) {
-          targetDeviceUrl = quickMatch.matchedUrl;
-          matchedDeviceName = quickMatch.matchedName;
-          suggestImage = quickMatch.image;
-          console.info(`[Discovery] Quicksearch match in 0ms: ${matchedDeviceName} -> ${targetDeviceUrl}`);
-          break;
-        }
-      }
-
-      // Fallback discovery if quicksearch index didn't match
       if (!targetDeviceUrl) {
-        console.info(`[Discovery] Quicksearch index miss, attempting fallback discovery for: "${searchName}"`);
-        const fallback = await fallbackDiscovery(searchName, controller.signal);
-        targetDeviceUrl = fallback.matchedUrl;
+        console.info(`[Discovery] Quicksearch lookup for: "${cleanInput}" (${strategies.length} strategies)`);
+        const match = await searchQuicksearchIndex(strategies, redis);
+        if (match) {
+          targetDeviceUrl = match.matchedUrl;
+          matchedDeviceName = match.matchedName;
+          suggestImage = match.image;
+          console.info(`[Discovery] Matched: ${matchedDeviceName} → ${targetDeviceUrl}`);
+        }
       }
 
       if (!targetDeviceUrl) {
         return res.status(404).json({
-          error: 'Device not found',
+          error: 'Device not found in GSMArena catalog',
           query: cleanInput,
-          timing_ms: Date.now() - startTime
+          timing_ms: Date.now() - startTime,
         });
       }
 
-      // Check cache again with resolved URL
-      if (redis) {
+      // Double-check spec cache with resolved URL before scraping
+      if (redis && !forceRefresh) {
         const deviceId = getDeviceId(targetDeviceUrl);
         if (deviceId) {
-          const canonicalData = await redis.get(`specs:url:${deviceId}`);
-          if (canonicalData) {
-            const payload = typeof canonicalData === 'string' ? JSON.parse(canonicalData) : canonicalData;
-            await redis.set(`url_map:${cleanInput.toLowerCase()}`, targetDeviceUrl, { ex: 2_592_000 });
+          const cached = await redis.get<any>(`specs:url:${deviceId}`);
+          if (cached) {
+            const payload = typeof cached === 'string' ? JSON.parse(cached) : cached;
+            // Opportunistically store the new url_map entry (no TTL = permanent)
+            await redis.set(`url_map:${cleanInput.toLowerCase()}`, targetDeviceUrl).catch(() => {});
             return res.status(200).json({ ...payload, timing_ms: Date.now() - startTime, cached: true });
           }
         }
       }
 
-      // ───────────────────────────────────────────────────────────────────────
-      // Tier 4: Direct Spec Extraction
-      // ───────────────────────────────────────────────────────────────────────
-      console.info(`[Extraction] Extracting specs from: ${targetDeviceUrl}`);
+      // ── Tier 4: Spec Page Extraction ─────────────────────────────────────
+      console.info(`[Extraction] Fetching: ${targetDeviceUrl}`);
       const extraction = await extractDeviceSpecs(targetDeviceUrl, controller.signal);
 
-      if (!extraction || !extraction.specifications) {
+      if (!extraction.specifications) {
         return res.status(502).json({
-          error: 'Failed to extract specs from device page',
+          error: 'Failed to extract specifications from device page (anti-bot or parsing failure)',
           url: targetDeviceUrl,
-          timing_ms: Date.now() - startTime
+          timing_ms: Date.now() - startTime,
         });
       }
 
@@ -532,26 +572,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         cached: false,
       };
 
-      // ───────────────────────────────────────────────────────────────────────
-      // Tier 5: Redis Storage
-      // ───────────────────────────────────────────────────────────────────────
+      // ── Tier 5: Redis Storage (Permanent — No TTL) ───────────────────────
       if (redis) {
         const deviceId = getDeviceId(targetDeviceUrl);
         const pipe = redis.pipeline();
 
         if (deviceId) {
-          pipe.set(`specs:url:${deviceId}`, JSON.stringify(payload), { ex: 7_776_000 });
+          pipe.set(`specs:url:${deviceId}`, JSON.stringify(payload));
         }
 
-        pipe.set(`url_map:${cleanInput.toLowerCase()}`, targetDeviceUrl, { ex: 2_592_000 });
+        // Map all query variants → device URL permanently
+        pipe.set(`url_map:${cleanInput.toLowerCase()}`, targetDeviceUrl);
         if (searchName !== cleanInput) {
-          pipe.set(`url_map:${searchName.toLowerCase()}`, targetDeviceUrl, { ex: 2_592_000 });
+          pipe.set(`url_map:${searchName.toLowerCase()}`, targetDeviceUrl);
         }
-        for (const variant of inputStrategies) {
-          pipe.set(`url_map:${variant.toLowerCase()}`, targetDeviceUrl, { ex: 2_592_000 });
+        for (const v of strategies) {
+          pipe.set(`url_map:${v.toLowerCase()}`, targetDeviceUrl);
         }
 
-        await pipe.exec();
+        await pipe.exec().catch(e => console.error('[Cache] Pipeline write failed:', e));
       }
 
       return res.status(200).json(payload);
@@ -566,6 +605,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error('[specs] Critical failure:', err);
     return res.status(500).json({ error: 'Internal Server Error', detail: err.message });
   } finally {
-    clearTimeout(timeoutId);
+    clearTimeout(budgetTimer);
   }
 }
