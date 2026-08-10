@@ -145,29 +145,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (action === 'invalidate-specs') {
-      // Scan and delete all specs:url:* and url_map:* keys
-      let cursor = 0;
-      let deletedCount = 0;
-      do {
-        const [nextCursor, keys] = await redis.scan(cursor, { match: 'specs:url:*', count: 100 });
-        cursor = Number(nextCursor);
-        if (keys.length > 0) {
-          await redis.del(...keys);
-          deletedCount += keys.length;
-        }
-      } while (cursor !== 0);
+      const purgePattern = async (pattern: string): Promise<number> => {
+        try {
+          const keys = await redis.keys(pattern);
+          if (!Array.isArray(keys) || keys.length === 0) return 0;
+          let deleted = 0;
+          for (let i = 0; i < keys.length; i += 100) {
+            const chunk = keys.slice(i, i + 100);
+            if (chunk.length > 0) {
+              await redis.del(...chunk);
+              deleted += chunk.length;
+            }
+          }
+          return deleted;
+        } catch { return 0; }
+      };
 
-      cursor = 0;
-      do {
-        const [nextCursor, keys] = await redis.scan(cursor, { match: 'url_map:*', count: 100 });
-        cursor = Number(nextCursor);
-        if (keys.length > 0) {
-          await redis.del(...keys);
-          deletedCount += keys.length;
-        }
-      } while (cursor !== 0);
+      const specsCount = await purgePattern('specs:*');
+      const urlsCount = await purgePattern('url_map:*');
+      const totalDeleted = specsCount + urlsCount;
 
-      return res.status(200).json({ success: true, message: `Cleared ${deletedCount} spec/url_map cache keys.` });
+      return res.status(200).json({
+        success: true,
+        message: `Cleared ${totalDeleted} spec payload & URL map cache keys.`,
+        specsCount,
+        urlsCount,
+      });
     }
 
     // ── Cooldown Check ────────────────────────────────────────────────────────
