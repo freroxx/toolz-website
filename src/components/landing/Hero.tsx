@@ -1,7 +1,6 @@
-import { Download, Github, ChevronDown, Shield, Zap, Lock, Sparkles, Smartphone } from "lucide-react";
+import { Download, Github, ChevronDown, Shield, Zap, Lock, Sparkles } from "lucide-react";
 import { motion, useScroll, useTransform, AnimatePresence, useSpring } from "framer-motion";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Link } from "react-router-dom";
 import { useUpdateManifest } from "@/hooks/use-update-manifest";
 
 const allScreenshots = [
@@ -56,7 +55,7 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
   const [paused, setPaused] = useState(false);
   const heroRef = useRef<HTMLElement>(null);
 
-  const { versionName, isLoading } = useUpdateManifest();
+  const { versionName } = useUpdateManifest();
 
   // Parallax via scroll
   const { scrollYProgress } = useScroll({
@@ -250,13 +249,6 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 <Github size={24} />
                 Source
               </a>
-              <Link
-                to="/spec"
-                className="m3-btn-tonal py-5 px-10 text-lg gap-3 active:scale-95 transition-transform"
-              >
-                <Smartphone size={24} />
-                Spec Catalog
-              </Link>
             </motion.div>
           </motion.div>
 

@@ -58,7 +58,7 @@ const CatalogSection = () => {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.05 }}
-                className="w-32 h-44 bg-white rounded-[24px] p-3 flex items-center justify-center border border-white/10 flex-shrink-0 shadow-xl"
+                className="w-32 h-44 bg-white rounded-2xl p-3 flex items-center justify-center border border-white/10 flex-shrink-0 shadow-xl"
               >
                 <img
                   src={dev.image}
