@@ -3,7 +3,6 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import {
   Search,
-  Smartphone,
   Info,
   ArrowLeft,
   Cpu,
@@ -11,10 +10,8 @@ import {
   Sparkles,
   RefreshCw,
   Battery,
-  Database,
   Layers,
   ChevronRight,
-  ShieldCheck,
   Globe,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -57,7 +54,7 @@ const FilterChip = ({
     onClick={onClick}
     className={cn(
       "m3-chip m3-state-layer transition-all duration-300",
-      active ? "m3-chip-active scale-105 shadow-md shadow-primary/20" : "hover:scale-105"
+      active ? "m3-chip-active scale-105" : "hover:scale-105"
     )}
   >
     {label}
@@ -79,7 +76,6 @@ const SpecDetailsDialog = ({ device }: { device: SpecPayload }) => {
   return (
     <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto p-0 border-none bg-surface-container-low rounded-[40px] shadow-2xl custom-scrollbar selection:bg-primary/30">
       <div className="relative">
-        {/* Header Area */}
         <div className="p-8 md:p-16 relative overflow-hidden flex flex-col md:flex-row gap-10 items-center md:items-start border-b border-outline-variant/20">
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
@@ -89,7 +85,7 @@ const SpecDetailsDialog = ({ device }: { device: SpecPayload }) => {
             <img
               src={device.image || "https://fdn2.gsmarena.com/vv/bigpic/smartphone.jpg"}
               alt={device.matched_device}
-              className="max-w-full max-h-full object-contain rounded-[24px]"
+              className="max-w-full max-h-full object-contain rounded-[16px]"
               onError={(e) => {
                 (e.target as HTMLImageElement).src = "https://fdn2.gsmarena.com/vv/bigpic/smartphone.jpg";
               }}
@@ -122,7 +118,6 @@ const SpecDetailsDialog = ({ device }: { device: SpecPayload }) => {
           </div>
         </div>
 
-        {/* Technical Data */}
         <div className="p-8 md:p-16 space-y-12">
           {Object.entries(device.specifications).map(([section, data]) => (
             <div key={section} className="space-y-6">
@@ -177,11 +172,8 @@ const SpecCard = ({ device }: { device: SpecPayload }) => {
                <img
                   src={device.image || "https://fdn2.gsmarena.com/vv/bigpic/smartphone.jpg"}
                   alt={device.matched_device}
-                  className="max-w-full max-h-full object-contain relative z-10 group-hover:rotate-3 transition-all duration-700 rounded-[20px]"
+                  className="max-w-full max-h-full object-contain relative z-10 group-hover:rotate-3 transition-all duration-700 rounded-[12px]"
                   loading="lazy"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "https://fdn2.gsmarena.com/vv/bigpic/smartphone.jpg";
-                  }}
                 />
             </div>
 
@@ -227,7 +219,6 @@ const SpecPage = () => {
   const [filter, setFilter] = useState("All");
   const heroRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to top on enter
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -240,7 +231,7 @@ const SpecPage = () => {
   const blobY = useTransform(scrollYProgress, [0, 1], [0, 200]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 700);
+    const timer = setTimeout(() => setDebouncedSearch(search), 600);
     return () => clearTimeout(timer);
   }, [search]);
 
@@ -261,7 +252,6 @@ const SpecPage = () => {
 
   return (
     <div className="min-h-screen bg-surface selection:bg-primary/30 selection:text-primary-foreground font-sans text-on-surface">
-      {/* Background Expressions */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden" aria-hidden="true">
         <motion.div
           style={{ y: blobY }}
@@ -273,7 +263,6 @@ const SpecPage = () => {
       </div>
 
       <div className="container mx-auto px-6 py-12 relative z-10 max-w-7xl">
-        {/* Navigation */}
         <div className="flex items-center justify-between mb-24">
           <motion.button
             initial={{ opacity: 0, x: -20 }}
@@ -295,7 +284,6 @@ const SpecPage = () => {
           </a>
         </div>
 
-        {/* Hero */}
         <div ref={heroRef} className="text-center mb-24 space-y-8">
           <motion.h1
             initial={{ opacity: 0, y: 32 }}
@@ -324,26 +312,25 @@ const SpecPage = () => {
           </motion.p>
         </div>
 
-        {/* Search & Filters */}
-        <div className="max-w-3xl mx-auto mb-20 space-y-8">
+        <div className="max-w-2xl mx-auto mb-20 space-y-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="relative"
           >
-            <div className="absolute left-6 top-1/2 -translate-y-1/2 text-primary/40">
-              <Search size={24} />
+            <div className="absolute left-6 top-1/2 -translate-y-1/2 text-on-surface-variant/40">
+              <Search size={20} />
             </div>
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search model name..."
-              className="w-full h-16 bg-surface-container-high border-2 border-outline-variant/10 rounded-full pl-16 pr-12 m3-title-small text-on-surface outline-none focus:border-primary transition-all shadow-xl shadow-black/20"
+              className="w-full h-14 bg-surface-container-high border-none rounded-2xl pl-14 pr-12 m3-body-medium text-on-surface outline-none focus:ring-2 focus:ring-primary/20 transition-all"
             />
             {isFetching && (
               <div className="absolute right-6 top-1/2 -translate-y-1/2">
-                <RefreshCw size={20} className="animate-spin text-primary/40" />
+                <RefreshCw size={16} className="animate-spin text-primary/40" />
               </div>
             )}
           </motion.div>
@@ -360,7 +347,6 @@ const SpecPage = () => {
           </div>
         </div>
 
-        {/* Grid */}
         <div className="min-h-[400px]">
           {isLoading && !data ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -384,7 +370,6 @@ const SpecPage = () => {
           )}
         </div>
 
-        {/* Footer */}
         <footer className="mt-40 text-center space-y-12">
            <div className="m3-divider opacity-10 max-w-lg mx-auto" />
            <div className="flex flex-wrap justify-center gap-12">

@@ -21,11 +21,11 @@ const Index = () => {
         <Hero onDownloadClick={() => setDownloadOpen(true)} />
         <div className="relative z-10 bg-surface">
           <Features />
-          <CatalogSection />
           <Showcase />
           <Gallery />
           <HowItWorks />
           <CTA onDownloadClick={() => setDownloadOpen(true)} />
+          <CatalogSection />
           <Discord />
         </div>
       </main>
