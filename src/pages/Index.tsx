@@ -2,6 +2,7 @@ import { useState } from "react";
 import Navbar from "@/components/landing/Navbar";
 import Hero from "@/components/landing/Hero";
 import Features from "@/components/landing/Features";
+import CatalogSection from "@/components/landing/CatalogSection";
 import Showcase from "@/components/landing/Showcase";
 import Gallery from "@/components/landing/Gallery";
 import Discord from "@/components/landing/Discord";
@@ -14,12 +15,13 @@ const Index = () => {
   const [downloadOpen, setDownloadOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-primary/30 selection:text-primary-foreground">
+    <div className="min-h-screen bg-surface selection:bg-primary/30 selection:text-primary-foreground font-sans">
       <Navbar onDownloadClick={() => setDownloadOpen(true)} />
       <main className="relative">
         <Hero onDownloadClick={() => setDownloadOpen(true)} />
-        <div className="relative z-10 bg-background">
+        <div className="relative z-10 bg-surface">
           <Features />
+          <CatalogSection />
           <Showcase />
           <Gallery />
           <HowItWorks />
