@@ -220,14 +220,11 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
               {/* Drawer links */}
               <div className="flex-1 overflow-y-auto py-3 px-3">
                 {navLinks.map((link, i) => {
-                  const isActive = activeHref === link.href;
+                  const isActive = (location.pathname === link.href) || (location.pathname === "/" && activeHref === link.href.replace("/", ""));
                   return (
-                    <motion.a
+                    <Link
                       key={link.href}
-                      href={link.href}
-                      initial={{ x: 40, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      transition={{ delay: i * 0.06, type: "spring", stiffness: 400, damping: 35 }}
+                      to={link.href}
                       onClick={() => setMobileOpen(false)}
                       className="flex items-center gap-4 px-4 py-3 rounded-full mb-1 m3-title-medium transition-colors"
                       style={{
@@ -237,8 +234,14 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                           : "hsl(var(--md-on-surface-variant))",
                       }}
                     >
-                      {link.label}
-                    </motion.a>
+                      <motion.span
+                        initial={{ x: 40, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: i * 0.06, type: "spring", stiffness: 400, damping: 35 }}
+                      >
+                        {link.label}
+                      </motion.span>
+                    </Link>
                   );
                 })}
               </div>
