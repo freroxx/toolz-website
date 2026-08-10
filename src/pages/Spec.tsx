@@ -80,7 +80,7 @@ const SpecDetailsDialog = ({ device }: { device: SpecPayload }) => {
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-52 h-72 bg-white rounded-[32px] p-6 flex items-center justify-center shadow-xl border border-outline-variant/10 shrink-0 relative z-10"
+            className="w-52 h-72 bg-white rounded-2xl p-6 flex items-center justify-center shadow-xl border border-outline-variant/10 shrink-0 relative z-10"
           >
             <img
               src={device.image || "https://fdn2.gsmarena.com/vv/bigpic/smartphone.jpg"}
@@ -168,7 +168,7 @@ const SpecCard = ({ device }: { device: SpecPayload }) => {
           className="m3-card-filled group cursor-pointer flex flex-col h-full bg-surface-container hover:bg-surface-container-high transition-all duration-500 border border-outline-variant/10"
         >
           <div className="p-6 flex-1 flex flex-col gap-6">
-            <div className="w-full h-48 bg-white rounded-[28px] p-6 flex items-center justify-center border border-outline-variant/5 group-hover:scale-[1.02] transition-transform duration-700 overflow-hidden relative shadow-sm">
+            <div className="w-full h-48 bg-white rounded-2xl p-6 flex items-center justify-center border border-outline-variant/5 group-hover:scale-[1.02] transition-transform duration-700 overflow-hidden relative shadow-sm">
                <img
                   src={device.image || "https://fdn2.gsmarena.com/vv/bigpic/smartphone.jpg"}
                   alt={device.matched_device}
@@ -293,7 +293,7 @@ const SpecPage = () => {
             animate={{ opacity: 1, y: 0 }}
             className="m3-display-large text-on-surface"
           >
-            Toolz Phone{" "}
+            Pure 100%{" "}
             <span className="m3-gradient-text italic font-serif relative inline-block">
               Catalog.
               <motion.div
@@ -311,9 +311,7 @@ const SpecPage = () => {
             transition={{ delay: 0.2 }}
             className="m3-body-large text-on-surface-variant max-w-xl mx-auto opacity-70 leading-relaxed"
           >
-            Accurate hardware specs.
-            Resolved instantly via server-side open-source engine.
-            Linked directly to the Toolz Device Info Tool!
+            High-fidelity hardware specifications. Zero slop, resolved instantly via server-side engine.
           </motion.p>
         </div>
 
