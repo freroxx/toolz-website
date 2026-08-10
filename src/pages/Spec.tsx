@@ -293,7 +293,7 @@ const SpecPage = () => {
             animate={{ opacity: 1, y: 0 }}
             className="m3-display-large text-on-surface"
           >
-            Pure 100%{" "}
+            Toolz Phone{" "}
             <span className="m3-gradient-text italic font-serif relative inline-block">
               Catalog.
               <motion.div
