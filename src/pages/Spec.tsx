@@ -80,12 +80,12 @@ const SpecDetailsDialog = ({ device }: { device: SpecPayload }) => {
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-52 h-72 bg-surface-container-highest rounded-[32px] p-6 flex items-center justify-center shadow-xl border border-outline-variant/10 shrink-0 relative z-10"
+            className="w-52 h-72 bg-white rounded-[32px] p-6 flex items-center justify-center shadow-xl border border-outline-variant/10 shrink-0 relative z-10"
           >
             <img
               src={device.image || "https://fdn2.gsmarena.com/vv/bigpic/smartphone.jpg"}
               alt={device.matched_device}
-              className="max-w-full max-h-full object-contain rounded-[16px]"
+              className="max-w-full max-h-full object-contain"
               onError={(e) => {
                 (e.target as HTMLImageElement).src = "https://fdn2.gsmarena.com/vv/bigpic/smartphone.jpg";
               }}
@@ -168,12 +168,15 @@ const SpecCard = ({ device }: { device: SpecPayload }) => {
           className="m3-card-filled group cursor-pointer flex flex-col h-full bg-surface-container hover:bg-surface-container-high transition-all duration-500 border border-outline-variant/10"
         >
           <div className="p-6 flex-1 flex flex-col gap-6">
-            <div className="w-full h-48 bg-surface-container-low rounded-[28px] p-6 flex items-center justify-center border border-outline-variant/5 group-hover:scale-[1.02] transition-transform duration-700 overflow-hidden relative">
+            <div className="w-full h-48 bg-white rounded-[28px] p-6 flex items-center justify-center border border-outline-variant/5 group-hover:scale-[1.02] transition-transform duration-700 overflow-hidden relative shadow-sm">
                <img
                   src={device.image || "https://fdn2.gsmarena.com/vv/bigpic/smartphone.jpg"}
                   alt={device.matched_device}
-                  className="max-w-full max-h-full object-contain relative z-10 group-hover:rotate-3 transition-all duration-700 rounded-[12px]"
+                  className="max-w-full max-h-full object-contain relative z-10 group-hover:rotate-3 transition-all duration-700"
                   loading="lazy"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "https://fdn2.gsmarena.com/vv/bigpic/smartphone.jpg";
+                  }}
                 />
             </div>
 

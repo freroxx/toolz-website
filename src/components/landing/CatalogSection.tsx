@@ -44,7 +44,7 @@ const CatalogSection = () => {
           </Link>
         </div>
 
-        {/* Clean, simple row of phones - No text, only rounded images */}
+        {/* Clean, simple row of phones - White backgrounds to blend GSMArena assets */}
         <div className="flex justify-center gap-4 overflow-hidden mask-fade-horizontal pb-4">
           {isLoading ? (
             [1, 2, 3, 4, 5, 6].map(i => (
@@ -58,12 +58,12 @@ const CatalogSection = () => {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.05 }}
-                className="w-32 h-44 bg-surface-container-low rounded-[32px] p-3 flex items-center justify-center border border-outline-variant/10 flex-shrink-0"
+                className="w-32 h-44 bg-white rounded-[24px] p-3 flex items-center justify-center border border-white/10 flex-shrink-0 shadow-xl"
               >
                 <img
                   src={dev.image}
                   alt={dev.matched_device}
-                  className="max-w-full max-h-full object-contain rounded-2xl"
+                  className="max-w-full max-h-full object-contain"
                 />
               </motion.div>
             ))
