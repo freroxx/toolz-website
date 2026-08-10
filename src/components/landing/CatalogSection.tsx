@@ -41,9 +41,15 @@ const CatalogSection = () => {
             viewport={{ once: true }}
             className="max-w-2xl text-center lg:text-left"
           >
-            <div className="m3-chip gap-2 bg-primary/10 text-primary border-primary/20 mb-6 py-1.5 px-6">
-              <Database size={14} />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em]">Hardware Index</span>
+            <div className="flex flex-wrap gap-3 justify-center lg:justify-start mb-6">
+              <div className="m3-chip gap-2 bg-primary/10 text-primary border-primary/20 py-1.5 px-6">
+                <Database size={14} />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em]">Hardware Index</span>
+              </div>
+              <div className="m3-chip gap-2 bg-secondary/10 text-secondary border-secondary/20 py-1.5 px-6">
+                <Zap size={14} className="animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em]">Live Redis Sync</span>
+              </div>
             </div>
             <h2 className="m3-display-medium text-on-surface mb-6">
               The world's hardware, <br />

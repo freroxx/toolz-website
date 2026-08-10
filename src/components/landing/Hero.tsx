@@ -1,6 +1,7 @@
-import { Download, Github, ChevronDown, Shield, Zap, Lock, Sparkles } from "lucide-react";
+import { Download, Github, ChevronDown, Shield, Zap, Lock, Sparkles, Smartphone } from "lucide-react";
 import { motion, useScroll, useTransform, AnimatePresence, useSpring } from "framer-motion";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { Link } from "react-router-dom";
 import { useUpdateManifest } from "@/hooks/use-update-manifest";
 
 const allScreenshots = [
@@ -247,8 +248,15 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 className="m3-btn-outlined py-5 px-10 text-lg gap-3 active:scale-95 transition-transform"
               >
                 <Github size={24} />
-                Explore Source
+                Source
               </a>
+              <Link
+                to="/spec"
+                className="m3-btn-tonal py-5 px-10 text-lg gap-3 active:scale-95 transition-transform"
+              >
+                <Smartphone size={24} />
+                Spec Catalog
+              </Link>
             </motion.div>
           </motion.div>
 

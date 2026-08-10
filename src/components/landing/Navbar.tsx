@@ -1,21 +1,22 @@
 import { useState, useEffect, useRef } from "react";
 import { Menu, X, Download, Github } from "lucide-react";
-import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { Link, useLocation } from "react-router-dom";
 import { useUpdateManifest } from "@/hooks/use-update-manifest";
 
 const navLinks = [
-  { label: "Features", href: "#features" },
-  { label: "Showcase", href: "#showcase" },
+  { label: "Features", href: "/#features" },
+  { label: "Showcase", href: "/#showcase" },
   { label: "Specs", href: "/spec" },
-  { label: "Community", href: "#discord" },
+  { label: "Community", href: "/#discord" },
 ];
 
 const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeHref, setActiveHref] = useState("");
-  const indicatorRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
   const { versionName } = useUpdateManifest();
 
   useEffect(() => {
@@ -26,6 +27,8 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
 
   // Active section tracker
   useEffect(() => {
+    if (location.pathname !== "/") return;
+
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -37,11 +40,14 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
       { rootMargin: "-40% 0px -55% 0px" }
     );
     navLinks.forEach(({ href }) => {
-      const el = document.querySelector(href);
-      if (el) observer.observe(el);
+      if (href.startsWith("/#")) {
+        const id = href.replace("/", "");
+        const el = document.querySelector(id);
+        if (el) observer.observe(el);
+      }
     });
     return () => observer.disconnect();
-  }, []);
+  }, [location]);
 
   return (
     <>
@@ -60,8 +66,8 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <a
-              href="#"
+            <Link
+              to="/"
               className="flex items-center gap-3 group active:scale-95 transition-transform"
               aria-label="Toolz home"
             >
@@ -83,22 +89,16 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                   v{versionName} BETA
                 </span>
               </div>
-            </a>
+            </Link>
 
             {/* Desktop Nav with M3 indicator pill */}
             <div ref={navRef} className="hidden md:flex items-center gap-1 relative">
               {navLinks.map((link) => {
-                const isActive = activeHref === link.href;
+                const isActive = (location.pathname === link.href) || (location.pathname === "/" && activeHref === link.href.replace("/", ""));
                 return (
-                  <motion.a
+                  <Link
                     key={link.href}
-                    href={link.href}
-                    whileHover={{
-                      scale: 1.05,
-                      y: -2,
-                      color: "hsl(var(--md-primary))"
-                    }}
-                    whileTap={{ scale: 0.95 }}
+                    to={link.href}
                     className="relative px-5 py-2 rounded-full m3-label-large transition-all duration-300 group"
                     style={{
                       color: isActive
@@ -115,15 +115,7 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                       />
                     )}
                     <span className="relative z-10">{link.label}</span>
-                    {!isActive && (
-                      <motion.div
-                        className="absolute bottom-1.5 left-5 right-5 h-0.5 bg-primary/40 rounded-full origin-left"
-                        initial={{ scaleX: 0 }}
-                        whileHover={{ scaleX: 1 }}
-                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                      />
-                    )}
-                  </motion.a>
+                  </Link>
                 );
               })}
             </div>
