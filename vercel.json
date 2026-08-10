@@ -2,9 +2,14 @@
   "functions": {
     "api/specs.ts": { "maxDuration": 25 },
     "api/devicebot.ts": { "maxDuration": 25 },
-    "api/sync-devices.ts": { "maxDuration": 25 }
+    "api/sync-devices.ts": { "maxDuration": 25 },
+    "api/reset.ts": { "maxDuration": 25 }
   },
   "rewrites": [
+    {
+      "source": "/reset",
+      "destination": "/api/reset"
+    },
     {
       "source": "/api/:path*",
       "destination": "/api/:path*"
