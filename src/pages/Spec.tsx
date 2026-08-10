@@ -89,7 +89,7 @@ const SpecDetailsDialog = ({ device }: { device: SpecPayload }) => {
             <img
               src={device.image || "https://fdn2.gsmarena.com/vv/bigpic/smartphone.jpg"}
               alt={device.matched_device}
-              className="max-w-full max-h-full object-contain"
+              className="max-w-full max-h-full object-contain rounded-[24px]"
               onError={(e) => {
                 (e.target as HTMLImageElement).src = "https://fdn2.gsmarena.com/vv/bigpic/smartphone.jpg";
               }}
@@ -177,8 +177,11 @@ const SpecCard = ({ device }: { device: SpecPayload }) => {
                <img
                   src={device.image || "https://fdn2.gsmarena.com/vv/bigpic/smartphone.jpg"}
                   alt={device.matched_device}
-                  className="max-w-full max-h-full object-contain relative z-10 group-hover:rotate-3 transition-all duration-700"
+                  className="max-w-full max-h-full object-contain relative z-10 group-hover:rotate-3 transition-all duration-700 rounded-[20px]"
                   loading="lazy"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "https://fdn2.gsmarena.com/vv/bigpic/smartphone.jpg";
+                  }}
                 />
             </div>
 
@@ -223,6 +226,11 @@ const SpecPage = () => {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const heroRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to top on enter
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const { scrollYProgress } = useScroll({
     target: heroRef,
@@ -289,15 +297,6 @@ const SpecPage = () => {
 
         {/* Hero */}
         <div ref={heroRef} className="text-center mb-24 space-y-8">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="m3-chip gap-2 bg-primary/10 text-primary border-primary/20 mx-auto py-1.5 px-6"
-          >
-            <Database size={14} />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em]">{data?.totalInRedis || 0} Devices Indexed</span>
-          </motion.div>
-
           <motion.h1
             initial={{ opacity: 0, y: 32 }}
             animate={{ opacity: 1, y: 0 }}
