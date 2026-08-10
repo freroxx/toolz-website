@@ -312,7 +312,7 @@ const SpecPage = () => {
             className="m3-body-large text-on-surface-variant max-w-xl mx-auto opacity-70 leading-relaxed"
           >
             Accurate hardware specifications.
-            Resolved instantly via server-side engine.
+            Resolved instantly via server-side open-source engine.
           </motion.p>
         </div>
 
