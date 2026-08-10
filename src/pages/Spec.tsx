@@ -389,10 +389,6 @@ const SpecPage = () => {
            <div className="m3-divider opacity-10 max-w-lg mx-auto" />
            <div className="flex flex-wrap justify-center gap-12">
               <div className="text-center">
-                 <div className="m3-display-small text-primary font-serif italic">{data?.totalInRedis || 0}</div>
-                 <div className="m3-label-small uppercase tracking-[0.2em] font-black opacity-30 mt-2">Indexed</div>
-              </div>
-              <div className="text-center">
                  <div className="m3-display-small text-secondary font-serif italic">∞</div>
                  <div className="m3-label-small uppercase tracking-[0.2em] font-black opacity-30 mt-2">Scale</div>
               </div>
