@@ -311,7 +311,7 @@ const SpecPage = () => {
             transition={{ delay: 0.2 }}
             className="m3-body-large text-on-surface-variant max-w-xl mx-auto opacity-70 leading-relaxed"
           >
-            High-fidelity hardware specifications. Zero slop, resolved instantly via server-side engine.
+            Accurate hardware specifications. Resolved instantly via server-side engine.
           </motion.p>
         </div>
 
