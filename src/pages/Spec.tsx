@@ -311,8 +311,9 @@ const SpecPage = () => {
             transition={{ delay: 0.2 }}
             className="m3-body-large text-on-surface-variant max-w-xl mx-auto opacity-70 leading-relaxed"
           >
-            Accurate hardware specifications.
+            Accurate hardware specs.
             Resolved instantly via server-side open-source engine.
+            Linked directly to the Toolz Device Info Tool!
           </motion.p>
         </div>
 
