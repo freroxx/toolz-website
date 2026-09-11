@@ -57,8 +57,6 @@ const BRANDS = [
   "Apple",
   "Google",
   "Xiaomi",
-  "Redmi",
-  "Poco",
   "OnePlus",
   "Nothing",
   "Motorola",
@@ -105,6 +103,14 @@ function getBrand(deviceName: string): string {
     lg: "LG",
   };
   return map[raw] ?? m[1];
+}
+
+// Redmi and Poco are Xiaomi sub-brands, so they show under the Xiaomi filter.
+const XIAOMI_FAMILY = new Set(["Xiaomi", "Redmi", "Poco"]);
+
+function brandMatchesFilter(brand: string, filter: string): boolean {
+  if (filter === "Xiaomi") return XIAOMI_FAMILY.has(brand);
+  return brand === filter;
 }
 
 function getDisplaySummary(device: SpecPayload): string {
@@ -664,13 +670,17 @@ const SpecPage = () => {
     devices.forEach((d) => {
       const b = getBrand(d.matched_device);
       counts.set(b, (counts.get(b) ?? 0) + 1);
+      // Roll sub-brand counts up into the Xiaomi chip.
+      if (b === "Redmi" || b === "Poco") {
+        counts.set("Xiaomi", (counts.get("Xiaomi") ?? 0) + 1);
+      }
     });
     return counts;
   }, [devices]);
 
   const filteredDevices = useMemo(() => {
     if (filter === "All") return devices;
-    return devices.filter((dev) => getBrand(dev.matched_device) === filter);
+    return devices.filter((dev) => brandMatchesFilter(getBrand(dev.matched_device), filter));
   }, [devices, filter]);
 
   const compareDevices = useMemo(
