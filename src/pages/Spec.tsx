@@ -768,12 +768,14 @@ const SpecPage = () => {
               <Search size={19} />
             </div>
             <input
-              type="search"
+              type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search model name… e.g. Galaxy S24, Pixel 9"
               enterKeyHint="search"
-              className="h-14 w-full rounded-full border border-outline-variant/20 bg-surface-container-high pl-12 pr-12 text-[15px] text-on-surface outline-none transition-all placeholder:text-on-surface-variant/45 focus:border-primary/50 focus:ring-4 focus:ring-primary/15"
+              autoComplete="off"
+              spellCheck={false}
+              className="h-14 w-full rounded-full border border-outline-variant/20 bg-surface-container-high pl-12 pr-12 text-[15px] text-on-surface outline-none transition-all [appearance:textfield] placeholder:text-on-surface-variant/45 focus:border-primary/50 focus:ring-4 focus:ring-primary/15 [&::-webkit-search-cancel-button]:hidden"
             />
             <div className="absolute right-4 top-1/2 flex -translate-y-1/2 items-center gap-2">
               {isFetching && (
