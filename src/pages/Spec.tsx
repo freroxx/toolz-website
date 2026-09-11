@@ -74,6 +74,9 @@ const BRANDS = [
 const BRAND_PATTERN =
   /^(samsung|apple|google|xiaomi|redmi|poco|oneplus|nothing|motorola|oppo|vivo|realme|honor|huawei|sony|asus|infinix|tecno|nokia|lenovo|lg)/i;
 
+// Devices rendered per page in the catalog grid.
+const PAGE_SIZE = 30;
+
 function getBrand(deviceName: string): string {
   const m = deviceName.trim().match(BRAND_PATTERN);
   if (!m) return "Other";
@@ -314,12 +317,7 @@ const SpecCard = ({
 
   return (
     <>
-      <motion.article
-        layout
-        initial={{ opacity: 0, y: 16 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-40px" }}
-        transition={{ duration: 0.35 }}
+      <article
         className={cn(
           "group relative flex h-full flex-col overflow-hidden rounded-[20px] border bg-surface-container transition-colors duration-300 sm:rounded-[28px]",
           compareSelected
@@ -401,7 +399,7 @@ const SpecCard = ({
             Details
           </button>
         </div>
-      </motion.article>
+      </article>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <SpecDetailsDialog
@@ -636,6 +634,9 @@ const SpecPage = () => {
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [compareOpen, setCompareOpen] = useState(false);
   const [diffOnly, setDiffOnly] = useState(false);
+  // Paged rendering: mounting 700+ cards at once is what caused the lag.
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -682,6 +683,33 @@ const SpecPage = () => {
     if (filter === "All") return devices;
     return devices.filter((dev) => brandMatchesFilter(getBrand(dev.matched_device), filter));
   }, [devices, filter]);
+
+  // Reset paging whenever the result set changes.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [debouncedSearch, filter, data]);
+
+  const visibleDevices = useMemo(
+    () => filteredDevices.slice(0, visibleCount),
+    [filteredDevices, visibleCount]
+  );
+  const hasMore = visibleCount < filteredDevices.length;
+
+  // Auto-load the next page when the sentinel scrolls into view.
+  useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el || !hasMore) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount((c) => Math.min(c + PAGE_SIZE, filteredDevices.length));
+        }
+      },
+      { rootMargin: "800px 0px" }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasMore, filteredDevices.length]);
 
   const compareDevices = useMemo(
     () =>
@@ -830,7 +858,11 @@ const SpecPage = () => {
         <div className="mb-4 flex flex-wrap items-center gap-2 px-1 sm:mb-6">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-container-high px-3.5 py-1.5 text-xs font-semibold text-on-surface-variant">
             <Smartphone size={13} className="text-primary" />
-            {isLoading ? "Loading…" : `${filteredDevices.length} device${filteredDevices.length === 1 ? "" : "s"}`}
+            {isLoading
+              ? "Loading…"
+              : filteredDevices.length > PAGE_SIZE
+                ? `Showing ${visibleDevices.length} of ${filteredDevices.length}`
+                : `${filteredDevices.length} device${filteredDevices.length === 1 ? "" : "s"}`}
             {filter !== "All" && ` · ${filter}`}
           </span>
           {compareIds.length > 0 && (
@@ -862,17 +894,35 @@ const SpecPage = () => {
               ))}
             </div>
           ) : filteredDevices.length > 0 ? (
-            <motion.div layout className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3 lg:gap-8">
-              {filteredDevices.map((dev) => (
-                <SpecCard
-                  key={dev.matched_device}
-                  device={dev}
-                  compareSelected={compareIds.includes(dev.matched_device)}
-                  compareDisabled={compareFull && !compareIds.includes(dev.matched_device)}
-                  onToggleCompare={() => toggleCompare(dev.matched_device)}
-                />
-              ))}
-            </motion.div>
+            <>
+              <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3 lg:gap-8">
+                {visibleDevices.map((dev) => (
+                  <SpecCard
+                    key={dev.matched_device}
+                    device={dev}
+                    compareSelected={compareIds.includes(dev.matched_device)}
+                    compareDisabled={compareFull && !compareIds.includes(dev.matched_device)}
+                    onToggleCompare={() => toggleCompare(dev.matched_device)}
+                  />
+                ))}
+              </div>
+              {hasMore && (
+                <div ref={loadMoreRef} className="flex flex-col items-center gap-3 pt-10">
+                  {isFetching ? (
+                    <span className="h-6 w-6 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+                  ) : (
+                    <button
+                      onClick={() =>
+                        setVisibleCount((c) => Math.min(c + PAGE_SIZE, filteredDevices.length))
+                      }
+                      className="rounded-full bg-surface-container-high px-8 py-3.5 text-[13px] font-bold text-on-surface transition-all hover:bg-primary hover:text-white active:scale-95"
+                    >
+                      Show more ({filteredDevices.length - visibleDevices.length} left)
+                    </button>
+                  )}
+                </div>
+              )}
+            </>
           ) : (
             <div className="space-y-3 px-4 py-24 text-center sm:py-32">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-surface-container-high text-on-surface-variant/40">
