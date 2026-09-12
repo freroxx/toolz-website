@@ -53,7 +53,22 @@ const pillBadges = [
 const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
   const [imgIndex, setImgIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  // Slides the phone mockup off to the left on scroll-down, back on scroll-up.
+  const [phoneHidden, setPhoneHidden] = useState(false);
+  const lastScrollY = useRef(0);
   const heroRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY;
+      const prev = lastScrollY.current;
+      if (y > prev + 4 && y > 80) setPhoneHidden(true);
+      else if (y < prev - 4) setPhoneHidden(false);
+      lastScrollY.current = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const { versionName } = useUpdateManifest();
 
@@ -264,6 +279,11 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
             transition={{ delay: 0.4, type: "spring", stiffness: 80, damping: 20, mass: 1.2 }}
             className="flex-shrink-0 relative group mt-8 lg:mt-0"
           >
+            {/* Scroll-direction slide: exits left on scroll-down, returns on scroll-up */}
+            <motion.div
+              animate={{ x: phoneHidden ? "-110vw" : "0vw", opacity: phoneHidden ? 0 : 1 }}
+              transition={{ type: "spring", stiffness: 70, damping: 22, mass: 1.1 }}
+            >
             {/* Glow behind phone */}
             <div
               className="absolute inset-0 -m-20 sm:-m-32 rounded-full blur-[80px] sm:blur-[140px] opacity-40 pointer-events-none transition-all duration-1000 group-hover:opacity-60"
@@ -328,19 +348,8 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 />
               </div>
 
-              {/* Screenshot counter chip */}
-              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                <motion.div
-                  layoutId="counter"
-                  className="m3-chip text-xs bg-surface-container-high/90 backdrop-blur-xl border-outline-variant/30 py-1.5 px-4 shadow-xl flex items-center gap-2"
-                >
-                  <Sparkles size={12} className="text-primary" />
-                  <span className="text-on-surface-variant font-medium tracking-wide">
-                    Module <span className="text-primary font-bold">{imgIndex + 1}</span>
-                  </span>
-                </motion.div>
-              </div>
             </div>
+            </motion.div>
           </motion.div>
         </div>
 
