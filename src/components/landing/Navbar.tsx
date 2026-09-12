@@ -5,8 +5,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useUpdateManifest } from "@/hooks/use-update-manifest";
 
 const navLinks = [
-  { label: "Features", href: "/#features" },
-  { label: "Showcase", href: "/#showcase" },
+  { label: "Tools", href: "/#features" },
   { label: "Specs", href: "/spec" },
   { label: "Community", href: "/#discord" },
 ];

@@ -1,9 +1,8 @@
 import { useState } from "react";
 import Navbar from "@/components/landing/Navbar";
 import Hero from "@/components/landing/Hero";
-import Features from "@/components/landing/Features";
+import ToolCatalog from "@/components/landing/ToolCatalog";
 import CatalogSection from "@/components/landing/CatalogSection";
-import Showcase from "@/components/landing/Showcase";
 import Gallery from "@/components/landing/Gallery";
 import Discord from "@/components/landing/Discord";
 import HowItWorks from "@/components/landing/HowItWorks";
@@ -20,8 +19,7 @@ const Index = () => {
       <main className="relative">
         <Hero onDownloadClick={() => setDownloadOpen(true)} />
         <div className="relative z-10 bg-surface">
-          <Features />
-          <Showcase />
+          <ToolCatalog />
           <Gallery />
           <HowItWorks />
           <CTA onDownloadClick={() => setDownloadOpen(true)} />
