@@ -1,47 +1,88 @@
-import { Shield, Lock, RefreshCw, HardDrive, Bell, Settings, Clock, Sparkles } from "lucide-react";
+import {
+  Clock,
+  Music,
+  Shield,
+  Compass,
+  Flashlight,
+  Calculator,
+  Cpu,
+  Sparkles,
+  MessageSquare,
+  ArrowRight,
+} from "lucide-react";
 import { motion } from "framer-motion";
 
-const features = [
+interface Category {
+  id: string;
+  icon: typeof Clock;
+  name: string;
+  tools: string[];
+  color: "primary" | "secondary" | "tertiary";
+}
+
+// Real groups from the Toolz app: 48+ tools in 9 categories.
+const categories: Category[] = [
   {
+    id: "time",
     icon: Clock,
-    title: "Time & Productivity",
-    tag: "Essential",
-    desc: "Countdown engines, high-resolution stopwatches, and Pomodoro focus cycles with background persistence.",
+    name: "Time & Productivity",
+    tools: ["Timer", "Stopwatch", "Pomodoro", "World Clock", "Calendar", "Todo List", "Caffeinate", "Focus Flow"],
     color: "primary",
   },
   {
-    icon: Lock,
-    title: "Security & Privacy",
-    tag: "Hardened",
-    desc: "SQLCipher-encrypted password vault and notifications. Core tools work 100% offline.",
+    id: "media",
+    icon: Music,
+    name: "Media & PDF",
+    tools: ["Music Player", "Voice Recorder", "File Converter", "PDF Reader", "Background Remover", "File Cleaner", "Sound Meter"],
     color: "secondary",
   },
   {
-    icon: RefreshCw,
-    title: "Media & PDF",
-    tag: "Utility",
-    desc: "FFmpeg-powered media conversion and studio-quality recording. Native PDF viewer with extraction.",
+    id: "security",
+    icon: Shield,
+    name: "Security & Privacy",
+    tools: ["Password Vault", "Password Generator", "Clipboard History", "Notification Vault", "Smart Encrypter", "Purge Shot"],
     color: "tertiary",
   },
   {
-    icon: HardDrive,
-    title: "Device & System",
-    tag: "Advanced",
-    desc: "Deep hardware diagnostics, storage management, and network optimization tools.",
+    id: "sensors",
+    icon: Compass,
+    name: "Sensors & Navigation",
+    tools: ["Compass", "Bubble Level", "Speedometer", "Altimeter", "Step Counter", "Ruler", "Color Picker"],
     color: "primary",
   },
   {
-    icon: Bell,
-    title: "Notification History",
-    tag: "Privacy",
-    desc: "A searchable local log of all system notifications. Audit privacy and retrieve deleted messages.",
+    id: "light",
+    icon: Flashlight,
+    name: "Light & Optics",
+    tools: ["Flashlight", "Screen Light", "Magnifier", "Scanner", "QR Generator", "Light Meter"],
     color: "secondary",
   },
   {
+    id: "math",
+    icon: Calculator,
+    name: "Math & Conversion",
+    tools: ["Calculator", "Unit Converter", "Tip Calculator", "BMI Calculator", "Equation Solver"],
+    color: "tertiary",
+  },
+  {
+    id: "device",
+    icon: Cpu,
+    name: "Device & System",
+    tools: ["Device Info", "Battery Info", "Periodic Table", "Flip Coin", "Network Tweaks", "Network Power Suite"],
+    color: "primary",
+  },
+  {
+    id: "ai",
     icon: Sparkles,
-    title: "AI Utilities",
-    tag: "Smart",
-    desc: "Optional conversational agents for document summaries and contextual search guidance.",
+    name: "AI & Utilities",
+    tools: ["AI Assistant", "Smart Search", "Web Search", "Notepad"],
+    color: "secondary",
+  },
+  {
+    id: "messaging",
+    icon: MessageSquare,
+    name: "Messaging",
+    tools: ["Whisper (beta)"],
     color: "tertiary",
   },
 ];
@@ -65,28 +106,18 @@ const colorMap = {
     chip: "hsl(var(--md-tertiary) / 0.12)",
     chipText: "hsl(var(--md-tertiary))",
   },
-};
+} as const;
 
-const containerVariants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.1 } },
-};
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 40, scale: 0.95 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { type: "spring", stiffness: 200, damping: 25 },
-  },
+const openInExplorer = (id: string) => {
+  window.dispatchEvent(new CustomEvent("toolz:select-category", { detail: id }));
+  document.getElementById("showcase")?.scrollIntoView({ behavior: "smooth", block: "start" });
 };
 
 const Features = () => {
   return (
     <section
       id="features"
-      className="py-32 relative overflow-hidden"
+      className="py-20 md:py-32 relative overflow-hidden"
       style={{ background: "hsl(var(--md-surface))" }}
     >
       {/* Background accent */}
@@ -104,105 +135,100 @@ const Features = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
           transition={{ type: "spring", stiffness: 200, damping: 25 }}
-          className="text-center mb-12 md:mb-20"
+          className="text-center mb-10 md:mb-16"
         >
-          <div className="m3-chip inline-flex mb-6">Precision Modules</div>
+          <div className="m3-chip inline-flex mb-5 md:mb-6">Inside the app</div>
           <h2
-            className="m3-display-medium text-3xl md:text-5xl lg:text-6xl mb-6"
+            className="m3-display-medium text-3xl md:text-5xl lg:text-6xl mb-4 md:mb-6"
             style={{ color: "hsl(var(--md-on-surface))" }}
           >
-            Everything you{" "}
-            <span
-              style={{
-                background: "linear-gradient(135deg, hsl(var(--md-primary)), hsl(var(--md-tertiary)))",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
-              need
-            </span>
-            ,<br />nothing you don't.
+            48+ tools. 9 groups. One app.
           </h2>
           <p
-            className="m3-body-large max-w-xl mx-auto px-4"
+            className="m3-body-large max-w-xl mx-auto px-2 text-[15px] md:text-lg"
             style={{ color: "hsl(var(--md-on-surface-variant))" }}
           >
-            A massive library of 45+ precision instruments. Zero bloat, zero cloud, zero compromise.
+            One APK for Android 12 and up. Core tools run offline, and vault
+            data stays encrypted on your device. No ads, no tracking.
           </p>
         </motion.div>
 
-        {/* Feature cards grid */}
+        {/* Category cards */}
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 lg:gap-6"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5"
+          initial={{ opacity: 0, y: 32 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-60px" }}
+          transition={{ type: "spring", stiffness: 160, damping: 26 }}
         >
-          {features.map((feature, i) => {
-            const colors = colorMap[feature.color as keyof typeof colorMap];
-            const Icon = feature.icon;
+          {categories.map((cat) => {
+            const colors = colorMap[cat.color];
+            const Icon = cat.icon;
             return (
-              <motion.div
-                key={i}
-                variants={cardVariants}
-                className="m3-card-filled p-6 md:p-8 flex flex-col gap-5 md:gap-6 group cursor-default"
-                whileHover={{ y: -4, scale: 1.01 }}
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              <article
+                key={cat.id}
+                className="m3-card-filled p-5 md:p-7 flex flex-col gap-4 md:gap-5"
               >
-                {/* Icon + tag row */}
-                <div className="flex items-start justify-between">
+                {/* Icon + count row */}
+                <div className="flex items-center justify-between">
                   <div
-                    className="w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-lg"
+                    className="w-11 h-11 md:w-14 md:h-14 rounded-2xl flex items-center justify-center shadow-lg p-3"
                     style={{ background: colors.container }}
                   >
                     <Icon className="w-5 h-5 md:w-6 md:h-6" style={{ color: colors.icon }} />
                   </div>
-                  <div
-                    className="m3-label-small px-3 py-1 rounded-full text-[10px] md:text-xs"
-                    style={{
-                      background: colors.chip,
-                      color: colors.chipText,
-                    }}
-                  >
-                    {feature.tag}
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="flex flex-col gap-2">
-                  <h3
-                    className="m3-title-large text-xl md:text-2xl"
-                    style={{ color: "hsl(var(--md-on-surface))" }}
-                  >
-                    {feature.title}
-                  </h3>
-                  <p
-                    className="m3-body-medium text-sm md:text-base leading-relaxed opacity-80"
-                    style={{ color: "hsl(var(--md-on-surface-variant))" }}
-                  >
-                    {feature.desc}
-                  </p>
-                </div>
-
-                {/* Status indicator */}
-                <div
-                  className="flex items-center gap-2 mt-auto pt-4 border-t opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                  style={{ borderColor: "hsl(var(--md-outline-variant))" }}
-                >
                   <span
-                    className="w-2 h-2 rounded-full animate-pulse"
-                    style={{ background: colors.chipText }}
-                  />
-                  <span className="m3-label-small" style={{ color: "hsl(var(--md-on-surface-variant))" }}>
-                    Active
+                    className="m3-label-small px-3 py-1.5 rounded-full text-[11px] md:text-xs font-bold tabular-nums"
+                    style={{ background: colors.chip, color: colors.chipText }}
+                  >
+                    {cat.tools.length} tool{cat.tools.length === 1 ? "" : "s"}
                   </span>
                 </div>
-              </motion.div>
+
+                {/* Name */}
+                <h3
+                  className="m3-title-large text-lg md:text-xl"
+                  style={{ color: "hsl(var(--md-on-surface))" }}
+                >
+                  {cat.name}
+                </h3>
+
+                {/* Tool names */}
+                <div className="flex flex-wrap gap-1.5 md:gap-2">
+                  {cat.tools.map((tool) => (
+                    <span
+                      key={tool}
+                      className="px-2.5 py-1 md:px-3 md:py-1.5 rounded-full text-[11px] md:text-xs font-medium"
+                      style={{
+                        background: "hsl(var(--md-surface-container-highest))",
+                        color: "hsl(var(--md-on-surface-variant))",
+                      }}
+                    >
+                      {tool}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Jump to explorer */}
+                <button
+                  onClick={() => openInExplorer(cat.id)}
+                  className="mt-auto pt-1 inline-flex items-center gap-1.5 text-[13px] md:text-sm font-bold self-start active:scale-95 transition-transform"
+                  style={{ color: colors.chipText }}
+                >
+                  What each one does
+                  <ArrowRight size={15} />
+                </button>
+              </article>
             );
           })}
         </motion.div>
+
+        <p
+          className="text-center mt-8 md:mt-10 text-[13px] md:text-sm"
+          style={{ color: "hsl(var(--md-on-surface-variant) / 0.7)" }}
+        >
+          Plus homescreen widgets and Quick Settings tiles for flashlight, notes, steps, music and more.
+        </p>
       </div>
     </section>
   );
