@@ -78,7 +78,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
  * catalog within ~1h (CDN) or immediately via Settings → Refresh models.
  */
 
-const CATALOG_VERSION = 1;
+const CATALOG_VERSION = 2;
 const UPDATED_AT = '2026-09-13';
 
 interface ProviderCatalog {
@@ -137,11 +137,11 @@ const PROVIDERS: ProviderCatalog[] = [
     description:
       "Google's fast multimodal assistant. Class-leading context window lengths and strong speed. Flash-Lite is free-tier friendly.",
     tutorial: [
-      'Go to Google AI Studio (aistudio.google.com)',
-      'Sign in with your Google Account',
+      'Open Google AI Studio (aistudio.google.com) and sign in with your Google account',
       "Click 'Get API key' in the left sidebar",
-      "Click 'Create API key in new project'",
-      'Copy the key and paste it here',
+      "Click 'Create API key', then pick or create a Google Cloud project",
+      'Copy the key (starts with AIza...) and paste it here',
+      'Free tier is generous and needs no credit card; if a key stops working, just create a fresh one',
     ],
   },
 
@@ -181,11 +181,12 @@ const PROVIDERS: ProviderCatalog[] = [
     description:
       "OpenAI's latest GPT-5 and o-series models, providing industry-leading reasoning and generation.",
     tutorial: [
-      'Go to OpenAI Platform (platform.openai.com)',
-      'Sign in or create an account',
-      "Navigate to 'API Keys' in the dashboard",
-      "Click '+ Create new secret key'",
-      'Copy your key immediately because it will not be shown again',
+      'Open platform.openai.com and sign in (or create an account)',
+      'Add billing: Settings → Billing → payment method (API usage is pay-as-you-go, separate from a Plus subscription)',
+      "Open the API Keys page (platform.openai.com/api-keys)",
+      "Click '+ Create new secret key', name it Toolz",
+      'Copy the key NOW (starts with sk-...) — it is never shown again — and paste it here',
+      'Optional: cap spending under Billing → Limits',
     ],
   },
 
@@ -253,11 +254,11 @@ const PROVIDERS: ProviderCatalog[] = [
     description:
       'Extremely low-latency inference using LPUs. Free dev tier. NOTE: llama-4 / mixtral / llama-3.1-instant IDs were retired — use openai/gpt-oss-20b.',
     tutorial: [
-      'Go to Groq Console (console.groq.com)',
-      'Sign in with your account',
-      "Click 'API Keys' in the sidebar",
-      "Click 'Create API Key' and name it 'Toolz'",
-      'Copy the generated key',
+      'Open console.groq.com and sign in (Google or GitHub works)',
+      "Open 'API Keys' in the left sidebar",
+      "Click 'Create API Key', name it Toolz, Submit",
+      'Copy the key (starts with gsk_...) and paste it here — free tier, no card needed',
+      'Free tier has daily request limits that reset automatically; on 429 errors wait a bit or pick a lighter model',
     ],
   },
 
@@ -294,11 +295,11 @@ const PROVIDERS: ProviderCatalog[] = [
     description:
       "Anthropic's 4/5-series models offering top-tier writing, coding, reasoning, and enormous context.",
     tutorial: [
-      'Go to Anthropic Console (console.anthropic.com)',
-      'Sign in or create an account',
-      "Go to 'Settings' -> 'API Keys'",
-      "Click 'Create Key' and name it 'Toolz'",
-      'Copy the key and paste it above',
+      'Open console.anthropic.com and sign in (or create an account)',
+      'Add billing: Settings → Billing → add a card (API is pay-as-you-go)',
+      "Go to Settings → API Keys (console.anthropic.com/settings/keys)",
+      "Click 'Create Key' and name it Toolz",
+      'Copy the key (starts with sk-ant-...) and paste it here',
     ],
   },
 
@@ -329,11 +330,11 @@ const PROVIDERS: ProviderCatalog[] = [
     description:
       'Powerful and extremely cost-efficient open-source models with top-tier math and coding. deepseek-chat is free to start.',
     tutorial: [
-      'Go to DeepSeek Platform (platform.deepseek.com)',
-      'Sign in or create an account',
-      "Navigate to 'API Keys' in the sidebar",
-      "Click 'Create API Key'",
-      'Copy the key and paste it here',
+      'Open platform.deepseek.com and sign in (or create an account)',
+      'Top up a small balance — usage is pay-per-use and very cheap',
+      "Open 'API Keys' in the sidebar (platform.deepseek.com/api_keys)",
+      "Click 'Create API Key' and name it Toolz",
+      'Copy the key (starts with sk-...) and paste it here',
     ],
   },
 
@@ -399,11 +400,11 @@ const PROVIDERS: ProviderCatalog[] = [
     description:
       'A universal API hub that gives you a single place to access almost any model. Models ending in :free cost $0.',
     tutorial: [
-      'Go to OpenRouter (openrouter.ai)',
-      'Sign in or create an account',
-      "Navigate to 'Keys' in your settings",
-      "Click 'Create Key'",
-      'Copy the key and paste it here',
+      'Open openrouter.ai and sign in (Google or GitHub works)',
+      'Optional: add credits for paid models — models ending in :free work with zero balance',
+      "Open Keys (openrouter.ai/keys)",
+      "Click 'Create Key' and name it Toolz",
+      'Copy the key (starts with sk-or-...) and paste it here',
     ],
   },
 
@@ -478,11 +479,11 @@ const PROVIDERS: ProviderCatalog[] = [
     description:
       'Curated gateway by the OpenCode team (opencode.ai/zen). Pay-as-you-go + several FREE models (Big Pickle, MiMo-V2.5 Free, Muse Spark Contributor Free). OpenAI-compatible: https://opencode.ai/zen/v1/chat/completions',
     tutorial: [
-      'Go to OpenCode Zen (opencode.ai/auth)',
-      'Sign in and add billing details / credits',
-      'Copy your Zen API key',
-      'Paste it here — free models like mimo-v2.5-free & muse-spark-1.3-contributor-free cost $0',
-      'Pick a model and chat',
+      'Open opencode.ai/auth and sign in',
+      'Add billing details / buy credits (pay-as-you-go; the FREE models cost $0)',
+      'Copy your API key from the dashboard and paste it here',
+      'Pick a FREE model to start: muse-spark-1.3-contributor-free, mimo-v2.5-free or big-pickle',
+      'Track usage in the same dashboard; enable balance fallback to keep going past Go limits',
     ],
   },
 
@@ -539,11 +540,11 @@ const PROVIDERS: ProviderCatalog[] = [
     description:
       'Low-cost $10/mo subscription for reliable open coding models (GLM, Kimi, DeepSeek V4, Qwen, Muse Spark). OpenAI-compatible: https://opencode.ai/zen/go/v1/chat/completions',
     tutorial: [
-      'Go to OpenCode Zen console (opencode.ai/auth)',
-      'Subscribe to OpenCode Go ($10/month)',
-      'Copy your Go API key',
-      'Paste it here',
+      'Open opencode.ai/auth and sign in',
+      'Subscribe to OpenCode Go ($10/month) — one subscription per workspace',
+      'Copy your Go API key from the dashboard and paste it here',
       'Pick a Go model (e.g. glm-5.3-flash) and chat',
+      'Watch the 5-hour / weekly / monthly usage meters in the console so caps never surprise you',
     ],
   },
 ];
