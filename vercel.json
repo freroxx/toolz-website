@@ -5,7 +5,8 @@
     "api/devicebot.ts": { "maxDuration": 25 },
     "api/sync-devices.ts": { "maxDuration": 25 },
     "api/reset.ts": { "maxDuration": 25 },
-    "api/info.ts": { "maxDuration": 10 }
+    "api/info.ts": { "maxDuration": 10 },
+    "api/models.ts": { "maxDuration": 10 }
   },
   "rewrites": [
     {
