@@ -18,6 +18,7 @@ export default function AdminNews() {
   const [editing, setEditing] = useState<NewsItem | null>(null);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [saveNote, setSaveNote] = useState<{ live: boolean; reason: string } | null>(null);
 
   useEffect(() => {
     restore().catch(() => {});
@@ -78,6 +79,11 @@ export default function AdminNews() {
       </div>
 
       {err && <div className="mb-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-300">{err}</div>}
+      {saveNote && (
+        <div className={`mb-4 rounded-2xl border px-4 py-3 text-sm font-semibold ${saveNote.live ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-amber-500/30 bg-amber-500/10 text-amber-200'}`}>
+          {saveNote.live ? 'Saved — LIVE on /news (visible within ~5 min).' : `Saved — NOT live on /news: ${saveNote.reason}.`}
+        </div>
+      )}
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <Tabs value={tab} onValueChange={setTab}>
@@ -116,7 +122,13 @@ export default function AdminNews() {
       />
 
       <h2 className="mb-3 mt-10 text-lg font-extrabold">Feed check</h2>
-      <NewsFeedCheck onCheck={feedHealth} />
+      <NewsFeedCheck
+        onCheck={feedHealth}
+        onRepair={async () => {
+          const data = await mutate('repair-index', {});
+          return { removed: Number((data as Record<string, unknown>).removed ?? 0) };
+        }}
+      />
 
       <h2 className="mb-3 mt-10 text-lg font-extrabold">Audit log</h2>
       <NewsAuditLog audit={audit} />
@@ -129,9 +141,13 @@ export default function AdminNews() {
         onUploadImage={uploadImage}
         onSave={async (form) => {
           setSaving(true);
+          setSaveNote(null);
           try {
-            if (editing && editing.id) await mutate('update', { id: editing.id, patch: form });
-            else await mutate('create', { item: form });
+            let res: Record<string, unknown>;
+            if (editing && editing.id) res = (await mutate('update', { id: editing.id, patch: form })) as Record<string, unknown>;
+            else res = (await mutate('create', { item: form })) as Record<string, unknown>;
+            const vis = res.visibility as { liveOnPublicFeed?: boolean; reason?: string } | undefined;
+            if (vis) setSaveNote({ live: !!vis.liveOnPublicFeed, reason: String(vis.reason ?? '') });
             setEditorOpen(false);
           } finally {
             setSaving(false);

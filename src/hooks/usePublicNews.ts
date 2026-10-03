@@ -16,7 +16,9 @@ export function usePublicNews() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/news?all=1');
+        // no-store: a heuristically-cached empty feed once made /news look
+        // permanently empty; this payload is tiny, freshness wins.
+        const res = await fetch('/api/news?all=1', { cache: 'no-store' });
         const data = (await res.json().catch(() => null)) as { news?: NewsItem[]; degraded?: boolean } | null;
         if (cancelled) return;
         if (!res.ok || !data || !Array.isArray(data.news) || data.degraded) {

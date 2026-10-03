@@ -17,12 +17,16 @@ export interface FeedHealthData {
  */
 export function NewsFeedCheck({
   onCheck,
+  onRepair,
 }: {
   onCheck: () => Promise<FeedHealthData>;
+  onRepair: () => Promise<{ removed: number }>;
 }) {
   const [data, setData] = useState<FeedHealthData | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
+  const [repairing, setRepairing] = useState(false);
+  const [repaired, setRepaired] = useState<number | null>(null);
 
   return (
     <Card className="rounded-[24px]">
@@ -53,10 +57,36 @@ export function NewsFeedCheck({
         <Button size="sm" variant="ghost" className="rounded-full" onClick={() => window.open('/api/news?all=1', '_blank')}>
           Public JSON
         </Button>
+        {(data?.orphanIds.length ?? 0) > 0 && (
+          <Button
+            size="sm"
+            variant="destructive"
+            className="rounded-full"
+            disabled={repairing}
+            onClick={async () => {
+              setRepairing(true);
+              setErr(null);
+              try {
+                const r = await onRepair();
+                setRepaired(r.removed);
+                setData(await onCheck());
+              } catch (e) {
+                setErr(e instanceof Error ? e.message : 'Repair failed');
+              } finally {
+                setRepairing(false);
+              }
+            }}
+          >
+            {repairing ? 'Repairing…' : `Repair index (${data?.orphanIds.length})`}
+          </Button>
+        )}
       </CardHeader>
       {(err || data) && (
         <CardContent className="grid gap-2 text-sm">
           {err && <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 font-semibold text-red-300">{err}</div>}
+          {repaired !== null && !err && (
+            <p className="text-emerald-300">Removed {repaired} orphan index {repaired === 1 ? 'entry' : 'entries'}.</p>
+          )}
           {data && (
             <>
               <div className="flex flex-wrap gap-2">

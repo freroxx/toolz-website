@@ -411,7 +411,7 @@ export function NewsEditorDialog({
                 />
               </div>
               {form.imageUrl && (
-                <img src={form.imageUrl} alt="" loading="lazy" className="max-h-40 w-full rounded-2xl object-cover" />
+                <img src={form.imageUrl} alt="" loading="lazy" className="max-h-64 w-full rounded-2xl object-contain" />
               )}
               <p className="text-xs text-muted-foreground">Images are downscaled in-browser (max 1600px, JPEG) then hosted on imgbb.</p>
             </div>

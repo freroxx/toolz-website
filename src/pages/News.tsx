@@ -149,7 +149,7 @@ const News = () => {
                   {n.title}
                 </h2>
                 {n.imageUrl && (
-                  <img src={n.imageUrl} alt="" loading="lazy" className="w-full max-h-80 object-cover rounded-2xl mb-4" />
+                  <img src={n.imageUrl} alt="" loading="lazy" className="w-full h-auto rounded-2xl mb-4" />
                 )}
                 <div className="m3-body-large" style={{ color: "hsl(var(--md-on-surface-variant))" }}>
                   <NewsBody body={n.body} />

@@ -122,7 +122,7 @@ const NewsSection = () => {
                         src={n.imageUrl}
                         alt=""
                         loading="lazy"
-                        className="w-full aspect-video object-cover rounded-2xl mb-4"
+                        className="w-full h-auto rounded-2xl mb-4"
                       />
                     )}
                     <div

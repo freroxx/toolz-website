@@ -433,6 +433,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json(await feedHealth(redis));
   }
 
+  // Remove index members whose payload is gone (failed/partial writes).
+  if (action === 'repair-index' && req.method === 'POST') {
+    const ids = (await redis.zrange<string[]>('news:index', 0, -1)) ?? [];
+    const orphans: string[] = [];
+    for (let i = 0; i < ids.length; i += 20) {
+      const pipe = redis.pipeline();
+      for (const id of ids.slice(i, i + 20)) pipe.get(`news:item:${id}`);
+      const chunk = await pipe.exec();
+      const slice = ids.slice(i, i + 20);
+      (chunk as unknown[]).forEach((r, j) => {
+        const v = (r as { result?: unknown })?.result ?? r;
+        if (!v) orphans.push(slice[j]);
+      });
+    }
+    if (orphans.length > 0) {
+      for (let i = 0; i < orphans.length; i += 100) {
+        await redis.zrem('news:index', ...orphans.slice(i, i + 100));
+      }
+    }
+    await audit(redis, ip, 'repair-index');
+    return res.status(200).json({ ok: true, removed: orphans.length, orphans });
+  }
+
   const hosts = await allowedHosts(redis);
 
   if (action === 'create' && req.method === 'POST') {
@@ -445,7 +468,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const score = pubRaw ? Date.parse(String(pubRaw)) : Date.parse(now);
     await redis.zadd('news:index', { score: Number.isFinite(score) ? score : Date.now(), member: String(full.id) });
     await audit(redis, ip, 'create', String(full.id));
-    return res.status(200).json({ ok: true, item: full });
+    const created = verdictFor(full);
+    return res.status(200).json({ ok: true, item: full, visibility: created });
   }
 
   if ((action === 'update' || action === 'publish' || action === 'unpublish' || action === 'archive') && req.method === 'POST') {
@@ -466,7 +490,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const nextPub = next.publishAt as string | null;
     if (nextPub) await redis.zadd('news:index', { score: Date.parse(String(nextPub)), member: id });
     await audit(redis, ip, action, id);
-    return res.status(200).json({ ok: true, item: next });
+    const updated = verdictFor(next);
+    return res.status(200).json({ ok: true, item: next, visibility: updated });
   }
 
   if (action === 'delete' && req.method === 'POST') {

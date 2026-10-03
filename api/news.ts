@@ -104,7 +104,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Status + time window always apply.
   const allVersions = req.query.all === '1';
   if (!preview) {
-    res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+    // Explicit browser max-age: without it, browsers may heuristically cache
+    // an empty feed far beyond s-maxage and /news looks permanently empty.
+    res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
   } else {
     res.setHeader('Cache-Control', 'no-store');
   }
