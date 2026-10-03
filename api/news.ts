@@ -126,13 +126,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const redis = Redis.fromEnv();
     const now = Date.now();
-    const ids = await redis.zrange<string[]>('news:index', 0, -1);
+    const [ids, tombKeys] = await Promise.all([
+      redis.zrange<string[]>('news:index', 0, -1),
+      redis.keys('news:tombstone:*').catch(() => [] as string[]),
+    ]);
+    const removedIds = (tombKeys ?? []).map((k) => k.replace(/^news:tombstone:/, '')).filter(Boolean).slice(0, 200);
     if (!ids || ids.length === 0) {
       return res.status(200).json({
         version: FEED_VERSION,
         appVersion,
         count: 0,
         news: [],
+        removedIds,
         fetchedAt: new Date().toISOString(),
       });
     }
@@ -162,6 +167,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       appVersion,
       count: sliced.length,
       news: sliced,
+      removedIds,
       fetchedAt: new Date().toISOString(),
     });
   } catch (e: unknown) {

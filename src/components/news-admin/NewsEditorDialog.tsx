@@ -352,7 +352,7 @@ export function NewsEditorDialog({
             </div>
             <div className="grid gap-2">
               <Label>Title ({form.title.length}/120)</Label>
-              <Input value={form.title} maxLength={120} onChange={(e) => set('title', e.target.value)} placeholder="What's new in 1.2" className="rounded-2xl" />
+              <Input autoFocus value={form.title} maxLength={120} onChange={(e) => set('title', e.target.value)} placeholder="What's new in 1.2" className="rounded-2xl" />
             </div>
             <div className="grid gap-2">
               <Label>Body ({form.body.length}/2000, markdown, no HTML)</Label>
@@ -606,7 +606,7 @@ export function NewsEditorDialog({
           </div>
         ) : null}
 
-        <div className="flex flex-wrap justify-end gap-2 pt-2">
+        <div className="sticky bottom-0 -mx-1 flex flex-wrap justify-end gap-2 border-t border-white/10 bg-background/95 py-3 backdrop-blur">
           <Button variant="outline" className="rounded-full" onClick={tryClose}>Cancel</Button>
           {(!initial || !initial.id || initial.status !== 'published') && (
             <Button

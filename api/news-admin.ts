@@ -303,10 +303,10 @@ async function feedHealth(redis: Redis): Promise<{
   };
 }
 
-async function audit(redis: Redis, ip: string, action: string, id?: string) {
+async function audit(redis: Redis, ip: string, action: string, id?: string, title?: string) {
   try {
     const key = `news:audit:${Date.now()}:${crypto.randomBytes(4).toString('hex')}`;
-    await redis.set(key, JSON.stringify({ ts: new Date().toISOString(), ip: ipHash(ip), action, id: id ?? null }), { ex: 90 * 86400 });
+    await redis.set(key, JSON.stringify({ ts: new Date().toISOString(), ip: ipHash(ip), action, id: id ?? null, title: title ?? null }), { ex: 90 * 86400 });
     const keys = await redis.keys('news:audit:*');
     if (Array.isArray(keys) && keys.length > 500) {
       keys.sort();
@@ -467,7 +467,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const pubRaw = full.publishAt as string | null;
     const score = pubRaw ? Date.parse(String(pubRaw)) : Date.parse(now);
     await redis.zadd('news:index', { score: Number.isFinite(score) ? score : Date.now(), member: String(full.id) });
-    await audit(redis, ip, 'create', String(full.id));
+    await audit(redis, ip, 'create', String(full.id), String(full.title ?? ''));
     const created = verdictFor(full);
     return res.status(200).json({ ok: true, item: full, visibility: created });
   }
@@ -489,7 +489,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await redis.set(`news:item:${id}`, JSON.stringify(next));
     const nextPub = next.publishAt as string | null;
     if (nextPub) await redis.zadd('news:index', { score: Date.parse(String(nextPub)), member: id });
-    await audit(redis, ip, action, id);
+    await audit(redis, ip, action, id, String(next.title ?? ''));
     const updated = verdictFor(next);
     return res.status(200).json({ ok: true, item: next, visibility: updated });
   }
@@ -497,9 +497,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (action === 'delete' && req.method === 'POST') {
     const id = String(req.body?.id ?? '');
     if (!id) return res.status(400).json({ error: 'id required' });
+    const rawDel = await redis.get(`news:item:${id}`);
+    const delObj = (typeof rawDel === 'string' ? safeJsonParse(rawDel) : rawDel) as Record<string, unknown> | null;
+    const delTitle = delObj ? String(delObj.title ?? '') : '';
     await redis.del(`news:item:${id}`);
     await redis.zrem('news:index', id);
-    await audit(redis, ip, 'delete', id);
+    // Tombstone so devices delete their cached copy on next sync (90 days).
+    await redis.set(`news:tombstone:${id}`, new Date().toISOString(), { ex: 90 * 86400 });
+    await audit(redis, ip, 'delete', id, delTitle || undefined);
     return res.status(200).json({ ok: true });
   }
 
