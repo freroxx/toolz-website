@@ -1,6 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { NewsBody } from '@/components/news/NewsBody';
 import type { NewsItem } from '@/lib/news-schema';
 
 function priorityColor(p: string) {
@@ -28,7 +29,9 @@ export function NewsPreviewCard({ item }: { item: Partial<NewsItem> }) {
             <img src={item.imageUrl} alt="" className="aspect-video w-full rounded-[20px] object-cover" loading="lazy" />
           ) : null}
           <div className="text-lg font-extrabold tracking-tight">{item.title || 'Title preview'}</div>
-          <div className="whitespace-pre-wrap text-sm text-muted-foreground">{item.body || 'Body preview…'}</div>
+          <div className="text-sm text-muted-foreground">
+            <NewsBody body={item.body || 'Body preview…'} compact />
+          </div>
           <div className="flex gap-2 pt-1">
             <Button className="flex-1 rounded-full font-bold" disabled={!item.actionUrl}>
               {item.actionLabel || 'Open'}

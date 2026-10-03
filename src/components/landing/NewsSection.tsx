@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Newspaper, ArrowRight } from "lucide-react";
 import { usePublicNews, formatNewsDate } from "@/hooks/usePublicNews";
+import { stripMarkdown } from "@/lib/stripMarkdown";
 
 /**
  * Home page news teaser: up to 3 latest real announcements + entry to /news.
@@ -134,7 +135,7 @@ const NewsSection = () => {
                       className="m3-body-medium line-clamp-3"
                       style={{ color: "hsl(var(--md-on-surface-variant))" }}
                     >
-                      {n.body}
+                      {stripMarkdown(n.body)}
                     </div>
                   </Link>
                 </motion.div>

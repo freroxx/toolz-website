@@ -5,71 +5,10 @@ import { Newspaper, ArrowLeft, Megaphone, ExternalLink } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import DownloadDialog from "@/components/landing/DownloadDialog";
+import { NewsBody } from "@/components/news/NewsBody";
 import { usePublicNews, formatNewsDate } from "@/hooks/usePublicNews";
 
 const filters = ["all", "critical", "feature", "fix", "promo", "info"] as const;
-
-/** Simple markdown-lite renderer (bold, italic, links, lists). */
-function renderBody(body: string, actionUrl: string | null) {
-  const lines = body.split("\n");
-  return (
-    <div className="grid gap-2">
-      {lines.map((line, i) => {
-        const t = line.trim();
-        if (!t) return null;
-        if (t.startsWith("- ") || t.startsWith("* ")) {
-          return (
-            <div key={i} className="flex gap-2">
-              <span style={{ color: "hsl(var(--md-primary))" }}>•</span>
-              <span><Inline text={t.slice(2)} actionUrl={actionUrl} /></span>
-            </div>
-          );
-        }
-        return (
-          <p key={i}>
-            <Inline text={t} actionUrl={actionUrl} />
-          </p>
-        );
-      })}
-    </div>
-  );
-}
-
-function Inline({ text, actionUrl }: { text: string; actionUrl: string | null }) {
-  // [label](url) and bare https:// links, **bold**, *italic*
-  const parts: React.ReactNode[] = [];
-  const re = /(\[([^\]]+)\]\(([^)]+)\)|(https?:\/\/[^\s)]+)|\*\*([^*]+)\*\*|\*([^*]+)\*)/g;
-  let last = 0;
-  let m: RegExpExecArray | null;
-  let k = 0;
-  const pushText = (s: string) => {
-    if (s) parts.push(<span key={`t${k++}`}>{s}</span>);
-  };
-  while ((m = re.exec(text)) !== null) {
-    pushText(text.slice(last, m.index));
-    last = m.index + m[0].length;
-    if (m[2] && m[3]) {
-      parts.push(
-        <a key={`l${k++}`} href={m[3]} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "hsl(var(--md-primary))" }}>
-          {m[2]}
-        </a>,
-      );
-    } else if (m[4]) {
-      parts.push(
-        <a key={`l${k++}`} href={m[4]} target="_blank" rel="noopener noreferrer" className="underline break-all" style={{ color: "hsl(var(--md-primary))" }}>
-          {m[4]}
-        </a>,
-      );
-    } else if (m[5]) {
-      parts.push(<strong key={`b${k++}`}>{m[5]}</strong>);
-    } else if (m[6]) {
-      parts.push(<em key={`i${k++}`}>{m[6]}</em>);
-    }
-  }
-  pushText(text.slice(last));
-  void actionUrl;
-  return <>{parts}</>;
-}
 
 const News = () => {
   const [downloadOpen, setDownloadOpen] = useState(false);
@@ -200,7 +139,7 @@ const News = () => {
                   <img src={n.imageUrl} alt="" loading="lazy" className="w-full max-h-80 object-cover rounded-2xl mb-4" />
                 )}
                 <div className="m3-body-large" style={{ color: "hsl(var(--md-on-surface-variant))" }}>
-                  {renderBody(n.body, n.actionUrl)}
+                  <NewsBody body={n.body} />
                 </div>
                 {n.actionUrl && (
                   <a
