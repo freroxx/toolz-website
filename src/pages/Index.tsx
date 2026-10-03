@@ -3,6 +3,7 @@ import Navbar from "@/components/landing/Navbar";
 import Hero from "@/components/landing/Hero";
 import ToolCatalog from "@/components/landing/ToolCatalog";
 import CatalogSection from "@/components/landing/CatalogSection";
+import NewsSection from "@/components/landing/NewsSection";
 import Gallery from "@/components/landing/Gallery";
 import Discord from "@/components/landing/Discord";
 import HowItWorks from "@/components/landing/HowItWorks";
@@ -22,6 +23,7 @@ const Index = () => {
           <ToolCatalog />
           <Gallery />
           <HowItWorks />
+          <NewsSection />
           <CTA onDownloadClick={() => setDownloadOpen(true)} />
           <CatalogSection />
           <Discord />

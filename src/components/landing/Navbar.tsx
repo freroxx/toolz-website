@@ -7,6 +7,7 @@ import { useUpdateManifest } from "@/hooks/use-update-manifest";
 const navLinks = [
   { label: "Tools", href: "/#features" },
   { label: "Specs", href: "/spec" },
+  { label: "News", href: "/news" },
   { label: "Community", href: "/#discord" },
 ];
 

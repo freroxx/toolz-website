@@ -6,7 +6,9 @@
     "api/sync-devices.ts": { "maxDuration": 25 },
     "api/reset.ts": { "maxDuration": 25 },
     "api/info.ts": { "maxDuration": 10 },
-    "api/models.ts": { "maxDuration": 10 }
+    "api/models.ts": { "maxDuration": 10 },
+    "api/news.ts": { "maxDuration": 10 },
+    "api/news-admin.ts": { "maxDuration": 15 }
   },
   "rewrites": [
     {
