@@ -11,7 +11,7 @@ import { NewsAuditLog } from '@/components/news-admin/NewsAuditLog';
 import { NewsFeedCheck } from '@/components/news-admin/NewsFeedCheck';
 
 export default function AdminNews() {
-  const { authed, restoring, loading, items, audit, login, logout, refresh, refreshAudit, restore, feedHealth, mutate } = useNewsAdmin();
+  const { authed, restoring, loading, items, audit, login, logout, refresh, refreshAudit, restore, feedHealth, uploadImage, mutate } = useNewsAdmin();
   const [tab, setTab] = useState('all');
   const [q, setQ] = useState('');
   const [editorOpen, setEditorOpen] = useState(false);
@@ -126,6 +126,7 @@ export default function AdminNews() {
         initial={editing}
         saving={saving}
         onClose={() => setEditorOpen(false)}
+        onUploadImage={uploadImage}
         onSave={async (form) => {
           setSaving(true);
           try {

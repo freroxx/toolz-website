@@ -101,5 +101,25 @@ export function useNewsAdmin() {
     [csrf, refresh],
   );
 
-  return { csrf, authed, restoring, loading, items, audit, login, logout, refresh, refreshAudit, restore, feedHealth, mutate };
+  // Image upload via the imgbb proxy (api/news-image.ts). The IMGBB_API_KEY
+  // stays server-side; the browser only ever sends the image + session/CSRF.
+  const uploadImage = useCallback(
+    async (imageBase64: string, name: string): Promise<string> => {
+      const res = await fetch('/api/news-image', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
+        },
+        body: JSON.stringify({ image: imageBase64, name }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+      if (!res.ok || !data.url) throw new Error(data.error || `Upload failed (${res.status})`);
+      return data.url;
+    },
+    [csrf],
+  );
+
+  return { csrf, authed, restoring, loading, items, audit, login, logout, refresh, refreshAudit, restore, feedHealth, uploadImage, mutate };
 }

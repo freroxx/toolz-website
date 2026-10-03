@@ -23,7 +23,7 @@ export function NewsPreviewCard({ item }: { item: Partial<NewsItem> }) {
           <div className="flex flex-wrap items-center gap-2">
             <Badge className={`rounded-full border ${priorityColor(item.priority ?? 'info')}`}>{item.priority ?? 'info'}</Badge>
             {item.pinned ? <Badge variant="outline" className="rounded-full">Pinned</Badge> : null}
-            <span className="ml-auto text-xs text-muted-foreground">{item.delaySeconds ?? 5}s delay · {item.frequency ?? 'once'}</span>
+            <span className="ml-auto text-xs text-muted-foreground">{item.frequency ?? 'once'}</span>
           </div>
           {item.imageUrl ? (
             <img src={item.imageUrl} alt="" className="aspect-video w-full rounded-[20px] object-cover" loading="lazy" />

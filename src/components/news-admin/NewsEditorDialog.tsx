@@ -36,6 +36,42 @@ function atMidnightPlus(days: number): string {
   return d.toISOString();
 }
 
+/**
+ * Downscale an image in-browser (max 1600px side, JPEG q0.85) and return a
+ * data URL, keeping uploads small before they reach the imgbb proxy.
+ */
+function downscaleImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const MAX = 1600;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Canvas unavailable');
+        ctx.drawImage(img, 0, 0, w, h);
+        const out = canvas.toDataURL('image/jpeg', 0.85);
+        URL.revokeObjectURL(url);
+        resolve(out);
+      } catch (e) {
+        URL.revokeObjectURL(url);
+        reject(e instanceof Error ? e : new Error('Image processing failed'));
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Could not read that image file'));
+    };
+    img.src = url;
+  });
+}
+
 const PRIORITY_COLORS: Record<string, string> = {
   info: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
   feature: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
@@ -86,7 +122,7 @@ const FREQUENCY_PRESETS: { name: string; frequency: Form['frequency']; intervalH
 function tabForPath(path: (string | number)[]): TabId {
   const p = String(path[0] ?? '');
   if (['minAppVersion', 'maxAppVersion', 'onlyVersions', 'excludedVersions'].includes(p)) return 'targeting';
-  if (['publishAt', 'expiresAt', 'delaySeconds', 'frequency', 'intervalHours', 'maxImpressions'].includes(p)) return 'behavior';
+  if (['publishAt', 'expiresAt', 'frequency', 'intervalHours', 'maxImpressions'].includes(p)) return 'behavior';
   return 'content';
 }
 
@@ -96,12 +132,14 @@ export function NewsEditorDialog({
   saving,
   onClose,
   onSave,
+  onUploadImage,
 }: {
   open: boolean;
   initial: NewsItem | null;
   saving: boolean;
   onClose: () => void;
   onSave: (form: Form) => Promise<void>;
+  onUploadImage: (imageBase64: string, name: string) => Promise<string>;
 }) {
   const [form, setForm] = useState<Form>({ ...newsDefaults });
   const [err, setErr] = useState<string | null>(null);
@@ -110,7 +148,9 @@ export function NewsEditorDialog({
   const [dirty, setDirty] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [simVersion, setSimVersion] = useState('');
+  const [uploading, setUploading] = useState(false);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const { versionName: latestVersion } = useUpdateManifest();
 
   useEffect(() => {
@@ -336,13 +376,49 @@ export function NewsEditorDialog({
               <p className="text-xs text-muted-foreground">Renders on popup, history, /news and admin preview: headings, bold/italic/code, links, lists, quotes, code blocks, tables.</p>
             </div>
             <div className="grid gap-2">
-              <Label>Image URL (https, optional)</Label>
-              <Input value={form.imageUrl ?? ''} onChange={(e) => set('imageUrl', e.target.value || null)} placeholder="https://…" className="rounded-2xl" />
+              <Label>Image (upload to imgbb, or paste URL)</Label>
+              <div className="flex gap-2">
+                <Input value={form.imageUrl ?? ''} onChange={(e) => set('imageUrl', e.target.value || null)} placeholder="https://…" className="rounded-2xl" />
+                <Button
+                  variant="outline"
+                  className="shrink-0 rounded-full"
+                  disabled={uploading}
+                  onClick={() => fileRef.current?.click()}
+                >
+                  {uploading ? 'Uploading…' : 'Upload'}
+                </Button>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = '';
+                    if (!file) return;
+                    setErr(null);
+                    setUploading(true);
+                    try {
+                      const dataUrl = await downscaleImage(file);
+                      const url = await onUploadImage(dataUrl, file.name.replace(/\.[^.]+$/, '').slice(0, 80) || 'toolz-news');
+                      set('imageUrl', url);
+                    } catch (e2) {
+                      setErr(e2 instanceof Error ? e2.message : 'Image upload failed');
+                    } finally {
+                      setUploading(false);
+                    }
+                  }}
+                />
+              </div>
+              {form.imageUrl && (
+                <img src={form.imageUrl} alt="" loading="lazy" className="max-h-40 w-full rounded-2xl object-cover" />
+              )}
+              <p className="text-xs text-muted-foreground">Images are downscaled in-browser (max 1600px, JPEG) then hosted on imgbb.</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-2">
-                <Label>Action label</Label>
-                <Input value={form.actionLabel ?? ''} maxLength={30} onChange={(e) => set('actionLabel', e.target.value || null)} placeholder="Try it" className="rounded-2xl" />
+                <Label>Action label ({(form.actionLabel ?? '').length}/50)</Label>
+                <Input value={form.actionLabel ?? ''} maxLength={50} onChange={(e) => set('actionLabel', e.target.value || null)} placeholder="Try it" className="rounded-2xl" />
               </div>
               <div className="grid gap-2">
                 <Label>Action URL</Label>
@@ -412,11 +488,7 @@ export function NewsEditorDialog({
                 })}
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="grid gap-2">
-                <Label>Delay (s)</Label>
-                <Input type="number" min={0} max={3600} value={form.delaySeconds} onChange={(e) => set('delaySeconds', Number(e.target.value))} className="rounded-2xl" />
-              </div>
+            <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-2">
                 <Label>Frequency</Label>
                 <select value={form.frequency} onChange={(e) => set('frequency', e.target.value as Form['frequency'])} className="h-10 rounded-2xl border border-input bg-background px-3 text-sm">
@@ -431,6 +503,40 @@ export function NewsEditorDialog({
             <div className="grid gap-2">
               <Label>Max impressions per device (empty = unlimited)</Label>
               <Input type="number" min={1} max={100} value={form.maxImpressions ?? ''} onChange={(e) => set('maxImpressions', e.target.value ? Number(e.target.value) : null)} className="rounded-2xl" />
+            </div>
+            <div>
+              <Label className="mb-2 block text-xs uppercase tracking-widest text-muted-foreground">Disappear after (auto-delete from devices)</Label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { l: 'Never', hours: null as number | null },
+                  { l: '1 hour', hours: 1 },
+                  { l: '24 hours', hours: 24 },
+                  { l: '7 days', hours: 168 },
+                  { l: '30 days', hours: 720 },
+                ].map((b) => (
+                  <button
+                    key={b.l}
+                    onClick={() => {
+                      setDirty(true);
+                      if (b.hours === null) {
+                        setForm((f) => ({ ...f, disappearing: false, expiresAt: null }));
+                      } else {
+                        const parsed = form.publishAt ? Date.parse(form.publishAt) : NaN;
+                        const base = Number.isFinite(parsed) ? parsed : Date.now();
+                        setForm((f) => ({ ...f, disappearing: true, expiresAt: new Date(base + (b.hours as number) * 3_600_000).toISOString() }));
+                      }
+                    }}
+                    className={`rounded-full border px-4 py-2 text-sm font-bold transition-all active:scale-95 ${(b.hours === null ? !form.disappearing : form.disappearing) ? 'bg-primary text-primary-foreground' : 'border-white/10 text-muted-foreground'}`}
+                  >
+                    {b.l}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {form.disappearing
+                  ? `Vanishes from popups, notifications and history ${form.expiresAt ? describeWhen(form.expiresAt) : ''}.`
+                  : 'Stays in history after expiring (unless "Keep in history" is off).'}
+              </p>
             </div>
             <div className="grid grid-cols-2 gap-3 text-sm font-medium">
               {(['pinned', 'dismissible', 'showInHistory', 'notify'] as const).map((k) => (

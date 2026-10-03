@@ -8,7 +8,8 @@
     "api/info.ts": { "maxDuration": 10 },
     "api/models.ts": { "maxDuration": 10 },
     "api/news.ts": { "maxDuration": 10 },
-    "api/news-admin.ts": { "maxDuration": 15 }
+    "api/news-admin.ts": { "maxDuration": 15 },
+    "api/news-image.ts": { "maxDuration": 30 }
   },
   "rewrites": [
     {

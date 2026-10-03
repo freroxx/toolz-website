@@ -11,7 +11,7 @@ import crypto from 'crypto';
 const PRIORITIES = ['info', 'feature', 'fix', 'promo', 'critical'] as const;
 const STATUSES = ['draft', 'published', 'archived'] as const;
 const FREQS = ['once', 'every_launch', 'daily', 'weekly', 'interval'] as const;
-const DEFAULT_HOSTS = ['toolz-app.vercel.app', 'github.com', 'freroxx.github.io', 'raw.githubusercontent.com'];
+const DEFAULT_HOSTS = ['toolz-app.vercel.app', 'github.com', 'freroxx.github.io', 'raw.githubusercontent.com', 'i.ibb.co', 'ibb.co'];
 
 function sha256(s: string): Buffer {
   return crypto.createHash('sha256').update(s).digest();
@@ -116,7 +116,7 @@ function validateItem(d: Draft, allowed: string[], isPatch = false): { errors: s
       const e = urlOk(s, allowed);
       if (e) errors.push(`actionUrl: ${e}`);
       else item.actionUrl = s;
-      const l = String(d.actionLabel ?? '').trim().slice(0, 30);
+      const l = String(d.actionLabel ?? '').trim().slice(0, 50);
       item.actionLabel = l || null;
     }
   } else if (!isPatch) {
@@ -131,7 +131,7 @@ function validateItem(d: Draft, allowed: string[], isPatch = false): { errors: s
     if (!(STATUSES as readonly string[]).includes(String(d.status))) errors.push('bad status');
     else item.status = String(d.status);
   }
-  for (const k of ['pinned', 'dismissible', 'showInHistory', 'requiresAction', 'notify'] as const) {
+  for (const k of ['pinned', 'dismissible', 'showInHistory', 'requiresAction', 'notify', 'disappearing'] as const) {
     if (d[k] !== undefined) item[k] = !!d[k];
     else if (!isPatch) item[k] = k === 'dismissible' || k === 'showInHistory' || k === 'notify' ? true : false;
   }
@@ -175,7 +175,7 @@ function validateItem(d: Draft, allowed: string[], isPatch = false): { errors: s
     const n = Number(d.delaySeconds);
     if (!Number.isFinite(n) || n < 0 || n > 3600) errors.push('delaySeconds 0-3600');
     else item.delaySeconds = Math.floor(n);
-  } else if (!isPatch) item.delaySeconds = 5;
+  } else if (!isPatch) item.delaySeconds = 0;
   if (d.frequency !== undefined) {
     if (!(FREQS as readonly string[]).includes(String(d.frequency))) errors.push('bad frequency');
     else item.frequency = String(d.frequency);

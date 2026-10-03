@@ -12,7 +12,7 @@ export const newsItemSchema = z.object({
   title: z.string().min(3).max(120),
   body: z.string().min(1).max(2000),
   imageUrl: z.string().max(500).nullable().optional(),
-  actionLabel: z.string().max(30).nullable().optional(),
+  actionLabel: z.string().max(50).nullable().optional(),
   actionUrl: z.string().max(500).nullable().optional(),
   priority: z.enum(newsPriorities),
   status: z.enum(newsStatuses),
@@ -23,7 +23,7 @@ export const newsItemSchema = z.object({
   maxAppVersion: semver.nullable().optional(),
   onlyVersions: z.array(z.string().max(32)).max(30).default([]),
   excludedVersions: z.array(z.string().max(32)).max(30).default([]),
-  delaySeconds: z.number().int().min(0).max(3600).default(5),
+  delaySeconds: z.number().int().min(0).max(3600).default(0),
   frequency: z.enum(newsFrequencies).default('once'),
   intervalHours: z.number().int().min(1).max(720).nullable().optional(),
   maxImpressions: z.number().int().min(1).max(100).nullable().optional(),
@@ -31,6 +31,7 @@ export const newsItemSchema = z.object({
   showInHistory: z.boolean().default(true),
   requiresAction: z.boolean().default(false),
   notify: z.boolean().default(true),
+  disappearing: z.boolean().default(false),
 });
 
 export type NewsItemForm = z.infer<typeof newsItemSchema>;
@@ -57,7 +58,7 @@ export const newsDefaults: NewsItemForm = {
   maxAppVersion: null,
   onlyVersions: [],
   excludedVersions: [],
-  delaySeconds: 5,
+  delaySeconds: 0,
   frequency: 'once',
   intervalHours: null,
   maxImpressions: null,
@@ -65,6 +66,7 @@ export const newsDefaults: NewsItemForm = {
   showInHistory: true,
   requiresAction: false,
   notify: true,
+  disappearing: false,
 };
 
 function parts(v: string): number[] {

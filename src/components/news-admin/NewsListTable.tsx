@@ -35,6 +35,7 @@ export function NewsListTable({
                 <Badge variant="outline" className="rounded-full">{n.priority}</Badge>
                 {n.pinned ? <Badge variant="outline" className="rounded-full">Pinned</Badge> : null}
                 {n.notify === false ? <Badge variant="outline" className="rounded-full">Silent</Badge> : null}
+                {n.disappearing ? <Badge variant="outline" className="rounded-full">Disappearing</Badge> : null}
                 {verdict.live ? (
                   <Badge className="rounded-full border-emerald-500/30 bg-emerald-500/15 text-emerald-300">LIVE on /news</Badge>
                 ) : (
@@ -45,7 +46,7 @@ export function NewsListTable({
               </div>
               <div className="mt-2 truncate text-base font-bold">{n.title}</div>
               <div className="text-xs text-muted-foreground">
-                {describeTargeting(n)} · {n.frequency}{n.frequency === 'interval' ? `/${n.intervalHours}h` : ''} · delay {n.delaySeconds}s · upd {n.updatedAt?.slice(0, 16).replace('T', ' ')}
+                {describeTargeting(n)} · {n.frequency}{n.frequency === 'interval' ? `/${n.intervalHours}h` : ''} · upd {n.updatedAt?.slice(0, 16).replace('T', ' ')}
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
