@@ -7,6 +7,7 @@ export interface FeedHealthData {
   indexSize: number;
   payloadCount: number;
   liveCount: number;
+  feedVersion: number;
   orphanIds: string[];
   items: { id: string; title: string; status: string; liveOnPublicFeed: boolean; reason: string }[];
 }
@@ -92,6 +93,7 @@ export function NewsFeedCheck({
               <div className="flex flex-wrap gap-2">
                 <Badge variant="outline" className="rounded-full">index: {data.indexSize}</Badge>
                 <Badge variant="outline" className="rounded-full">payloads: {data.payloadCount}</Badge>
+                <Badge variant="outline" className="rounded-full" title="Feed generation — devices sync when this changes">gen: {data.feedVersion}</Badge>
                 <Badge className={`rounded-full ${data.liveCount > 0 ? 'border-emerald-500/30 bg-emerald-500/15 text-emerald-300' : 'border-amber-500/30 bg-amber-500/10 text-amber-300'}`}>
                   live on /news: {data.liveCount}
                 </Badge>

@@ -269,6 +269,7 @@ async function feedHealth(redis: Redis): Promise<{
   indexSize: number;
   payloadCount: number;
   liveCount: number;
+  feedVersion: number;
   orphanIds: string[];
   items: FeedHealthItem[];
 }> {
@@ -298,9 +299,32 @@ async function feedHealth(redis: Redis): Promise<{
     indexSize: ids.length,
     payloadCount,
     liveCount: items.filter((x) => x.liveOnPublicFeed).length,
+    feedVersion: await currentFeedVersion(redis),
     orphanIds,
     items,
   };
+}
+
+/**
+ * Feed generation counter. Bumped on every mutation so devices and pages can
+ * detect changes with a cheap version check instead of a full sync.
+ * No TTL — the feed is meaningless without it.
+ */
+async function bumpFeedVersion(redis: Redis): Promise<number> {
+  try {
+    return await redis.incr('news:version');
+  } catch {
+    return -1;
+  }
+}
+
+async function currentFeedVersion(redis: Redis): Promise<number> {
+  try {
+    const v = await redis.get<number>('news:version');
+    return typeof v === 'number' ? v : -1;
+  } catch {
+    return -1;
+  }
 }
 
 async function audit(redis: Redis, ip: string, action: string, id?: string, title?: string) {
@@ -451,6 +475,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       for (let i = 0; i < orphans.length; i += 100) {
         await redis.zrem('news:index', ...orphans.slice(i, i + 100));
       }
+      await bumpFeedVersion(redis);
     }
     await audit(redis, ip, 'repair-index');
     return res.status(200).json({ ok: true, removed: orphans.length, orphans });
@@ -467,6 +492,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const pubRaw = full.publishAt as string | null;
     const score = pubRaw ? Date.parse(String(pubRaw)) : Date.parse(now);
     await redis.zadd('news:index', { score: Number.isFinite(score) ? score : Date.now(), member: String(full.id) });
+    await bumpFeedVersion(redis);
     await audit(redis, ip, 'create', String(full.id), String(full.title ?? ''));
     const created = verdictFor(full);
     return res.status(200).json({ ok: true, item: full, visibility: created });
@@ -489,6 +515,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await redis.set(`news:item:${id}`, JSON.stringify(next));
     const nextPub = next.publishAt as string | null;
     if (nextPub) await redis.zadd('news:index', { score: Date.parse(String(nextPub)), member: id });
+    await bumpFeedVersion(redis);
     await audit(redis, ip, action, id, String(next.title ?? ''));
     const updated = verdictFor(next);
     return res.status(200).json({ ok: true, item: next, visibility: updated });
@@ -504,6 +531,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await redis.zrem('news:index', id);
     // Tombstone so devices delete their cached copy on next sync (90 days).
     await redis.set(`news:tombstone:${id}`, new Date().toISOString(), { ex: 90 * 86400 });
+    await bumpFeedVersion(redis);
     await audit(redis, ip, 'delete', id, delTitle || undefined);
     return res.status(200).json({ ok: true });
   }

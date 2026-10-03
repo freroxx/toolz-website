@@ -104,9 +104,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Status + time window always apply.
   const allVersions = req.query.all === '1';
   if (!preview) {
-    // Explicit browser max-age: without it, browsers may heuristically cache
-    // an empty feed far beyond s-maxage and /news looks permanently empty.
-    res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
+    // Short CDN window: mutations must propagate in about a minute without
+    // any manual action. Browsers are capped at 60 s; the site fetches no-store.
+    res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60, stale-while-revalidate=120');
   } else {
     res.setHeader('Cache-Control', 'no-store');
   }
@@ -126,10 +126,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const redis = Redis.fromEnv();
     const now = Date.now();
-    const [ids, tombKeys] = await Promise.all([
+    const [ids, tombKeys, feedV] = await Promise.all([
       redis.zrange<string[]>('news:index', 0, -1),
       redis.keys('news:tombstone:*').catch(() => [] as string[]),
+      redis.get<number>('news:version').catch(() => -1),
     ]);
+    const feedVersion = typeof feedV === 'number' ? feedV : -1;
     const removedIds = (tombKeys ?? []).map((k) => k.replace(/^news:tombstone:/, '')).filter(Boolean).slice(0, 200);
     if (!ids || ids.length === 0) {
       return res.status(200).json({
@@ -138,6 +140,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         count: 0,
         news: [],
         removedIds,
+        v: feedVersion,
         fetchedAt: new Date().toISOString(),
       });
     }
@@ -168,6 +171,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       count: sliced.length,
       news: sliced,
       removedIds,
+      v: feedVersion,
       fetchedAt: new Date().toISOString(),
     });
   } catch (e: unknown) {

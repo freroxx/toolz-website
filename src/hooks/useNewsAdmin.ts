@@ -88,6 +88,7 @@ export function useNewsAdmin() {
       indexSize: number;
       payloadCount: number;
       liveCount: number;
+      feedVersion: number;
       orphanIds: string[];
       items: { id: string; title: string; status: string; liveOnPublicFeed: boolean; reason: string }[];
     };
