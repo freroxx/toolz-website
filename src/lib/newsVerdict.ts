@@ -47,3 +47,47 @@ export function describeWhen(iso: string | null | undefined, now: number = Date.
   const qty = days > 0 ? `${days}d` : hours > 0 ? `${hours}h` : `${mins}m`;
   return diff > 0 ? `in ${qty}` : `${qty} ago`;
 }
+
+export interface SavedSnapshot {
+  status?: unknown;
+  title?: unknown;
+  imageUrl?: unknown;
+  publishAt?: unknown;
+  expiresAt?: unknown;
+}
+
+export interface FeedCheckItem {
+  id?: unknown;
+  status?: unknown;
+  title?: unknown;
+  imageUrl?: unknown;
+  publishAt?: unknown;
+  expiresAt?: unknown;
+}
+
+/**
+ * Compares what was just saved against what the public feed actually serves
+ * (fetched with preview=1 so CDN staleness can't hide a mismatch).
+ * Returns confirmed=true only when the id is present AND the key fields match.
+ */
+export function compareSavedVsFeed(
+  saved: SavedSnapshot,
+  feedItem: FeedCheckItem | null | undefined,
+): { confirmed: boolean; detail: string } {
+  if (!feedItem) {
+    return { confirmed: false, detail: 'not in the public feed yet (CDN ≤5 min, or filtered)' };
+  }
+  const mismatches: string[] = [];
+  const norm = (v: unknown) => (v === null || v === undefined ? '' : String(v));
+  if (norm(saved.status) && norm(feedItem.status) && norm(saved.status) !== norm(feedItem.status)) {
+    mismatches.push(`status is ${norm(feedItem.status)}`);
+  }
+  if (norm(saved.title) !== norm(feedItem.title)) mismatches.push('title differs');
+  if (norm(saved.imageUrl) !== norm(feedItem.imageUrl)) mismatches.push('image differs');
+  if (norm(saved.publishAt) !== norm(feedItem.publishAt)) mismatches.push('publish time differs');
+  if (norm(saved.expiresAt) !== norm(feedItem.expiresAt)) mismatches.push('expiry differs');
+  if (mismatches.length > 0) {
+    return { confirmed: false, detail: `feed shows stale values (${mismatches.join(', ')})` };
+  }
+  return { confirmed: true, detail: 'feed matches what was saved' };
+}

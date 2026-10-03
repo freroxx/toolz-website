@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import type { NewsItem } from '@/lib/news-schema';
+import { compareSavedVsFeed, type SavedSnapshot } from '@/lib/newsVerdict';
 
 async function post(action: string, body: unknown, csrf?: string | null) {
   const res = await fetch(`/api/news-admin?action=${action}`, {
@@ -121,5 +122,22 @@ export function useNewsAdmin() {
     [csrf],
   );
 
-  return { csrf, authed, restoring, loading, items, audit, login, logout, refresh, refreshAudit, restore, feedHealth, uploadImage, mutate };
+  // Post-save verification: fetch the live public feed bypassing CDN
+  // (preview=1) and confirm the saved item actually arrived with the
+  // saved values. Answers "did my edit really land?" at save time.
+  const verifySaved = useCallback(
+    async (id: string, saved: SavedSnapshot): Promise<{ confirmed: boolean; detail: string }> => {
+      try {
+        const res = await fetch('/api/news?all=1&preview=1', { cache: 'no-store' });
+        const data = (await res.json().catch(() => null)) as { news?: { id?: unknown }[] } | null;
+        const found = Array.isArray(data?.news) ? data.news.find((n) => String(n.id) === id) : null;
+        return compareSavedVsFeed(saved, found ?? null);
+      } catch {
+        return { confirmed: false, detail: 'could not re-check the feed' };
+      }
+    },
+    [],
+  );
+
+  return { csrf, authed, restoring, loading, items, audit, login, logout, refresh, refreshAudit, restore, feedHealth, uploadImage, verifySaved, mutate };
 }

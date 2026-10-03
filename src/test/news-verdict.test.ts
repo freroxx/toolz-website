@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeWhen, getVisibilityVerdict } from '@/lib/newsVerdict';
+import { compareSavedVsFeed, describeWhen, getVisibilityVerdict } from '@/lib/newsVerdict';
 
 const base = { status: 'published', publishAt: null, expiresAt: null } as const;
 
@@ -40,5 +40,25 @@ describe('describeWhen', () => {
     expect(describeWhen(null, now)).toBe('now');
     expect(describeWhen('2026-10-03T15:00:00Z', now)).toBe('in 3h');
     expect(describeWhen('2026-10-01T12:00:00Z', now)).toBe('2d ago');
+  });
+});
+
+describe('compareSavedVsFeed', () => {
+  const saved = { status: 'published', title: 'Hi', imageUrl: 'https://x/y.png', publishAt: null, expiresAt: null };
+
+  it('confirms matching items', () => {
+    expect(compareSavedVsFeed(saved, { ...saved }).confirmed).toBe(true);
+  });
+
+  it('reports missing items', () => {
+    const r = compareSavedVsFeed(saved, null);
+    expect(r.confirmed).toBe(false);
+    expect(r.detail).toContain('not in the public feed');
+  });
+
+  it('reports field mismatches (e.g. cleared image not applied)', () => {
+    const r = compareSavedVsFeed({ ...saved, imageUrl: null }, { ...saved, imageUrl: 'https://x/y.png' });
+    expect(r.confirmed).toBe(false);
+    expect(r.detail).toContain('image differs');
   });
 });

@@ -11,14 +11,14 @@ import { NewsAuditLog } from '@/components/news-admin/NewsAuditLog';
 import { NewsFeedCheck } from '@/components/news-admin/NewsFeedCheck';
 
 export default function AdminNews() {
-  const { authed, restoring, loading, items, audit, login, logout, refresh, refreshAudit, restore, feedHealth, uploadImage, mutate } = useNewsAdmin();
+  const { authed, restoring, loading, items, audit, login, logout, refresh, refreshAudit, restore, feedHealth, uploadImage, verifySaved, mutate } = useNewsAdmin();
   const [tab, setTab] = useState('all');
   const [q, setQ] = useState('');
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<NewsItem | null>(null);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [saveNote, setSaveNote] = useState<{ live: boolean; reason: string } | null>(null);
+  const [saveNote, setSaveNote] = useState<{ live: boolean; text: string } | null>(null);
 
   useEffect(() => {
     restore().catch(() => {});
@@ -81,7 +81,7 @@ export default function AdminNews() {
       {err && <div className="mb-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-300">{err}</div>}
       {saveNote && (
         <div className={`mb-4 rounded-2xl border px-4 py-3 text-sm font-semibold ${saveNote.live ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-amber-500/30 bg-amber-500/10 text-amber-200'}`}>
-          {saveNote.live ? 'Saved — LIVE on /news (visible within ~5 min).' : `Saved — NOT live on /news: ${saveNote.reason}.`}
+          {saveNote.text}
         </div>
       )}
 
@@ -147,7 +147,25 @@ export default function AdminNews() {
             if (editing && editing.id) res = (await mutate('update', { id: editing.id, patch: form })) as Record<string, unknown>;
             else res = (await mutate('create', { item: form })) as Record<string, unknown>;
             const vis = res.visibility as { liveOnPublicFeed?: boolean; reason?: string } | undefined;
-            if (vis) setSaveNote({ live: !!vis.liveOnPublicFeed, reason: String(vis.reason ?? '') });
+            const savedItem = (res.item ?? {}) as { id?: unknown; status?: unknown; title?: unknown; imageUrl?: unknown; publishAt?: unknown; expiresAt?: unknown };
+            const serverLive = !!vis?.liveOnPublicFeed;
+            if (!vis || !serverLive) {
+              setSaveNote({ live: false, text: `Saved — NOT live on /news: ${String(vis?.reason ?? 'unknown reason')}.` });
+            } else {
+              // Server says live — confirm against the actual public feed.
+              const check = await verifySaved(String(savedItem.id ?? ''), {
+                status: savedItem.status,
+                title: savedItem.title,
+                imageUrl: savedItem.imageUrl,
+                publishAt: savedItem.publishAt,
+                expiresAt: savedItem.expiresAt,
+              });
+              setSaveNote(
+                check.confirmed
+                  ? { live: true, text: 'Saved & verified live on /news.' }
+                  : { live: false, text: `Saved (server: live) — public feed hasn't caught up: ${check.detail}. Apps follow within 6 h or manual refresh.` },
+              );
+            }
             setEditorOpen(false);
           } finally {
             setSaving(false);
