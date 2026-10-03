@@ -4,23 +4,28 @@ import type { NewsItem } from '@/lib/news-schema';
 /**
  * Public Toolz News feed (`GET /api/news?all=1` — published + time-valid,
  * no version filtering). Used by the home section and the /news page.
- * Never throws; empty list on any failure.
+ * Distinguishes feed failure (`unavailable`) from a genuinely empty feed
+ * so the UI can be honest about breakage.
  */
 export function usePublicNews() {
   const [items, setItems] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [unavailable, setUnavailable] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const res = await fetch('/api/news?all=1');
-        const data = (await res.json()) as { news?: NewsItem[] };
-        if (!cancelled && res.ok && Array.isArray(data.news)) {
+        const data = (await res.json().catch(() => null)) as { news?: NewsItem[]; degraded?: boolean } | null;
+        if (cancelled) return;
+        if (!res.ok || !data || !Array.isArray(data.news) || data.degraded) {
+          setUnavailable(true);
+        } else {
           setItems(data.news);
         }
       } catch {
-        /* empty state handles it */
+        if (!cancelled) setUnavailable(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -30,7 +35,7 @@ export function usePublicNews() {
     };
   }, []);
 
-  return { items, loading };
+  return { items, loading, unavailable };
 }
 
 export function formatNewsDate(iso: string | null | undefined): string {

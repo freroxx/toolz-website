@@ -81,6 +81,17 @@ export function useNewsAdmin() {
     setAudit((data.audit as unknown[]) ?? []);
   }, []);
 
+  const feedHealth = useCallback(async () => {
+    const data = await get('feed-health');
+    return data as unknown as {
+      indexSize: number;
+      payloadCount: number;
+      liveCount: number;
+      orphanIds: string[];
+      items: { id: string; title: string; status: string; liveOnPublicFeed: boolean; reason: string }[];
+    };
+  }, []);
+
   const mutate = useCallback(
     async (action: string, body: unknown) => {
       const data = await post(action, body, csrf);
@@ -90,5 +101,5 @@ export function useNewsAdmin() {
     [csrf, refresh],
   );
 
-  return { csrf, authed, restoring, loading, items, audit, login, logout, refresh, refreshAudit, restore, mutate };
+  return { csrf, authed, restoring, loading, items, audit, login, logout, refresh, refreshAudit, restore, feedHealth, mutate };
 }

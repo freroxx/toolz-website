@@ -13,7 +13,7 @@ const filters = ["all", "critical", "feature", "fix", "promo", "info"] as const;
 const News = () => {
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [filter, setFilter] = useState<(typeof filters)[number]>("all");
-  const { items, loading } = usePublicNews();
+  const { items, loading, unavailable } = usePublicNews();
 
   const visible = useMemo(
     () => (filter === "all" ? items : items.filter((n) => n.priority === filter)),
@@ -83,6 +83,19 @@ const News = () => {
             {[0, 1, 2].map((i) => (
               <div key={i} className="rounded-3xl p-8 min-h-[160px] animate-pulse" style={{ background: "hsl(var(--md-surface-container-high))" }} />
             ))}
+          </div>
+        ) : unavailable ? (
+          <div className="rounded-3xl p-12 text-center" style={{ background: "hsl(var(--md-surface-container-high))" }}>
+            <Megaphone size={28} className="mx-auto mb-4" style={{ color: "hsl(var(--md-primary))" }} />
+            <div className="m3-title-large font-bold mb-2" style={{ color: "hsl(var(--md-on-surface))" }}>
+              News feed unavailable
+            </div>
+            <p className="m3-body-large mb-6" style={{ color: "hsl(var(--md-on-surface-variant))" }}>
+              We couldn't reach the announcements feed. Check your connection and try again.
+            </p>
+            <button onClick={() => window.location.reload()} className="m3-btn-filled h-11 px-5 text-sm gap-2">
+              Retry
+            </button>
           </div>
         ) : visible.length === 0 ? (
           <div className="rounded-3xl p-12 text-center" style={{ background: "hsl(var(--md-surface-container-high))" }}>

@@ -213,6 +213,96 @@ async function allowedHosts(redis: Redis): Promise<string[]> {
   }
 }
 
+export interface FeedHealthItem {
+  id: string;
+  title: string;
+  status: string;
+  publishAt: string | null;
+  expiresAt: string | null;
+  liveOnPublicFeed: boolean;
+  reason: string;
+}
+
+function verdictFor(raw: unknown): FeedHealthItem | null {
+  const item = (typeof raw === 'string' ? safeJsonParse(raw) : raw) as Record<string, unknown> | null;
+  if (!item || typeof item !== 'object' || typeof item.id !== 'string') return null;
+  const now = Date.now();
+  const status = String(item.status ?? '');
+  const publishAt = typeof item.publishAt === 'string' ? item.publishAt : null;
+  const expiresAt = typeof item.expiresAt === 'string' ? item.expiresAt : null;
+  if (status !== 'published') {
+    return {
+      id: item.id, title: String(item.title ?? '(untitled)'), status,
+      publishAt, expiresAt, liveOnPublicFeed: false,
+      reason: status === 'draft' ? 'draft (not published)' : status === 'archived' ? 'archived' : `status=${status}`,
+    };
+  }
+  if (publishAt) {
+    const t = Date.parse(publishAt);
+    if (Number.isFinite(t) && now < t) {
+      return { id: item.id, title: String(item.title ?? ''), status, publishAt, expiresAt, liveOnPublicFeed: false, reason: `scheduled at ${publishAt}` };
+    }
+  }
+  if (expiresAt) {
+    const t = Date.parse(expiresAt);
+    if (Number.isFinite(t) && now >= t) {
+      return { id: item.id, title: String(item.title ?? ''), status, publishAt, expiresAt, liveOnPublicFeed: false, reason: `expired at ${expiresAt}` };
+    }
+  }
+  return { id: item.id, title: String(item.title ?? ''), status, publishAt, expiresAt, liveOnPublicFeed: true, reason: 'live' };
+}
+
+function safeJsonParse(s: string): unknown {
+  try {
+    return JSON.parse(s);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Feed diagnostics for the admin panel: index size, payload counts and a
+ * per-item verdict using the exact same rules as GET /api/news (status +
+ * time window; version filtering is per-device and checked separately).
+ */
+async function feedHealth(redis: Redis): Promise<{
+  indexSize: number;
+  payloadCount: number;
+  liveCount: number;
+  orphanIds: string[];
+  items: FeedHealthItem[];
+}> {
+  const ids = (await redis.zrange<string[]>('news:index', 0, -1)) ?? [];
+  const items: FeedHealthItem[] = [];
+  const orphanIds: string[] = [];
+  let payloadCount = 0;
+  for (let i = 0; i < ids.length; i += 20) {
+    const pipe = redis.pipeline();
+    for (const id of ids.slice(i, i + 20)) pipe.get(`news:item:${id}`);
+    const chunk = await pipe.exec();
+    const slice = ids.slice(i, i + 20);
+    (chunk as unknown[]).forEach((r, j) => {
+      const v = (r as { result?: unknown })?.result ?? r;
+      if (!v) {
+        orphanIds.push(slice[j]);
+        return;
+      }
+      payloadCount++;
+      const verdict = verdictFor(v);
+      if (verdict) items.push(verdict);
+      else orphanIds.push(slice[j]);
+    });
+  }
+  items.sort((a, b) => Number(b.liveOnPublicFeed) - Number(a.liveOnPublicFeed));
+  return {
+    indexSize: ids.length,
+    payloadCount,
+    liveCount: items.filter((x) => x.liveOnPublicFeed).length,
+    orphanIds,
+    items,
+  };
+}
+
 async function audit(redis: Redis, ip: string, action: string, id?: string) {
   try {
     const key = `news:audit:${Date.now()}:${crypto.randomBytes(4).toString('hex')}`;
@@ -337,6 +427,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       out.push(typeof v === 'string' ? JSON.parse(v) : v);
     }
     return res.status(200).json({ audit: out });
+  }
+
+  if (action === 'feed-health' && req.method === 'GET') {
+    return res.status(200).json(await feedHealth(redis));
   }
 
   const hosts = await allowedHosts(redis);

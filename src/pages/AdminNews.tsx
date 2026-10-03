@@ -8,9 +8,10 @@ import { NewsLoginCard } from '@/components/news-admin/NewsLoginCard';
 import { NewsListTable } from '@/components/news-admin/NewsListTable';
 import { NewsEditorDialog } from '@/components/news-admin/NewsEditorDialog';
 import { NewsAuditLog } from '@/components/news-admin/NewsAuditLog';
+import { NewsFeedCheck } from '@/components/news-admin/NewsFeedCheck';
 
 export default function AdminNews() {
-  const { authed, restoring, loading, items, audit, login, logout, refresh, refreshAudit, restore, mutate } = useNewsAdmin();
+  const { authed, restoring, loading, items, audit, login, logout, refresh, refreshAudit, restore, feedHealth, mutate } = useNewsAdmin();
   const [tab, setTab] = useState('all');
   const [q, setQ] = useState('');
   const [editorOpen, setEditorOpen] = useState(false);
@@ -98,6 +99,12 @@ export default function AdminNews() {
           setEditing(n);
           setEditorOpen(true);
         }}
+        onClone={(n) => {
+          const { id: _drop, ...rest } = n;
+          void _drop;
+          setEditing({ ...rest, id: '', title: `${n.title} (copy)`, status: 'draft', createdAt: '', updatedAt: '' } as NewsItem);
+          setEditorOpen(true);
+        }}
         onAction={async (action, id) => {
           setErr(null);
           try {
@@ -107,6 +114,9 @@ export default function AdminNews() {
           }
         }}
       />
+
+      <h2 className="mb-3 mt-10 text-lg font-extrabold">Feed check</h2>
+      <NewsFeedCheck onCheck={feedHealth} />
 
       <h2 className="mb-3 mt-10 text-lg font-extrabold">Audit log</h2>
       <NewsAuditLog audit={audit} />
@@ -119,7 +129,7 @@ export default function AdminNews() {
         onSave={async (form) => {
           setSaving(true);
           try {
-            if (editing) await mutate('update', { id: editing.id, patch: form });
+            if (editing && editing.id) await mutate('update', { id: editing.id, patch: form });
             else await mutate('create', { item: form });
             setEditorOpen(false);
           } finally {
