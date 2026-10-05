@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +8,7 @@ export interface FeedHealthData {
   payloadCount: number;
   liveCount: number;
   feedVersion: number;
+  nextTransitionAt: string | null;
   orphanIds: string[];
   items: { id: string; title: string; status: string; liveOnPublicFeed: boolean; reason: string }[];
 }
@@ -19,15 +20,35 @@ export interface FeedHealthData {
 export function NewsFeedCheck({
   onCheck,
   onRepair,
+  autoRun = true,
 }: {
   onCheck: () => Promise<FeedHealthData>;
   onRepair: () => Promise<{ removed: number }>;
+  autoRun?: boolean;
 }) {
   const [data, setData] = useState<FeedHealthData | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
   const [repairing, setRepairing] = useState(false);
   const [repaired, setRepaired] = useState<number | null>(null);
+
+  const runCheck = async () => {
+    setChecking(true);
+    setErr(null);
+    try {
+      setData(await onCheck());
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Feed check failed');
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  // Auto-run once on mount so deletes/edits are visible without manual clicks.
+  useEffect(() => {
+    if (autoRun) runCheck().catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRun]);
 
   return (
     <Card className="rounded-[24px]">
@@ -41,19 +62,9 @@ export function NewsFeedCheck({
           variant="outline"
           className="ml-auto rounded-full"
           disabled={checking}
-          onClick={async () => {
-            setChecking(true);
-            setErr(null);
-            try {
-              setData(await onCheck());
-            } catch (e) {
-              setErr(e instanceof Error ? e.message : 'Feed check failed');
-            } finally {
-              setChecking(false);
-            }
-          }}
+          onClick={runCheck}
         >
-          {checking ? 'Checking…' : 'Run feed check'}
+          {checking ? 'Checking…' : data ? 'Re-check' : 'Run feed check'}
         </Button>
         <Button size="sm" variant="ghost" className="rounded-full" onClick={() => window.open('/api/news?all=1', '_blank')}>
           Public JSON
@@ -94,6 +105,11 @@ export function NewsFeedCheck({
                 <Badge variant="outline" className="rounded-full">index: {data.indexSize}</Badge>
                 <Badge variant="outline" className="rounded-full">payloads: {data.payloadCount}</Badge>
                 <Badge variant="outline" className="rounded-full" title="Feed generation — devices sync when this changes">gen: {data.feedVersion}</Badge>
+                {data.nextTransitionAt && (
+                  <Badge variant="outline" className="rounded-full" title={`Next scheduled change: ${data.nextTransitionAt}`}>
+                    next: {data.nextTransitionAt.slice(0, 16).replace('T', ' ')}
+                  </Badge>
+                )}
                 <Badge className={`rounded-full ${data.liveCount > 0 ? 'border-emerald-500/30 bg-emerald-500/15 text-emerald-300' : 'border-amber-500/30 bg-amber-500/10 text-amber-300'}`}>
                   live on /news: {data.liveCount}
                 </Badge>

@@ -551,8 +551,13 @@ export function NewsEditorDialog({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-2">
-                <Label>Publish at (empty = now)</Label>
+                <Label>Publish at (empty = now, your local time)</Label>
                 <Input type="datetime-local" value={toLocal(form.publishAt ?? null)} onChange={(e) => set('publishAt', fromLocal(e.target.value))} className="rounded-2xl" />
+                {form.publishAt && (
+                  <p className="text-xs text-muted-foreground" title={form.publishAt}>
+                    = {new Date(form.publishAt).toLocaleString()} local · stored as UTC
+                  </p>
+                )}
                 <div className="flex flex-wrap gap-1">
                   {[
                     { l: 'Now', fn: () => set('publishAt', null) },
@@ -565,8 +570,13 @@ export function NewsEditorDialog({
                 </div>
               </div>
               <div className="grid gap-2">
-                <Label>Expires at (empty = never)</Label>
+                <Label>Expires at (empty = never, your local time)</Label>
                 <Input type="datetime-local" value={toLocal(form.expiresAt ?? null)} onChange={(e) => set('expiresAt', fromLocal(e.target.value))} className="rounded-2xl" />
+                {form.expiresAt && (
+                  <p className="text-xs text-muted-foreground" title={form.expiresAt}>
+                    = {new Date(form.expiresAt).toLocaleString()} local · stored as UTC
+                  </p>
+                )}
                 <div className="flex flex-wrap gap-1">
                   {[
                     { l: 'Never', fn: () => { set('expiresAt', null); } },
@@ -580,7 +590,7 @@ export function NewsEditorDialog({
             </div>
             <div className={`rounded-2xl border px-4 py-3 text-sm font-bold ${verdict.live ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-amber-500/30 bg-amber-500/10 text-amber-300'}`}>
               {verdict.live
-                ? `● Live now — appears on /news within ~5 min${form.publishAt ? ` (since ${describeWhen(form.publishAt)})` : ''}`
+                ? `● Live now — appears on /news within ~1 min${form.publishAt ? ` (since ${describeWhen(form.publishAt)})` : ''}`
                 : `○ Not live: ${verdict.reason}`}
             </div>
           </TabsContent>

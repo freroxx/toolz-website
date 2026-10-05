@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Newspaper, ArrowLeft, Megaphone, ExternalLink } from "lucide-react";
+import { Newspaper, ArrowLeft, Megaphone, ExternalLink, Link2, Check } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import DownloadDialog from "@/components/landing/DownloadDialog";
@@ -13,12 +13,48 @@ const filters = ["all", "critical", "feature", "fix", "promo", "info"] as const;
 const News = () => {
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [filter, setFilter] = useState<(typeof filters)[number]>("all");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const { items, loading, unavailable } = usePublicNews();
 
   const visible = useMemo(
     () => (filter === "all" ? items : items.filter((n) => n.priority === filter)),
     [items, filter],
   );
+
+  // SEO: honest title + description (no per-item route; anchors carry the id).
+  useEffect(() => {
+    document.title = "Toolz news — announcements & changelog";
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute("content", "Every Toolz announcement — changelogs, fixes and notices. Same feed the app shows.");
+  }, []);
+
+  // Deep-link: /news#news-<id> scrolls + highlights (matches the app's Read on website).
+  useEffect(() => {
+    if (loading || items.length === 0) return;
+    const hash = window.location.hash.replace(/^#/, "");
+    if (!hash.startsWith("news-")) return;
+    const el = document.getElementById(hash);
+    if (el) {
+      const t = setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
+      return () => clearTimeout(t);
+    }
+  }, [loading, items]);
+
+  const copyLink = async (id: string) => {
+    const url = `${window.location.origin}/news#news-${id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    setCopiedId(id);
+    setTimeout(() => setCopiedId((c) => (c === id ? null : c)), 1600);
+  };
 
   return (
     <div className="min-h-screen bg-surface font-sans" style={{ background: "hsl(var(--md-surface))" }}>
@@ -76,6 +112,20 @@ const News = () => {
               {f}
             </button>
           ))}
+          <a
+            href="/api/news-rss"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 rounded-full m3-label-large transition-all active:scale-95 hover:underline"
+            style={{
+              background: "hsl(var(--md-surface-container-high))",
+              color: "hsl(var(--md-on-surface-variant))",
+              border: "1px solid hsl(var(--md-outline-variant))",
+            }}
+            title="Subscribe via RSS"
+          >
+            RSS
+          </a>
         </div>
 
         {loading ? (
@@ -112,11 +162,12 @@ const News = () => {
             {visible.map((n, i) => (
               <motion.article
                 key={n.id}
+                id={`news-${n.id}`}
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-40px" }}
                 transition={{ delay: Math.min(i * 0.05, 0.3), type: "spring", stiffness: 220, damping: 26 }}
-                className="rounded-3xl p-6 sm:p-8"
+                className="rounded-3xl p-6 sm:p-8 scroll-mt-28"
                 style={{
                   background: "hsl(var(--md-surface-container-high))",
                   border: "1px solid hsl(var(--md-outline-variant))",
@@ -154,17 +205,38 @@ const News = () => {
                 <div className="m3-body-large" style={{ color: "hsl(var(--md-on-surface-variant))" }}>
                   <NewsBody body={n.body} />
                 </div>
-                {n.actionUrl && (
-                  <a
-                    href={n.actionUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="m3-btn-filled h-11 px-5 text-sm gap-2 mt-6 inline-flex"
+                <div className="mt-6 flex flex-wrap items-center gap-2">
+                  {n.actionUrl ? (
+                    n.actionUrl.startsWith("toolz://") ? (
+                      <span
+                        className="m3-label-large inline-flex h-11 items-center px-5 text-sm"
+                        style={{ color: "hsl(var(--md-on-surface-variant))" }}
+                        title="This button opens inside the Toolz app"
+                      >
+                        {n.actionLabel || "Open"} · in-app only
+                      </span>
+                    ) : (
+                      <a
+                        href={n.actionUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="m3-btn-filled h-11 px-5 text-sm gap-2 inline-flex"
+                      >
+                        {n.actionLabel || "Open"}
+                        <ExternalLink size={14} />
+                      </a>
+                    )
+                  ) : null}
+                  <button
+                    onClick={() => copyLink(n.id)}
+                    className="m3-label-large inline-flex h-11 items-center gap-2 px-4 text-sm hover:underline"
+                    style={{ color: "hsl(var(--md-on-surface-variant))" }}
+                    title="Copy link to this announcement"
                   >
-                    {n.actionLabel || "Open"}
-                    <ExternalLink size={14} />
-                  </a>
-                )}
+                    {copiedId === n.id ? <Check size={14} /> : <Link2 size={14} />}
+                    {copiedId === n.id ? "Copied" : "Copy link"}
+                  </button>
+                </div>
               </motion.article>
             ))}
           </div>

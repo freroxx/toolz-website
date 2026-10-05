@@ -45,7 +45,7 @@ export function NewsListTable({
                 )}
               </div>
               <div className="mt-2 truncate text-base font-bold">{n.title}</div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs text-muted-foreground" title={`Updated ${n.updatedAt ? new Date(n.updatedAt).toLocaleString() : '—'} local · publish ${n.publishAt ? new Date(n.publishAt).toLocaleString() : 'now'} · expiry ${n.expiresAt ? new Date(n.expiresAt).toLocaleString() : 'never'}`}>
                 {describeTargeting(n)} · {n.frequency}{n.frequency === 'interval' ? `/${n.intervalHours}h` : ''} · upd {n.updatedAt?.slice(0, 16).replace('T', ' ')}
               </div>
             </div>

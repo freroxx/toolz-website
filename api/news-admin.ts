@@ -213,6 +213,56 @@ async function allowedHosts(redis: Redis): Promise<string[]> {
   }
 }
 
+/** Non-blocking SCAN with KEYS fallback. Caps results to avoid huge payloads. */
+async function scanMatch(redis: Redis, pattern: string, cap = 500): Promise<string[]> {
+  try {
+    const r = redis as unknown as {
+      scan?: (cursor: number, opts?: { match?: string; count?: number }) => Promise<unknown>;
+      keys?: (p: string) => Promise<string[]>;
+    };
+    if (typeof r.scan === 'function') {
+      const out: string[] = [];
+      let cursor = 0;
+      for (let i = 0; i < 20; i++) {
+        const res = (await r.scan(cursor, { match: pattern, count: 200 })) as unknown;
+        let next = 0;
+        let batch: string[] = [];
+        if (Array.isArray(res) && res.length >= 2) {
+          next = Number(res[0]);
+          batch = (res[1] as string[]) ?? [];
+        }
+        out.push(...batch);
+        if (!Number.isFinite(next) || next === 0) break;
+        cursor = next;
+        if (out.length >= cap) break;
+      }
+      return out.slice(0, cap);
+    }
+    if (typeof r.keys === 'function') return ((await r.keys(pattern)) ?? []).slice(0, cap);
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+/** Secure flag only on https (localhost dev is http — Secure would drop the cookie). */
+function sessionCookie(tokenId: string, mac: string, maxAge: number, req: VercelRequest): string {
+  const proto = String(req.headers['x-forwarded-proto'] ?? '');
+  const host = String(req.headers.host ?? req.headers['x-forwarded-host'] ?? '');
+  const isLocal = /localhost|127\.0\.0\.1/i.test(host) || process.env.NODE_ENV === 'development';
+  const secure = !isLocal && (proto.includes('https') || process.env.NODE_ENV === 'production' || proto === '');
+  // Empty proto (direct node/vitest) defaults to Secure in prod, plain locally.
+  return `news_admin_session=${tokenId}.${mac}; HttpOnly; ${secure ? 'Secure; ' : ''}SameSite=Lax; Path=/; Max-Age=${maxAge}`;
+}
+
+function clearSessionCookie(req: VercelRequest): string {
+  const proto = String(req.headers['x-forwarded-proto'] ?? '');
+  const host = String(req.headers.host ?? req.headers['x-forwarded-host'] ?? '');
+  const isLocal = /localhost|127\.0\.0\.1/i.test(host) || process.env.NODE_ENV === 'development';
+  const secure = !isLocal && (proto.includes('https') || process.env.NODE_ENV === 'production' || proto === '');
+  return `news_admin_session=; HttpOnly; ${secure ? 'Secure; ' : ''}SameSite=Lax; Path=/; Max-Age=0`;
+}
+
 export interface FeedHealthItem {
   id: string;
   title: string;
@@ -270,6 +320,7 @@ async function feedHealth(redis: Redis): Promise<{
   payloadCount: number;
   liveCount: number;
   feedVersion: number;
+  nextTransitionAt: string | null;
   orphanIds: string[];
   items: FeedHealthItem[];
 }> {
@@ -277,6 +328,9 @@ async function feedHealth(redis: Redis): Promise<{
   const items: FeedHealthItem[] = [];
   const orphanIds: string[] = [];
   let payloadCount = 0;
+  let nextTransitionAt: string | null = null;
+  let nextMs = Number.POSITIVE_INFINITY;
+  const now = Date.now();
   for (let i = 0; i < ids.length; i += 20) {
     const pipe = redis.pipeline();
     for (const id of ids.slice(i, i + 20)) pipe.get(`news:item:${id}`);
@@ -290,7 +344,14 @@ async function feedHealth(redis: Redis): Promise<{
       }
       payloadCount++;
       const verdict = verdictFor(v);
-      if (verdict) items.push(verdict);
+      if (verdict) {
+        items.push(verdict);
+        for (const iso of [verdict.publishAt, verdict.expiresAt]) {
+          if (!iso) continue;
+          const t = Date.parse(iso);
+          if (Number.isFinite(t) && t > now && t < nextMs) { nextMs = t; nextTransitionAt = iso; }
+        }
+      }
       else orphanIds.push(slice[j]);
     });
   }
@@ -300,6 +361,7 @@ async function feedHealth(redis: Redis): Promise<{
     payloadCount,
     liveCount: items.filter((x) => x.liveOnPublicFeed).length,
     feedVersion: await currentFeedVersion(redis),
+    nextTransitionAt,
     orphanIds,
     items,
   };
@@ -331,7 +393,7 @@ async function audit(redis: Redis, ip: string, action: string, id?: string, titl
   try {
     const key = `news:audit:${Date.now()}:${crypto.randomBytes(4).toString('hex')}`;
     await redis.set(key, JSON.stringify({ ts: new Date().toISOString(), ip: ipHash(ip), action, id: id ?? null, title: title ?? null }), { ex: 90 * 86400 });
-    const keys = await redis.keys('news:audit:*');
+    const keys = await scanMatch(redis, 'news:audit:*', 600);
     if (Array.isArray(keys) && keys.length > 500) {
       keys.sort();
       const drop = keys.slice(0, keys.length - 500);
@@ -409,7 +471,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const mac = crypto.createHmac('sha256', SECRET).update(tokenId).digest('hex');
     const csrf = crypto.randomBytes(16).toString('hex');
     await redis.set(`news_admin_session:${tokenId}`, JSON.stringify({ csrf }), { ex: 6 * 3600 });
-    res.setHeader('Set-Cookie', `news_admin_session=${tokenId}.${mac}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=21600`);
+    res.setHeader('Set-Cookie', sessionCookie(tokenId, mac, 21600, req));
     await audit(redis, ip, 'login');
     return res.status(200).json({ ok: true, csrf });
   }
@@ -422,13 +484,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const cookies = parseCookies(req);
     const tokenId = (cookies['news_admin_session'] || '').split('.')[0];
     if (tokenId) { try { await redis.del(`news_admin_session:${tokenId}`); } catch { /* ignore */ } }
-    res.setHeader('Set-Cookie', 'news_admin_session=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0');
+    res.setHeader('Set-Cookie', clearSessionCookie(req));
     return res.status(200).json({ ok: true });
   }
 
   if (action === 'list' && req.method === 'GET') {
     const ids = await redis.zrange<string[]>('news:index', 0, -1);
-    const keys = (ids || []).map((id) => `news:item:${id}`);
+    // Optional server-side pagination (backward compatible: defaults return all).
+    const limitRaw = Number(req.query.limit ?? 0);
+    const offsetRaw = Number(req.query.offset ?? 0);
+    const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(Math.floor(limitRaw), 200) : (ids || []).length;
+    const offset = Number.isFinite(offsetRaw) && offsetRaw > 0 ? Math.floor(offsetRaw) : 0;
+    const window = (ids || []).slice(offset, offset + limit);
+    const keys = window.map((id) => `news:item:${id}`);
     const out: unknown[] = [];
     for (let i = 0; i < keys.length; i += 20) {
       const pipe = redis.pipeline();
@@ -443,7 +511,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (action === 'audit' && req.method === 'GET') {
-    const keys = await redis.keys('news:audit:*');
+    const keys = await scanMatch(redis, 'news:audit:*', 500);
     keys.sort().reverse();
     const out: unknown[] = [];
     for (const k of keys.slice(0, 100)) {

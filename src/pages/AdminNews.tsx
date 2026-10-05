@@ -60,7 +60,7 @@ export default function AdminNews() {
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight">Toolz News Admin</h1>
           <p className="text-sm text-muted-foreground">
-            {items.filter((i) => i.status === 'published').length} published · {items.filter((i) => i.status === 'draft').length} drafts · visible to apps within ~5 min
+            {items.filter((i) => i.status === 'published').length} published · {items.filter((i) => i.status === 'draft').length} drafts · visible to apps within ~1 min (auto-sync on change)
           </p>
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
@@ -97,6 +97,25 @@ export default function AdminNews() {
         </Tabs>
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search title/body…" className="max-w-xs rounded-full" />
         <Button variant="ghost" className="rounded-full" onClick={() => { refresh().catch(() => {}); refreshAudit().catch(() => {}); }}>Refresh</Button>
+        {items.some((i) => i.status === 'draft') && (
+          <Button
+            variant="outline"
+            className="rounded-full"
+            onClick={async () => {
+              if (!confirm(`Publish ${items.filter((i) => i.status === 'draft').length} draft(s)?`)) return;
+              setErr(null);
+              try {
+                for (const d of items.filter((i) => i.status === 'draft')) {
+                  await mutate('publish', { id: d.id });
+                }
+              } catch (e) {
+                setErr(e instanceof Error ? e.message : 'Bulk publish failed');
+              }
+            }}
+          >
+            Publish all drafts
+          </Button>
+        )}
       </div>
 
       <NewsListTable
@@ -163,7 +182,7 @@ export default function AdminNews() {
               setSaveNote(
                 check.confirmed
                   ? { live: true, text: 'Saved & verified live on /news.' }
-                  : { live: false, text: `Saved (server: live) — public feed hasn't caught up: ${check.detail}. Apps follow within 6 h or manual refresh.` },
+                  : { live: false, text: `Saved (server: live) — public feed hasn't caught up: ${check.detail}. Apps auto-sync within minutes on change.` },
               );
             }
             setEditorOpen(false);

@@ -75,7 +75,7 @@ export function compareSavedVsFeed(
   feedItem: FeedCheckItem | null | undefined,
 ): { confirmed: boolean; detail: string } {
   if (!feedItem) {
-    return { confirmed: false, detail: 'not in the public feed yet (CDN ≤5 min, or filtered)' };
+    return { confirmed: false, detail: 'not in the public feed yet (CDN ≤1 min, or filtered)' };
   }
   const mismatches: string[] = [];
   const norm = (v: unknown) => (v === null || v === undefined ? '' : String(v));

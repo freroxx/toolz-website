@@ -90,6 +90,62 @@ function toPublic(item: NewsItem): NewsItem {
   return rest as unknown as NewsItem;
 }
 
+/** Non-blocking key scan with KEYS fallback (Upstash REST supports SCAN). */
+async function scanKeys(redis: unknown, pattern: string): Promise<string[]> {
+  try {
+    const r = redis as {
+      scan?: (cursor: number, opts?: { match?: string; count?: number }) => Promise<[number | string, string[]] | unknown>;
+      keys?: (p: string) => Promise<string[]>;
+    };
+    if (typeof r.scan === 'function') {
+      const out: string[] = [];
+      let cursor = 0;
+      for (let i = 0; i < 20; i++) {
+        const res = (await r.scan(cursor, { match: pattern, count: 200 })) as unknown;
+        let next = 0;
+        let batch: string[] = [];
+        if (Array.isArray(res) && res.length >= 2) {
+          next = Number(res[0]);
+          batch = (res[1] as string[]) ?? [];
+        }
+        out.push(...batch);
+        if (!Number.isFinite(next) || next === 0) break;
+        cursor = next;
+        if (out.length >= 500) break;
+      }
+      return out.slice(0, 500);
+    }
+    if (typeof r.keys === 'function') return ((await r.keys(pattern)) ?? []).slice(0, 500);
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+/** Simple Redis fixed-window rate limit (60 req/min/IP). Fail-open. */
+async function rateLimited(redis: unknown, ip: string): Promise<boolean> {
+  try {
+    const r = redis as {
+      incr?: (k: string) => Promise<number>;
+      expire?: (k: string, s: number) => Promise<unknown>;
+    };
+    if (typeof r.incr !== 'function') return false;
+    const day = new Date().toISOString().slice(0, 16);
+    const key = `news:rl:${ip}:${day}`;
+    const n = await r.incr(key);
+    if (n === 1 && typeof r.expire === 'function') await r.expire(key, 90).catch(() => {});
+    return n > 120;
+  } catch {
+    return false;
+  }
+}
+
+function clientIpFromHeaders(req: VercelRequest): string {
+  const h = req.headers['x-forwarded-for'];
+  const s = Array.isArray(h) ? h[0] : (h as string) || '';
+  return s.split(',')[0].trim() || 'unknown';
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -126,14 +182,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const redis = Redis.fromEnv();
     const now = Date.now();
+    // Fail-open per-IP throttle (abuse safety, no new deps).
+    try {
+      if (await rateLimited(redis, clientIpFromHeaders(req))) {
+        res.setHeader('Retry-After', '60');
+        return res.status(429).json({ error: 'Too many requests', version: FEED_VERSION, appVersion, count: 0, news: [] });
+      }
+    } catch { /* fail open */ }
     const [ids, tombKeys, feedV] = await Promise.all([
       redis.zrange<string[]>('news:index', 0, -1),
-      redis.keys('news:tombstone:*').catch(() => [] as string[]),
+      scanKeys(redis, 'news:tombstone:*'),
       redis.get<number>('news:version').catch(() => -1),
     ]);
     const feedVersion = typeof feedV === 'number' ? feedV : -1;
     const removedIds = (tombKeys ?? []).map((k) => k.replace(/^news:tombstone:/, '')).filter(Boolean).slice(0, 200);
     if (!ids || ids.length === 0) {
+      const etagEmpty = `W/"v${feedVersion}-0"`;
+      res.setHeader('ETag', etagEmpty);
+      if (req.headers['if-none-match'] === etagEmpty && !preview) return res.status(304).end();
       return res.status(200).json({
         version: FEED_VERSION,
         appVersion,
@@ -141,6 +207,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         news: [],
         removedIds,
         v: feedVersion,
+        nextTransitionAt: null,
         fetchedAt: new Date().toISOString(),
       });
     }
@@ -149,11 +216,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     for (const k of keys) pipe.get(k);
     const raw = await pipe.exec();
     const items: NewsItem[] = [];
+    // Earliest future publishAt/expiresAt across ALL payloads (not just the
+    // filtered slice) so clients can wake exactly when the feed changes with
+    // zero mutations (scheduled publish / expiry otherwise never bumps v).
+    let nextTransitionAt: string | null = null;
+    let nextTransitionMs = Number.POSITIVE_INFINITY;
+    const considerTransition = (iso: unknown) => {
+      if (typeof iso !== 'string' || !iso) return;
+      const t = Date.parse(iso);
+      if (!Number.isFinite(t) || t <= now) return;
+      if (t < nextTransitionMs) { nextTransitionMs = t; nextTransitionAt = iso; }
+    };
     for (const r of raw as unknown[]) {
       const v = (r as { result?: unknown })?.result ?? r;
       if (!v) continue;
       const item = (typeof v === 'string' ? safeParse(v) : v) as NewsItem | null;
       if (!item || typeof item !== 'object' || !item.id) continue;
+      considerTransition(item.publishAt);
+      considerTransition(item.expiresAt);
       if (!timeValid(item, now)) continue;
       if (!allVersions && !versionEligible(item, appVersion)) continue;
       items.push(toPublic(item));
@@ -165,6 +245,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return pb - pa;
     });
     const sliced = items.slice(0, MAX_ITEMS);
+    const etag = `W/"v${feedVersion}-${sliced.length}-${sliced[0]?.id ?? 'empty'}"`;
+    res.setHeader('ETag', etag);
+    if (req.headers['if-none-match'] === etag && !preview) return res.status(304).end();
     return res.status(200).json({
       version: FEED_VERSION,
       appVersion,
@@ -172,6 +255,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       news: sliced,
       removedIds,
       v: feedVersion,
+      nextTransitionAt,
       fetchedAt: new Date().toISOString(),
     });
   } catch (e: unknown) {
