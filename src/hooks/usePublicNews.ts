@@ -38,6 +38,8 @@ export function usePublicNews(pollMs = 60_000) {
   const [items, setItems] = useState<NewsItem[]>(() => sharedCache?.items ?? []);
   const [loading, setLoading] = useState(() => sharedCache == null);
   const [unavailable, setUnavailable] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<number>(() => sharedCache?.at ?? 0);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,9 +49,10 @@ export function usePublicNews(pollMs = 60_000) {
         const cached = await cachedFeed();
         if (cancelled) return;
         setItems(cached.items);
+        setUpdatedAt(cached.at);
       } catch {
         if (!cancelled && sharedCache == null) setUnavailable(true);
-        else if (!cancelled && sharedCache) setItems(sharedCache.items);
+        else if (!cancelled && sharedCache) { setItems(sharedCache.items); setUpdatedAt(sharedCache.at); }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -71,7 +74,7 @@ export function usePublicNews(pollMs = 60_000) {
           const due = cur?.transition ? Date.parse(cur.transition) <= Date.now() : false;
           if (changed || due) {
             const fresh = await fetchFeed();
-            if (!cancelled) { setItems(fresh.items); setUnavailable(false); }
+            if (!cancelled) { setItems(fresh.items); setUpdatedAt(fresh.at); setUnavailable(false); }
           }
         } catch { /* keep stale cache; next tick retries */ }
       }, pollMs);
@@ -82,7 +85,21 @@ export function usePublicNews(pollMs = 60_000) {
     };
   }, [pollMs]);
 
-  return { items, loading, unavailable };
+  const refresh = async () => {
+    setRefreshing(true);
+    try {
+      const fresh = await fetchFeed();
+      setItems(fresh.items);
+      setUpdatedAt(fresh.at);
+      setUnavailable(false);
+    } catch {
+      setUnavailable(true);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  return { items, loading, unavailable, updatedAt, refreshing, refresh };
 }
 
 export function formatNewsDate(iso: string | null | undefined): string {

@@ -13,13 +13,29 @@ const filters = ["all", "critical", "feature", "fix", "promo", "info"] as const;
 const News = () => {
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [filter, setFilter] = useState<(typeof filters)[number]>("all");
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<"newest" | "oldest">("newest");
+  const [shown, setShown] = useState(10);
+  const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const { items, loading, unavailable } = usePublicNews();
+  const [activeHash, setActiveHash] = useState<string | null>(null);
+  const { items, loading, unavailable, refreshing, refresh } = usePublicNews();
 
-  const visible = useMemo(
-    () => (filter === "all" ? items : items.filter((n) => n.priority === filter)),
-    [items, filter],
-  );
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const base = (filter === "all" ? items : items.filter((n) => n.priority === filter)).filter(
+      (n) => !q || `${n.title} ${n.body}`.toLowerCase().includes(q),
+    );
+    const sorted = [...base].sort((a, b) => {
+      const ta = Date.parse(a.publishAt ?? "") || 0;
+      const tb = Date.parse(b.publishAt ?? "") || 0;
+      if ((b.pinned ? 1 : 0) !== (a.pinned ? 1 : 0)) return (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
+      return sort === "newest" ? tb - ta : ta - tb;
+    });
+    return sorted;
+  }, [items, filter, query, sort]);
+
+  const paged = useMemo(() => visible.slice(0, shown), [visible, shown]);
 
   // SEO: honest title + description (no per-item route; anchors carry the id).
   useEffect(() => {
@@ -33,12 +49,34 @@ const News = () => {
     if (loading || items.length === 0) return;
     const hash = window.location.hash.replace(/^#/, "");
     if (!hash.startsWith("news-")) return;
+    setActiveHash(hash);
     const el = document.getElementById(hash);
     if (el) {
       const t = setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
       return () => clearTimeout(t);
     }
   }, [loading, items]);
+
+  // Per-anchor OG so shares show the right card when crawlers execute JS.
+  useEffect(() => {
+    if (!activeHash) return;
+    const n = items.find((x) => `news-${x.id}` === activeHash);
+    if (!n) return;
+    document.title = `${n.title} — Toolz news`;
+    const setMeta = (sel: string, attr: string, val: string) => {
+      let el = document.querySelector(sel) as HTMLMetaElement | null;
+      if (!el) {
+        el = document.createElement("meta");
+        if (sel.includes("property")) el.setAttribute("property", sel.match(/property="([^"]+)"/)?.[1] ?? "");
+        else el.setAttribute("name", sel.match(/name="([^"]+)"/)?.[1] ?? "");
+        document.head.appendChild(el);
+      }
+      el.setAttribute(attr, val);
+    };
+    setMeta('meta[name="description"]', "content", n.body.slice(0, 160));
+    setMeta('meta[property="og:title"]', "content", n.title);
+    setMeta('meta[property="og:description"]', "content", n.body.slice(0, 200));
+  }, [activeHash, items]);
 
   const copyLink = async (id: string) => {
     const url = `${window.location.origin}/news#news-${id}`;
@@ -93,11 +131,31 @@ const News = () => {
           </p>
         </motion.div>
 
+        <div className="flex flex-wrap items-center gap-2 mb-8">
+          <input
+            value={query}
+            onChange={(e) => { setQuery(e.target.value); setShown(10); }}
+            placeholder="Search announcements…"
+            aria-label="Search announcements"
+            className="h-10 min-w-[200px] flex-1 rounded-full border px-4 text-sm"
+            style={{ background: "hsl(var(--md-surface-container-high))", borderColor: "hsl(var(--md-outline-variant))" }}
+          />
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as "newest" | "oldest")}
+            aria-label="Sort announcements"
+            className="h-10 rounded-full border px-3 text-sm"
+            style={{ background: "hsl(var(--md-surface-container-high))", borderColor: "hsl(var(--md-outline-variant))" }}
+          >
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+          </select>
+        </div>
         <div className="flex flex-wrap gap-2 mb-8">
           {filters.map((f) => (
             <button
               key={f}
-              onClick={() => setFilter(f)}
+              onClick={() => { setFilter(f); setShown(10); }}
               className="px-4 py-2 rounded-full m3-label-large capitalize transition-all active:scale-95"
               style={{
                 background: filter === f
@@ -143,8 +201,8 @@ const News = () => {
             <p className="m3-body-large mb-6" style={{ color: "hsl(var(--md-on-surface-variant))" }}>
               We couldn't reach the announcements feed. Check your connection and try again.
             </p>
-            <button onClick={() => window.location.reload()} className="m3-btn-filled h-11 px-5 text-sm gap-2">
-              Retry
+            <button onClick={() => refresh()} disabled={refreshing} className="m3-btn-filled h-11 px-5 text-sm gap-2">
+              {refreshing ? "Retrying…" : "Retry"}
             </button>
           </div>
         ) : visible.length === 0 ? (
@@ -159,7 +217,10 @@ const News = () => {
           </div>
         ) : (
           <div className="grid gap-5">
-            {visible.map((n, i) => (
+            <p className="m3-label-large" style={{ color: "hsl(var(--md-on-surface-variant))" }}>
+              Showing {paged.length} of {visible.length}{query.trim() ? ` for “${query.trim()}”` : ""}
+            </p>
+            {paged.map((n, i) => (
               <motion.article
                 key={n.id}
                 id={`news-${n.id}`}
@@ -170,7 +231,9 @@ const News = () => {
                 className="rounded-3xl p-6 sm:p-8 scroll-mt-28"
                 style={{
                   background: "hsl(var(--md-surface-container-high))",
-                  border: "1px solid hsl(var(--md-outline-variant))",
+                  border: activeHash === `news-${n.id}`
+                    ? "2px solid hsl(var(--md-primary))"
+                    : "1px solid hsl(var(--md-outline-variant))",
                 }}
               >
                 <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -199,8 +262,14 @@ const News = () => {
                 <h2 className="m3-headline-small font-bold mb-3" style={{ color: "hsl(var(--md-on-surface))" }}>
                   {n.title}
                 </h2>
-                {n.imageUrl && (
-                  <img src={n.imageUrl} alt="" loading="lazy" className="w-full h-auto rounded-2xl mb-4" />
+                {n.imageUrl && !brokenImages.has(n.id) && (
+                  <img
+                    src={n.imageUrl}
+                    alt={n.title}
+                    loading="lazy"
+                    onError={() => setBrokenImages((prev) => new Set(prev).add(n.id))}
+                    className="w-full h-auto rounded-2xl mb-4"
+                  />
                 )}
                 <div className="m3-body-large" style={{ color: "hsl(var(--md-on-surface-variant))" }}>
                   <NewsBody body={n.body} />
@@ -239,6 +308,11 @@ const News = () => {
                 </div>
               </motion.article>
             ))}
+            {paged.length < visible.length && (
+              <button onClick={() => setShown((s) => s + 10)} className="m3-btn-outlined h-11 px-5 text-sm mx-auto">
+                Show more ({visible.length - paged.length} left)
+              </button>
+            )}
           </div>
         )}
       </main>

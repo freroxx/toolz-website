@@ -1,16 +1,29 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Newspaper, ArrowRight } from "lucide-react";
 import { usePublicNews, formatNewsDate } from "@/hooks/usePublicNews";
 import { stripMarkdown } from "@/lib/stripMarkdown";
 
+function updatedAgo(at: number): string | null {
+  if (!at) return null;
+  const mins = Math.max(0, Math.floor((Date.now() - at) / 60000));
+  if (mins < 1) return "updated just now";
+  if (mins < 60) return `updated ${mins}m ago`;
+  const h = Math.floor(mins / 60);
+  if (h < 24) return `updated ${h}h ago`;
+  return `updated ${Math.floor(h / 24)}d ago`;
+}
+
 /**
  * Home page news teaser: up to 3 latest real announcements + entry to /news.
  * Renders nothing when the feed is empty or unreachable (keeps home clean).
  */
 const NewsSection = () => {
-  const { items, loading } = usePublicNews();
+  const { items, loading, updatedAt } = usePublicNews();
+  const [broken, setBroken] = useState<Set<string>>(new Set());
   const preview = items.slice(0, 3);
+  const stamp = updatedAgo(updatedAt);
 
   if (!loading && preview.length === 0) return null;
 
@@ -55,6 +68,7 @@ const NewsSection = () => {
               >
                 Changelog highlights and announcements from the Toolz team —
                 the same feed your app shows.
+                {stamp && <span className="m3-label-small ml-2">{stamp}</span>}
               </p>
             </div>
             <Link to="/news" className="m3-btn-outlined h-11 px-5 text-sm gap-2">
@@ -84,7 +98,7 @@ const NewsSection = () => {
                   transition={{ delay: i * 0.08, type: "spring", stiffness: 220, damping: 26 }}
                 >
                   <Link
-                    to="/news"
+                    to={`/news#news-${n.id}`}
                     className="block rounded-3xl p-6 h-full transition-transform hover:-translate-y-1 active:scale-[0.99]"
                     style={{
                       background: "hsl(var(--md-surface-container-high))",
@@ -117,11 +131,12 @@ const NewsSection = () => {
                         {formatNewsDate(n.publishAt)}
                       </span>
                     </div>
-                    {n.imageUrl && (
+                    {n.imageUrl && !broken.has(n.id) && (
                       <img
                         src={n.imageUrl}
-                        alt=""
+                        alt={n.title}
                         loading="lazy"
+                        onError={() => setBroken((prev) => new Set(prev).add(n.id))}
                         className="w-full h-auto rounded-2xl mb-4"
                       />
                     )}
