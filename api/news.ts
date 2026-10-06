@@ -122,8 +122,8 @@ async function scanKeys(redis: unknown, pattern: string): Promise<string[]> {
   }
 }
 
-/** Simple Redis fixed-window rate limit (60 req/min/IP). Fail-open. */
-async function rateLimited(redis: unknown, ip: string): Promise<boolean> {
+/** Simple Redis fixed-window rate limit. Fail-open. Limit is per-minute. */
+async function rateLimited(redis: unknown, ip: string, limit = 120): Promise<boolean> {
   try {
     const r = redis as {
       incr?: (k: string) => Promise<number>;
@@ -134,7 +134,7 @@ async function rateLimited(redis: unknown, ip: string): Promise<boolean> {
     const key = `news:rl:${ip}:${day}`;
     const n = await r.incr(key);
     if (n === 1 && typeof r.expire === 'function') await r.expire(key, 90).catch(() => {});
-    return n > 120;
+    return n > limit;
   } catch {
     return false;
   }
@@ -149,7 +149,8 @@ function clientIpFromHeaders(req: VercelRequest): string {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, If-None-Match');
+  res.setHeader('Vary', 'Accept-Encoding');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method Not Allowed' });

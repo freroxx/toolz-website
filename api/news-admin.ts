@@ -421,7 +421,68 @@ async function requireSession(req: VercelRequest, redis: Redis, secret: string):
   // Header preferred; JSON body fallback. Query-string CSRF is rejected (URL leak risk).
   const headerCsrf = (req.headers['x-csrf-token'] as string) || (req.body?.csrf as string);
   if (req.method !== 'GET' && headerCsrf !== sess.csrf) return { ok: false };
+  // Sliding expiration: active admins stay logged in (best effort, 6h window).
+  try { await redis.expire(`news_admin_session:${tokenId}`, 6 * 3600); } catch { /* ignore */ }
   return { ok: true, csrf: sess.csrf };
+}
+
+const MAX_PUBLISHED = 50;
+
+async function countPublished(redis: Redis, excludeId?: string): Promise<number> {
+  try {
+    const ids = (await redis.zrange<string[]>('news:index', 0, -1)) ?? [];
+    if (ids.length === 0) return 0;
+    let n = 0;
+    for (let i = 0; i < ids.length; i += 20) {
+      const pipe = redis.pipeline();
+      for (const id of ids.slice(i, i + 20)) pipe.get(`news:item:${id}`);
+      const chunk = await pipe.exec();
+      const slice = ids.slice(i, i + 20);
+      (chunk as unknown[]).forEach((r, j) => {
+        if (excludeId && slice[j] === excludeId) return;
+        const v = (r as { result?: unknown })?.result ?? r;
+        const obj = (typeof v === 'string' ? safeJsonParse(v) : v) as Record<string, unknown> | null;
+        if (obj && String(obj.status ?? '') === 'published') n++;
+      });
+    }
+    return n;
+  } catch {
+    return 0;
+  }
+}
+
+function parsePartsLocal(v: string): number[] {
+  const clean = String(v || '').trim().split('-')[0].split('+')[0];
+  return clean.split('.').map((p) => {
+    const n = parseInt(p, 10);
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  });
+}
+
+function compareVersionsLocal(a: string, b: string): number {
+  const pa = parsePartsLocal(a);
+  const pb = parsePartsLocal(b);
+  const len = Math.max(pa.length, pb.length, 3);
+  for (let i = 0; i < len; i++) {
+    const x = pa[i] ?? 0;
+    const y = pb[i] ?? 0;
+    if (x > y) return 1;
+    if (x < y) return -1;
+  }
+  return 0;
+}
+
+function versionEligibleLocal(item: Record<string, unknown>, appVersion: string): { ok: boolean; reason: string } {
+  const av = (appVersion || '0.0.0').trim() || '0.0.0';
+  const min = typeof item.minAppVersion === 'string' ? item.minAppVersion : null;
+  const max = typeof item.maxAppVersion === 'string' ? item.maxAppVersion : null;
+  const only = Array.isArray(item.onlyVersions) ? (item.onlyVersions as unknown[]).map(String) : [];
+  const excl = Array.isArray(item.excludedVersions) ? (item.excludedVersions as unknown[]).map(String) : [];
+  if (min && compareVersionsLocal(av, min) < 0) return { ok: false, reason: `requires ≥${min}` };
+  if (max && compareVersionsLocal(av, max) > 0) return { ok: false, reason: `requires ≤${max}` };
+  if (only.length > 0 && !only.includes(av)) return { ok: false, reason: `only ${only.join(', ')}` };
+  if (excl.includes(av)) return { ok: false, reason: `excluded ${av}` };
+  return { ok: true, reason: 'eligible' };
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -458,13 +519,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!pw) return res.status(400).json({ error: 'Password required.' });
     const ok = crypto.timingSafeEqual(sha256(pw.trim()), sha256(SECRET.trim()));
     if (!ok) {
-      let fails = 0;
       try {
-        fails = await redis.incr(`newsfails:${ip}`);
+        const fails = await redis.incr(`newsfails:${ip}`);
         if (fails === 1) await redis.expire(`newsfails:${ip}`, 900);
         if (fails >= 5) await redis.set(`newsban:${ip}`, '1', { ex: 900 });
       } catch { /* ignore */ }
-      return res.status(401).json({ error: `Invalid password. (${Math.max(0, 5 - fails)} attempts remaining)` });
+      // Generic message: don't leak remaining attempts to attackers.
+      return res.status(401).json({ error: 'Invalid password.' });
     }
     try { await redis.del(`newsfails:${ip}`); } catch { /* ignore */ }
     const tokenId = crypto.randomBytes(32).toString('hex');
@@ -554,6 +615,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (action === 'create' && req.method === 'POST') {
     const { errors, item } = validateItem((req.body?.item ?? req.body ?? {}) as Draft, hosts);
     if (errors.length) return res.status(400).json({ error: errors.join('; ') });
+    if (String(item.status ?? 'draft') === 'published') {
+      const n = await countPublished(redis);
+      if (n >= MAX_PUBLISHED) return res.status(400).json({ error: `Published cap reached (${MAX_PUBLISHED}). Archive or delete an item first.` });
+    }
     const now = new Date().toISOString();
     const full = { schemaVersion: 1, id: newId(), createdAt: now, updatedAt: now, ...item } as Record<string, unknown>;
     await redis.set(`news:item:${full.id}`, JSON.stringify(full));
@@ -580,6 +645,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { errors, item } = validateItem(patch as Draft, hosts, true);
     if (errors.length) return res.status(400).json({ error: errors.join('; ') });
     const next = { ...cur, ...item, id, updatedAt: new Date().toISOString(), schemaVersion: 1 } as Record<string, unknown>;
+    if (String(next.status ?? '') === 'published' && String(cur.status ?? '') !== 'published') {
+      const n = await countPublished(redis, id);
+      if (n >= MAX_PUBLISHED) return res.status(400).json({ error: `Published cap reached (${MAX_PUBLISHED}). Archive or delete an item first.` });
+    }
     await redis.set(`news:item:${id}`, JSON.stringify(next));
     const nextPub = next.publishAt as string | null;
     if (nextPub) await redis.zadd('news:index', { score: Date.parse(String(nextPub)), member: id });
@@ -595,6 +664,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const rawDel = await redis.get(`news:item:${id}`);
     const delObj = (typeof rawDel === 'string' ? safeJsonParse(rawDel) : rawDel) as Record<string, unknown> | null;
     const delTitle = delObj ? String(delObj.title ?? '') : '';
+    // 7-day trash copy so deletes are undoable from the admin panel.
+    try {
+      if (rawDel) await redis.set(`news:trash:${id}`, typeof rawDel === 'string' ? rawDel : JSON.stringify(rawDel), { ex: 7 * 86400 });
+    } catch { /* best effort */ }
     await redis.del(`news:item:${id}`);
     await redis.zrem('news:index', id);
     // Tombstone so devices delete their cached copy on next sync (90 days).
@@ -602,6 +675,153 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await bumpFeedVersion(redis);
     await audit(redis, ip, 'delete', id, delTitle || undefined);
     return res.status(200).json({ ok: true });
+  }
+
+  // Restore a recently deleted item from the 7-day trash.
+  if (action === 'restore' && req.method === 'POST') {
+    const id = String(req.body?.id ?? '');
+    if (!id) return res.status(400).json({ error: 'id required' });
+    const existing = await redis.get(`news:item:${id}`);
+    if (existing) return res.status(400).json({ error: 'item already exists' });
+    const trashed = await redis.get(`news:trash:${id}`);
+    if (!trashed) return res.status(404).json({ error: 'nothing in trash for this id (7-day window expired?)' });
+    const obj = (typeof trashed === 'string' ? safeJsonParse(trashed) : trashed) as Record<string, unknown> | null;
+    if (!obj || typeof obj !== 'object') return res.status(400).json({ error: 'trashed payload corrupt' });
+    if (String(obj.status ?? '') === 'published') {
+      const n = await countPublished(redis, id);
+      if (n >= MAX_PUBLISHED) return res.status(400).json({ error: `Published cap reached (${MAX_PUBLISHED}). Archive or delete an item first.` });
+    }
+    const next = { ...obj, id, updatedAt: new Date().toISOString(), schemaVersion: 1 } as Record<string, unknown>;
+    await redis.set(`news:item:${id}`, JSON.stringify(next));
+    const pubRaw = next.publishAt as string | null;
+    const score = pubRaw ? Date.parse(String(pubRaw)) : Date.now();
+    await redis.zadd('news:index', { score: Number.isFinite(score) ? score : Date.now(), member: id });
+    try { await redis.del(`news:tombstone:${id}`); } catch { /* ignore */ }
+    await bumpFeedVersion(redis);
+    await audit(redis, ip, 'restore', id, String(next.title ?? ''));
+    return res.status(200).json({ ok: true, item: next, visibility: verdictFor(next) });
+  }
+
+  // Bulk status changes: one round-trip for multi-select (max 50 ops).
+  if (action === 'bulk' && req.method === 'POST') {
+    const ops = req.body?.ops;
+    if (!Array.isArray(ops) || ops.length === 0 || ops.length > 50) return res.status(400).json({ error: 'ops must be an array of 1-50 {action, id}' });
+    const allowed = new Set(['publish', 'unpublish', 'archive', 'delete']);
+    const results: { id: string; action: string; ok: boolean; error?: string }[] = [];
+    for (const op of ops as unknown[]) {
+      const o = (op ?? {}) as Record<string, unknown>;
+      const opAction = String(o.action ?? '');
+      const opId = String(o.id ?? '');
+      if (!allowed.has(opAction) || !opId) { results.push({ id: opId, action: opAction, ok: false, error: 'bad op' }); continue; }
+      try {
+        if (opAction === 'delete') {
+          const rawDel = await redis.get(`news:item:${opId}`);
+          if (rawDel) {
+            try { await redis.set(`news:trash:${opId}`, typeof rawDel === 'string' ? rawDel : JSON.stringify(rawDel), { ex: 7 * 86400 }); } catch { /* ignore */ }
+          }
+          await redis.del(`news:item:${opId}`);
+          await redis.zrem('news:index', opId);
+          await redis.set(`news:tombstone:${opId}`, new Date().toISOString(), { ex: 90 * 86400 });
+          results.push({ id: opId, action: opAction, ok: true });
+        } else {
+          const raw = await redis.get(`news:item:${opId}`);
+          if (!raw) { results.push({ id: opId, action: opAction, ok: false, error: 'not found' }); continue; }
+          const cur = (typeof raw === 'string' ? JSON.parse(raw) : raw) as Record<string, unknown>;
+          const status = opAction === 'publish' ? 'published' : opAction === 'unpublish' ? 'draft' : 'archived';
+          if (status === 'published' && String(cur.status ?? '') !== 'published') {
+            const n = await countPublished(redis, opId);
+            if (n >= MAX_PUBLISHED) { results.push({ id: opId, action: opAction, ok: false, error: 'published cap reached' }); continue; }
+          }
+          const next = { ...cur, status, id: opId, updatedAt: new Date().toISOString(), schemaVersion: 1 };
+          await redis.set(`news:item:${opId}`, JSON.stringify(next));
+          results.push({ id: opId, action: opAction, ok: true });
+        }
+      } catch {
+        results.push({ id: opId, action: opAction, ok: false, error: 'failed' });
+      }
+    }
+    await bumpFeedVersion(redis);
+    await audit(redis, ip, 'bulk', undefined, `${results.filter((r) => r.ok).length}/${results.length} ok`);
+    return res.status(200).json({ ok: true, results });
+  }
+
+  // Full backup export (items + version + tombstones, no secrets).
+  if (action === 'export' && req.method === 'GET') {
+    const ids = (await redis.zrange<string[]>('news:index', 0, -1)) ?? [];
+    const out: unknown[] = [];
+    for (let i = 0; i < ids.length; i += 20) {
+      const pipe = redis.pipeline();
+      for (const id of ids.slice(i, i + 20)) pipe.get(`news:item:${id}`);
+      const chunk = await pipe.exec();
+      for (const r of chunk as unknown[]) {
+        const v = (r as { result?: unknown })?.result ?? r;
+        if (v) out.push(typeof v === 'string' ? JSON.parse(v as string) : v);
+      }
+    }
+    const v = await currentFeedVersion(redis);
+    const tombs = await scanMatch(redis, 'news:tombstone:*', 500);
+    return res.status(200).json({ ok: true, exportedAt: new Date().toISOString(), v, count: out.length, items: out, tombstones: tombs.map((k) => k.replace(/^news:tombstone:/, '')) });
+  }
+
+  // Restore from a backup export (validates every item, caps at 200).
+  if (action === 'import' && req.method === 'POST') {
+    const arr = req.body?.items;
+    if (!Array.isArray(arr) || arr.length === 0 || arr.length > 200) return res.status(400).json({ error: 'items must be an array of 1-200' });
+    let written = 0;
+    const errors: string[] = [];
+    for (const rawItem of arr as unknown[]) {
+      const draft = ((rawItem ?? {}) as Record<string, unknown>);
+      const { errors: errs, item } = validateItem(draft as Draft, hosts);
+      if (errs.length) { errors.push(`${String(draft.id ?? '?')}: ${errs.join('; ')}`); continue; }
+      const id = typeof draft.id === 'string' && /^[A-Za-z0-9]{12}$/.test(draft.id) ? draft.id : newId();
+      const existing = await redis.get(`news:item:${id}`);
+      const toPublished = String(item.status ?? draft.status ?? 'draft') === 'published' && (!existing || String(((typeof existing === 'string' ? safeJsonParse(existing) : existing) as Record<string, unknown> | null)?.status ?? '') !== 'published');
+      if (toPublished) {
+        const n = await countPublished(redis, id);
+        if (n >= MAX_PUBLISHED) { errors.push(`${id}: published cap reached`); continue; }
+      }
+      const now = new Date().toISOString();
+      const full = { schemaVersion: 1, createdAt: now, updatedAt: now, ...item, id } as Record<string, unknown>;
+      await redis.set(`news:item:${id}`, JSON.stringify(full));
+      const pubRaw = full.publishAt as string | null;
+      const score = pubRaw ? Date.parse(String(pubRaw)) : Date.parse(now);
+      await redis.zadd('news:index', { score: Number.isFinite(score) ? score : Date.now(), member: id });
+      written++;
+    }
+    if (written > 0) await bumpFeedVersion(redis);
+    await audit(redis, ip, 'import', undefined, `${written} items`);
+    return res.status(200).json({ ok: true, written, errors: errors.slice(0, 20) });
+  }
+
+  // Change history: recent mutating audit entries (version timeline).
+  if (action === 'feed-history' && req.method === 'GET') {
+    const keys = await scanMatch(redis, 'news:audit:*', 500);
+    keys.sort().reverse();
+    const out: unknown[] = [];
+    for (const k of keys.slice(0, 200)) {
+      const v = await redis.get(k);
+      const obj = (typeof v === 'string' ? safeJsonParse(v) : v) as Record<string, unknown> | null;
+      if (!obj) continue;
+      const a = String(obj.action ?? '');
+      if (!['create', 'update', 'publish', 'unpublish', 'archive', 'delete', 'restore', 'bulk', 'import', 'repair-index'].includes(a)) continue;
+      out.push(obj);
+      if (out.length >= 50) break;
+    }
+    return res.status(200).json({ ok: true, history: out });
+  }
+
+  // Dry-run simulator: no writes. Answers "would version X see this draft?"
+  if (action === 'simulate' && req.method === 'POST') {
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const draft = ((body.item ?? body.draft ?? {}) as Record<string, unknown>);
+    const appVersion = String(body.appVersion ?? body.version ?? '0.0.0');
+    const verdict = verdictFor({ status: draft.status ?? 'published', id: 'preview', title: draft.title ?? '', publishAt: (draft.publishAt as string | null) ?? null, expiresAt: (draft.expiresAt as string | null) ?? null });
+    const elig = versionEligibleLocal(draft, appVersion);
+    const live = (verdict?.liveOnPublicFeed ?? false) && elig.ok;
+    const reasons: string[] = [];
+    if (verdict && !verdict.liveOnPublicFeed) reasons.push(verdict.reason);
+    if (!elig.ok) reasons.push(elig.reason);
+    return res.status(200).json({ ok: true, live, verdict: verdict?.reason ?? 'unknown', eligible: elig, reasons, notify: draft.notify !== false, critical: draft.priority === 'critical' });
   }
 
   return res.status(400).json({ error: `Unknown action: ${action}` });
