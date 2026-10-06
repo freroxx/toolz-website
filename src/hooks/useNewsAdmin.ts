@@ -95,6 +95,53 @@ export function useNewsAdmin() {
     };
   }, []);
 
+  const bulk = useCallback(
+    async (action: 'publish' | 'unpublish' | 'archive' | 'delete', ids: string[]) => {
+      const clean = [...new Set(ids.map((s) => String(s ?? '').trim()).filter(Boolean))].slice(0, 50);
+      if (clean.length === 0) throw new Error('Nothing selected.');
+      const data = await post('bulk', { ops: clean.map((id) => ({ action, id })) }, csrf);
+      await refresh().catch(() => {});
+      return data as { results?: { id: string; action: string; ok: boolean; error?: string }[] };
+    },
+    [csrf, refresh],
+  );
+
+  const restoreItem = useCallback(
+    async (id: string) => {
+      const data = await post('restore', { id }, csrf);
+      await refresh().catch(() => {});
+      return data;
+    },
+    [csrf, refresh],
+  );
+
+  const feedHistory = useCallback(async () => {
+    const data = await get('feed-history');
+    return (data.history as unknown[]) ?? [];
+  }, []);
+
+  const simulate = useCallback(
+    async (item: unknown, appVersion: string) => {
+      const data = await post('simulate', { item, appVersion }, csrf);
+      return data as { live?: boolean; verdict?: string; reasons?: string[]; eligible?: { ok: boolean; reason: string } };
+    },
+    [csrf],
+  );
+
+  const exportBackup = useCallback(async () => {
+    const data = await get('export');
+    return data as { items?: unknown[]; count?: number; v?: number; exportedAt?: string };
+  }, []);
+
+  const importBackup = useCallback(
+    async (items: unknown[]) => {
+      const data = await post('import', { items }, csrf);
+      await refresh().catch(() => {});
+      return data as { written?: number; errors?: string[] };
+    },
+    [csrf, refresh],
+  );
+
   const mutate = useCallback(
     async (action: string, body: unknown) => {
       const data = await post(action, body, csrf);
@@ -141,5 +188,5 @@ export function useNewsAdmin() {
     [],
   );
 
-  return { csrf, authed, restoring, loading, items, audit, login, logout, refresh, refreshAudit, restore, feedHealth, uploadImage, verifySaved, mutate };
+  return { csrf, authed, restoring, loading, items, audit, login, logout, refresh, refreshAudit, restore, feedHealth, bulk, restoreItem, feedHistory, simulate, exportBackup, importBackup, uploadImage, verifySaved, mutate };
 }
