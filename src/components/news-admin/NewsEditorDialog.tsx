@@ -278,7 +278,7 @@ export function NewsEditorDialog({
 
   const statusCaption =
     form.status === 'published'
-      ? 'Published → on /news within ~5 min (if time window is open)'
+      ? 'Published → on /news within ~1 min (if time window is open)'
       : form.status === 'draft'
         ? 'Draft → invisible everywhere until published'
         : 'Archived → history only, no popup';

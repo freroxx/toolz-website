@@ -6,11 +6,15 @@ import { getVisibilityVerdict } from '@/lib/newsVerdict';
 
 export function NewsListTable({
   items,
+  selected,
+  onToggleSelect,
   onEdit,
   onClone,
   onAction,
 }: {
   items: NewsItem[];
+  selected?: Set<string>;
+  onToggleSelect?: (id: string) => void;
   onEdit: (item: NewsItem) => void;
   onClone: (item: NewsItem) => void;
   onAction: (action: string, id: string) => Promise<void>;
@@ -26,9 +30,19 @@ export function NewsListTable({
     <div className="grid gap-3">
       {items.map((n) => {
         const verdict = getVisibilityVerdict(n);
+        const checked = selected?.has(n.id) ?? false;
         return (
         <Card key={n.id} className="rounded-[24px]">
           <CardContent className="flex flex-col gap-3 p-5 md:flex-row md:items-center">
+            {onToggleSelect && (
+              <input
+                type="checkbox"
+                checked={checked}
+                onChange={() => onToggleSelect(n.id)}
+                aria-label={`Select ${n.title}`}
+                className="h-5 w-5 shrink-0 accent-current"
+              />
+            )}
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant={n.status === 'published' ? 'default' : 'secondary'} className="rounded-full">{n.status}</Badge>

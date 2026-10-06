@@ -4,16 +4,23 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNewsAdmin } from '@/hooks/useNewsAdmin';
 import type { NewsItem } from '@/lib/news-schema';
+import { duplicateTitles, filterAdminItems, sortAdminItems, type NewsSort } from '@/lib/newsAdminTools';
 import { NewsLoginCard } from '@/components/news-admin/NewsLoginCard';
 import { NewsListTable } from '@/components/news-admin/NewsListTable';
 import { NewsEditorDialog } from '@/components/news-admin/NewsEditorDialog';
 import { NewsAuditLog } from '@/components/news-admin/NewsAuditLog';
 import { NewsFeedCheck } from '@/components/news-admin/NewsFeedCheck';
+import { NewsTestLab } from '@/components/news-admin/NewsTestLab';
+import { NewsStatusDashboard } from '@/components/news-admin/NewsStatusDashboard';
 
 export default function AdminNews() {
-  const { authed, restoring, loading, items, audit, login, logout, refresh, refreshAudit, restore, feedHealth, uploadImage, verifySaved, mutate } = useNewsAdmin();
+  const { authed, restoring, loading, items, audit, login, logout, refresh, refreshAudit, restore, feedHealth, bulk, restoreItem, feedHistory, simulate, exportBackup, importBackup, uploadImage, verifySaved, mutate } = useNewsAdmin();
   const [tab, setTab] = useState('all');
   const [q, setQ] = useState('');
+  const [sort, setSort] = useState<NewsSort>('updated');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [lastDeleted, setLastDeleted] = useState<{ id: string; title: string } | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<NewsItem | null>(null);
   const [saving, setSaving] = useState(false);
@@ -33,16 +40,51 @@ export default function AdminNews() {
   }, [authed, refresh, refreshAudit]);
 
   const filtered = useMemo(() => {
-    const now = Date.now();
-    return items.filter((n) => {
-      if (tab === 'published' && n.status !== 'published') return false;
-      if (tab === 'drafts' && n.status !== 'draft') return false;
-      if (tab === 'archived' && n.status !== 'archived') return false;
-      if (tab === 'expired' && !(n.expiresAt && Date.parse(n.expiresAt) <= now)) return false;
-      if (q && !`${n.title} ${n.body}`.toLowerCase().includes(q.toLowerCase())) return false;
-      return true;
+    return sortAdminItems(filterAdminItems(items, tab, q), sort);
+  }, [items, tab, q, sort]);
+
+  const dupes = useMemo(() => duplicateTitles(items), [items]);
+
+  // Keyboard shortcuts: n = new, / = search. No AI slop — plain, predictable.
+  useEffect(() => {
+    if (!authed) return;
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (e.key === 'n' || e.key === 'N') { setEditing(null); setEditorOpen(true); }
+      if (e.key === '/') { e.preventDefault(); document.querySelector<HTMLInputElement>('input[placeholder^="Search"]')?.focus(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [authed]);
+
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
     });
-  }, [items, tab, q]);
+  };
+
+  const runBulk = async (action: 'publish' | 'unpublish' | 'archive' | 'delete') => {
+    const ids = [...selected].filter((id) => filtered.some((n) => n.id === id));
+    if (ids.length === 0) return;
+    if (!confirm(`${action} ${ids.length} selected item(s)?`)) return;
+    setBulkBusy(true);
+    setErr(null);
+    try {
+      const r = await bulk(action, ids);
+      const failed = (r.results ?? []).filter((x) => !x.ok);
+      if (failed.length > 0) setErr(`Bulk ${action}: ${failed.length} failed (${failed.slice(0, 3).map((f) => f.id).join(', ')})`);
+      if (action === 'delete') setLastDeleted(null);
+      setSelected(new Set());
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Bulk action failed');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
 
   if (restoring) {
     return (
@@ -85,6 +127,36 @@ export default function AdminNews() {
         </div>
       )}
 
+      {dupes.length > 0 && (
+        <div className="mb-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm font-semibold text-amber-200">
+          Duplicate titles: {dupes.slice(0, 3).join(' · ')}{dupes.length > 3 ? ` +${dupes.length - 3} more` : ''} — consider renaming before publishing.
+        </div>
+      )}
+      {lastDeleted && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 px-4 py-3 text-sm font-semibold">
+          Deleted “{lastDeleted.title}”. Undo within 7 days?
+          <span className="ml-auto flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="rounded-full"
+              onClick={async () => {
+                setErr(null);
+                try {
+                  await restoreItem(lastDeleted.id);
+                  setLastDeleted(null);
+                } catch (e) {
+                  setErr(e instanceof Error ? e.message : 'Restore failed');
+                }
+              }}
+            >
+              Undo delete
+            </Button>
+            <Button size="sm" variant="ghost" className="rounded-full" onClick={() => setLastDeleted(null)}>Dismiss</Button>
+          </span>
+        </div>
+      )}
+
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="rounded-full">
@@ -92,34 +164,40 @@ export default function AdminNews() {
             <TabsTrigger value="published" className="rounded-full">Published</TabsTrigger>
             <TabsTrigger value="drafts" className="rounded-full">Drafts</TabsTrigger>
             <TabsTrigger value="archived" className="rounded-full">Archived</TabsTrigger>
+            <TabsTrigger value="critical" className="rounded-full">Critical</TabsTrigger>
+            <TabsTrigger value="scheduled" className="rounded-full">Scheduled</TabsTrigger>
             <TabsTrigger value="expired" className="rounded-full">Expired</TabsTrigger>
           </TabsList>
         </Tabs>
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search title/body…" className="max-w-xs rounded-full" />
+        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search title/body… (/ focuses)" className="max-w-xs rounded-full" />
+        <select value={sort} onChange={(e) => setSort(e.target.value as NewsSort)} className="h-10 rounded-full border border-input bg-background px-3 text-sm" aria-label="Sort">
+          <option value="updated">Updated</option>
+          <option value="published">Publish date</option>
+          <option value="title">Title</option>
+        </select>
         <Button variant="ghost" className="rounded-full" onClick={() => { refresh().catch(() => {}); refreshAudit().catch(() => {}); }}>Refresh</Button>
-        {items.some((i) => i.status === 'draft') && (
-          <Button
-            variant="outline"
-            className="rounded-full"
-            onClick={async () => {
-              if (!confirm(`Publish ${items.filter((i) => i.status === 'draft').length} draft(s)?`)) return;
-              setErr(null);
-              try {
-                for (const d of items.filter((i) => i.status === 'draft')) {
-                  await mutate('publish', { id: d.id });
-                }
-              } catch (e) {
-                setErr(e instanceof Error ? e.message : 'Bulk publish failed');
-              }
-            }}
-          >
-            Publish all drafts
-          </Button>
-        )}
+        <span className="text-xs text-muted-foreground">{filtered.length}/{items.length}{selected.size > 0 ? ` · ${selected.size} selected` : ''}</span>
       </div>
+
+      {selected.size > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 px-4 py-3 text-sm">
+          <span className="font-bold">{selected.size} selected</span>
+          <Button size="sm" variant="ghost" className="rounded-full" onClick={() => setSelected(new Set(filtered.map((n) => n.id)))}>Select shown</Button>
+          <Button size="sm" variant="ghost" className="rounded-full" onClick={() => setSelected(new Set())}>Clear</Button>
+          <span className="ml-auto flex flex-wrap gap-2">
+            {(['publish', 'unpublish', 'archive', 'delete'] as const).map((a) => (
+              <Button key={a} size="sm" variant={a === 'delete' ? 'destructive' : 'outline'} className="rounded-full capitalize" disabled={bulkBusy} onClick={() => runBulk(a)}>
+                {bulkBusy ? 'Working…' : a}
+              </Button>
+            ))}
+          </span>
+        </div>
+      )}
 
       <NewsListTable
         items={filtered}
+        selected={selected}
+        onToggleSelect={toggleSelect}
         onEdit={(n) => {
           setEditing(n);
           setEditorOpen(true);
@@ -133,12 +211,17 @@ export default function AdminNews() {
         onAction={async (action, id) => {
           setErr(null);
           try {
+            const target = items.find((n) => n.id === id);
             await mutate(action, { id });
+            if (action === 'delete' && target) setLastDeleted({ id, title: target.title });
           } catch (e) {
             setErr(e instanceof Error ? e.message : 'Action failed');
           }
         }}
       />
+
+      <h2 className="mb-3 mt-10 text-lg font-extrabold">Test lab</h2>
+      <NewsTestLab items={items} onSimulate={simulate} />
 
       <h2 className="mb-3 mt-10 text-lg font-extrabold">Feed check</h2>
       <NewsFeedCheck
@@ -148,6 +231,9 @@ export default function AdminNews() {
           return { removed: Number((data as Record<string, unknown>).removed ?? 0) };
         }}
       />
+
+      <h2 className="mb-3 mt-10 text-lg font-extrabold">Status + backups</h2>
+      <NewsStatusDashboard onHistory={feedHistory} onExport={exportBackup} onImport={importBackup} />
 
       <h2 className="mb-3 mt-10 text-lg font-extrabold">Audit log</h2>
       <NewsAuditLog audit={audit} />
