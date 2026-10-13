@@ -9,14 +9,25 @@
     "api/models.ts": { "maxDuration": 10 },
     "api/news.ts": { "maxDuration": 10 },
     "api/news-rss.ts": { "maxDuration": 10 },
-    "api/news-version.ts": { "maxDuration": 10 },
-    "api/news-admin.ts": { "maxDuration": 15 },
-    "api/news-image.ts": { "maxDuration": 30 }
+    "api/news-admin.ts": { "maxDuration": 30 },
+    "api/skins.ts": { "maxDuration": 15 }
   },
   "rewrites": [
     {
       "source": "/reset",
       "destination": "/api/reset"
+    },
+    {
+      "source": "/api/news-version",
+      "destination": "/api/news?action=version"
+    },
+    {
+      "source": "/api/news-image",
+      "destination": "/api/news-admin?action=image"
+    },
+    {
+      "source": "/api/skins-admin",
+      "destination": "/api/skins"
     },
     {
       "source": "/api/:path*",

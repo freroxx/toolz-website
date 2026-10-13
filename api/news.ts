@@ -5,6 +5,9 @@ import { Redis } from '@upstash/redis';
  * Toolz News — public feed `GET /api/news`.
  * Serves published, time-valid, version-eligible items from Upstash Redis.
  * Never fails the app: Redis outage returns empty degraded payload.
+ *
+ * Also serves the generation counter at `GET /api/news?action=version`
+ * (migrated from /api/news-version): `{ v, nextTransitionAt }`.
  */
 
 const FEED_VERSION = 1;
@@ -146,6 +149,52 @@ function clientIpFromHeaders(req: VercelRequest): string {
   return s.split(',')[0].trim() || 'unknown';
 }
 
+/** Generation counter (migrated from /api/news-version). */
+async function handleVersion(req: VercelRequest, res: VercelResponse) {
+  res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=60, stale-while-revalidate=120');
+
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return res.status(200).json({ v: -1, nextTransitionAt: null, degraded: true });
+  }
+
+  try {
+    const redis = Redis.fromEnv();
+    const v = await redis.get<number>('news:version');
+    const num = typeof v === 'number' ? v : -1;
+    // Best-effort transition hint: cheapest possible — index + payload dates.
+    // Fail-open to null; the full feed always carries the authoritative value.
+    let nextTransitionAt: string | null = null;
+    try {
+      const ids = (await redis.zrange<string[]>('news:index', 0, -1)) ?? [];
+      if (ids.length > 0) {
+        const pipe = redis.pipeline();
+        for (const id of ids.slice(0, 100)) pipe.get(`news:item:${id}`);
+        const raw = await pipe.exec();
+        const now = Date.now();
+        let best = Number.POSITIVE_INFINITY;
+        for (const r of raw as unknown[]) {
+          const val = (r as { result?: unknown })?.result ?? r;
+          const obj = (typeof val === 'string' ? safeParse(val) : val) as Record<string, unknown> | null;
+          if (!obj || typeof obj !== 'object') continue;
+          for (const k of ['publishAt', 'expiresAt'] as const) {
+            const iso = obj[k];
+            if (typeof iso !== 'string' || !iso) continue;
+            const t = Date.parse(iso);
+            if (Number.isFinite(t) && t > now && t < best) { best = t; nextTransitionAt = iso; }
+          }
+        }
+      }
+    } catch { /* hint stays null */ }
+    const etag = `W/"nv${num}-${nextTransitionAt ?? 'none'}"`;
+    res.setHeader('ETag', etag);
+    if (req.headers['if-none-match'] === etag) return res.status(304).end();
+    return res.status(200).json({ v: num, nextTransitionAt });
+  } catch (e: unknown) {
+    console.error('[news:version] error:', e);
+    return res.status(200).json({ v: -1, nextTransitionAt: null, degraded: true });
+  }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -154,6 +203,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method Not Allowed' });
+
+  // Generation counter (migrated from /api/news-version). Devices poll this
+  // cheap endpoint and only run a full sync when the generation changed.
+  if (String(req.query.action ?? '') === 'version') {
+    return handleVersion(req, res);
+  }
 
   const appVersion = String(req.query.appVersion ?? req.query.app_version ?? '0.0.0');
   const preview = req.query.preview === '1';

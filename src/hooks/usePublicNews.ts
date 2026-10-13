@@ -62,7 +62,7 @@ export function usePublicNews(pollMs = 60_000) {
     if (pollMs > 0) {
       timer = setInterval(async () => {
         try {
-          const res = await fetch('/api/news-version', { cache: 'no-store' });
+          const res = await fetch('/api/news?action=version', { cache: 'no-store' });
           const data = (await res.json().catch(() => null)) as { v?: unknown; nextTransitionAt?: unknown } | null;
           if (!res.ok || !data) return;
           const rv = typeof data.v === 'number' ? data.v : -1;

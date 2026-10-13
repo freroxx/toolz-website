@@ -151,11 +151,11 @@ export function useNewsAdmin() {
     [csrf, refresh],
   );
 
-  // Image upload via the imgbb proxy (api/news-image.ts). The IMGBB_API_KEY
-  // stays server-side; the browser only ever sends the image + session/CSRF.
+  // Image upload via the imgbb proxy (?action=image on news-admin). The
+  // IMGBB_API_KEY stays server-side; the browser only sends image + session/CSRF.
   const uploadImage = useCallback(
     async (imageBase64: string, name: string): Promise<string> => {
-      const res = await fetch('/api/news-image', {
+      const res = await fetch('/api/news-admin?action=image', {
         method: 'POST',
         credentials: 'include',
         headers: {

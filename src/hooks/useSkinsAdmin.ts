@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import type { SkinItem } from '@/lib/skin-schema';
 
 async function post(action: string, body: unknown, csrf?: string | null) {
-  const res = await fetch(`/api/skins-admin?action=${action}`, {
+  const res = await fetch(`/api/skins?action=${action}`, {
     method: 'POST',
     credentials: 'include',
     headers: {
@@ -17,7 +17,7 @@ async function post(action: string, body: unknown, csrf?: string | null) {
 }
 
 async function get(action: string) {
-  const res = await fetch(`/api/skins-admin?action=${action}`, { credentials: 'include' });
+  const res = await fetch(`/api/skins?action=${action}`, { credentials: 'include' });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error((data as { error?: string }).error || `Request failed (${res.status})`);
   return data as Record<string, unknown>;

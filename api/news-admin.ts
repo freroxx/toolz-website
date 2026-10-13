@@ -6,6 +6,9 @@ import crypto from 'crypto';
  * Toolz News admin API — `POST/GET /api/news-admin?action=...`
  * Same-origin JSON API for the /admin/news SPA.
  * Auth: NEWS_ADMIN_PASSWORD (Vercel env) -> HMAC session cookie + CSRF.
+ *
+ * Also serves image uploads at `POST ?action=image` (migrated from
+ * /api/news-image): base64 → ImgBB via server-side IMGBB_API_KEY.
  */
 
 const PRIORITIES = ['info', 'feature', 'fix', 'promo', 'critical'] as const;
@@ -485,6 +488,80 @@ function versionEligibleLocal(item: Record<string, unknown>, appVersion: string)
   return { ok: true, reason: 'eligible' };
 }
 
+const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+const IMAGE_ALLOWED_HOSTS = ['i.ibb.co', 'ibb.co'];
+
+/**
+ * Image upload for the news editor (migrated from /api/news-image).
+ * Caller must already be session+CSRF authed. Accepts a base64 image (raw
+ * or data-URL) and forwards it to ImgBB with the server-side IMGBB_API_KEY.
+ */
+async function handleImageUpload(req: VercelRequest, res: VercelResponse) {
+  if (!process.env.IMGBB_API_KEY) {
+    return res.status(500).json({ error: 'Image uploads are not configured (IMGBB_API_KEY missing).' });
+  }
+
+  let b64 = String(req.body?.image ?? '');
+  const name = String(req.body?.name ?? 'toolz-news').slice(0, 80);
+  if (!b64) return res.status(400).json({ error: 'image (base64) required.' });
+  // Accept data URLs by stripping the prefix.
+  const comma = b64.indexOf(',');
+  if (b64.startsWith('data:') && comma >= 0) b64 = b64.slice(comma + 1);
+  b64 = b64.replace(/\s+/g, '');
+  if (!/^[A-Za-z0-9+/=]+$/.test(b64)) return res.status(400).json({ error: 'Invalid base64 image.' });
+
+  let bytes: Buffer;
+  try {
+    bytes = Buffer.from(b64, 'base64');
+  } catch {
+    return res.status(400).json({ error: 'Invalid base64 image.' });
+  }
+  if (bytes.length === 0 || bytes.length > IMAGE_MAX_BYTES) {
+    return res.status(400).json({ error: `Image must be 1 byte–5 MB (got ${(bytes.length / 1024).toFixed(0)} KB).` });
+  }
+
+  const form = new URLSearchParams();
+  form.set('key', process.env.IMGBB_API_KEY as string);
+  form.set('image', b64);
+  form.set('name', name);
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 30_000);
+  try {
+    const up = await fetch('https://api.imgbb.com/1/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: form.toString(),
+      signal: ctrl.signal,
+    });
+    const payload = (await up.json().catch(() => null)) as {
+      success?: boolean;
+      data?: { display_url?: string; delete_url?: string };
+      error?: { message?: string };
+    } | null;
+    if (!up.ok || !payload?.success || !payload.data?.display_url) {
+      const msg = payload?.error?.message || `ImgBB HTTP ${up.status}`;
+      return res.status(502).json({ error: `Image host rejected the upload: ${msg}` });
+    }
+    const url = payload.data.display_url;
+    let host = '';
+    try {
+      host = new URL(url).hostname.toLowerCase();
+    } catch {
+      return res.status(502).json({ error: 'Image host returned an invalid URL.' });
+    }
+    if (!IMAGE_ALLOWED_HOSTS.some((h) => host === h || host.endsWith(`.${h}`))) {
+      return res.status(502).json({ error: 'Image host returned an unexpected host.' });
+    }
+    return res.status(200).json({ ok: true, url, deleteUrl: payload.data.delete_url ?? null });
+  } catch (e: unknown) {
+    console.error('[news-admin:image] upload error:', e);
+    return res.status(500).json({ error: 'Internal error' });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
@@ -547,6 +624,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (tokenId) { try { await redis.del(`news_admin_session:${tokenId}`); } catch { /* ignore */ } }
     res.setHeader('Set-Cookie', clearSessionCookie(req));
     return res.status(200).json({ ok: true });
+  }
+
+  // Image upload (migrated from /api/news-image — same session+CSRF gate above).
+  // POST ?action=image {image: base64|data-URL, name?} → {ok, url, deleteUrl}.
+  if (action === 'image' && req.method === 'POST') {
+    return handleImageUpload(req, res);
   }
 
   if (action === 'list' && req.method === 'GET') {

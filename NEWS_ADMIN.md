@@ -10,16 +10,18 @@ Required env vars:
 - `NEWS_ADMIN_PASSWORD` — admin-only password (separate from `SYNC_PASSWORD`)
 - `IMGBB_API_KEY` — imgbb API key for the editor Upload button (server-side only, never exposed; get one at https://api.imgbb.com)
 
-Vercel picks up `api/news.ts` (public feed, 10s), `api/news-version.ts` (generation counter, 10s), `api/news-rss.ts` (RSS 2.0, 10s), `api/news-admin.ts` (authed JSON, 15s) and `api/news-image.ts` (imgbb upload proxy, 30s) automatically via `vercel.json`.
+Vercel picks up `api/news.ts` (public feed + generation counter, 10s), `api/news-rss.ts` (RSS 2.0, 10s), `api/news-admin.ts` (authed JSON + imgbb upload proxy, 30s) and `api/skins.ts` (public feed + admin ops, 15s) automatically via `vercel.json` — 11 functions total, under the Hobby-plan limit of 12.
 
 ## Endpoints
 
 - `GET /api/news?appVersion=1.1.6` — public feed (CORS `*`, CDN-cached ~1 min + `ETag`/`304`, `nextTransitionAt` for scheduled flips, fail-open 120 req/min/IP throttle, degraded `{news:[]}` on Redis outage).
-- `GET /api/news-version` — feed generation counter `{v, nextTransitionAt}` (CDN-cached 60 s + `ETag`); devices sync when it changes or the transition becomes due.
+- `GET /api/news?action=version` — feed generation counter `{v, nextTransitionAt}` (CDN-cached 60 s + `ETag`); devices sync when it changes or the transition becomes due. (Old `/api/news-version` URL still works via rewrite.)
 - `GET /api/news-rss` — RSS 2.0 with the same visibility rules (CDN 5 min), per-item `/news#news-<id>` links.
 - `POST /api/news-admin?action=login` `{password}` — sets HttpOnly `news_admin_session` cookie (`Secure` only on https; localhost works), returns `{csrf}` (send as `X-CSRF-Token` on every later call).
 - `GET ?action=list` (optional `?limit=&offset=`, defaults to all) / `POST ?action=create|update|publish|unpublish|archive|delete` (delete → 7-day trash) / `POST ?action=restore|bulk|import` / `GET ?action=export|audit|feed-health|feed-history` / `POST ?action=simulate|repair-index`.
 - `bulk` takes `{ops:[{action,id}]}` (1–50, one round-trip, per-op results); `restore` undoes a delete within 7 days; `export` dumps `{items,count,v}`; `import` validates 1–200 items (cap-aware); `feed-history` returns the last 50 feed changes; `simulate` dry-runs `{item,appVersion}` with no writes.
+- `POST /api/news-admin?action=image` `{image (base64|data-URL), name?}` — imgbb upload proxy, same session+CSRF auth (old `/api/news-image` URL still works via rewrite).
+- Skins: `GET/POST /api/skins` (public feed + community submit) and `?action=` admin ops (`list/create/update/publish/unpublish/archive/delete`, same session+CSRF auth; old `/api/skins-admin` URL still works via rewrite).
 - Saves return a `visibility` verdict (`live` vs reason) so the panel can confirm immediately whether the item is on `/news`.
 - `GET /api/news?all=1` — unfiltered public feed behind `/news` and the home teaser (status + time window only).
 - `?action=feed-health` — `{ indexSize, payloadCount, liveCount, feedVersion, nextTransitionAt, orphanIds, items: [{ id, title, status, liveOnPublicFeed, reason }] }`; also powers the admin "Feed check" section (auto-runs on mount).
