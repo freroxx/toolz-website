@@ -1,5 +1,6 @@
 import { WifiOff, Lock, Terminal, LayoutGrid } from "lucide-react";
 import { motion } from "framer-motion";
+import SectionHeader from "@/components/landing/SectionHeader";
 
 // Grounded in the Toolz README: offline-first (not offline-only), SQLCipher
 // vaults, GPLv3, Android 12+, QS tiles / widgets / autofill.
@@ -71,28 +72,11 @@ const HowItWorks = () => {
 
       <div className="container mx-auto px-4 relative z-10">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 32 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ type: "spring", stiffness: 200, damping: 25 }}
-          className="text-center mb-10 md:mb-16"
-        >
-          <div className="m3-chip inline-flex mb-5 md:mb-6">Philosophy</div>
-          <h2
-            className="m3-display-medium text-3xl md:text-5xl mb-4 md:mb-6"
-            style={{ color: "hsl(var(--md-on-surface))" }}
-          >
-            Built to stay on your phone.
-          </h2>
-          <p
-            className="m3-body-large max-w-xl mx-auto px-2 text-[15px] md:text-lg"
-            style={{ color: "hsl(var(--md-on-surface-variant))" }}
-          >
-            Toolz is an offline-first toolkit: 50+ tools in one APK, and vault
-            data that never leaves your device.
-          </p>
-        </motion.div>
+        <SectionHeader
+          chip="Principles"
+          title="Built to stay on your phone."
+          description="Toolz is an offline-first toolkit: 50+ tools in one APK, and vault data that never leaves your device."
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start">
           {/* Steps */}

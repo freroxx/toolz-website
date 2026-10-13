@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import SectionHeader from "@/components/landing/SectionHeader";
 
 interface SpecPayload {
   matched_device: string;
@@ -28,18 +29,18 @@ const CatalogSection = () => {
   return (
     <section id="catalog" className="py-24 relative overflow-hidden" style={{ background: "hsl(var(--md-surface))" }}>
       <div className="container mx-auto px-4 relative z-10">
-        <div className="flex flex-col items-center text-center mb-16">
-          <h2 className="m3-display-small text-on-surface mb-4">
-            Hardware Intelligence.
-          </h2>
-          <p className="m3-body-medium text-on-surface-variant opacity-60 mb-8 max-w-xl">
-            A minimalist engineering index of device specifications. Zero slop.
-          </p>
+        <div className="flex flex-col items-center text-center mb-12">
+          <SectionHeader
+            className="mb-6"
+            chip="Spec catalog"
+            title="Look up any device."
+            description="Full hardware specs for thousands of phones, tablets and watches — the same catalog inside the app."
+          />
           <Link
             to="/spec"
             className="m3-btn-filled px-8 text-sm gap-2 active:scale-95 transition-transform"
           >
-            Launch Catalog
+            Open catalog
             <ArrowRight size={18} />
           </Link>
         </div>

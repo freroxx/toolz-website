@@ -1,63 +1,24 @@
-import { Download, Github, ChevronDown, Shield, Lock, Sparkles } from "lucide-react";
-import { motion, useScroll, useTransform, AnimatePresence, useSpring } from "framer-motion";
-import { useState, useEffect, useCallback, useRef } from "react";
-import { useUpdateManifest } from "@/hooks/use-update-manifest";
-import { APP_SCREENSHOTS as allScreenshots } from "@/lib/screenshots";
+import { Download, Github, Shield, Lock, LayoutGrid } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useCallback } from "react";
+import { useLatestRelease } from "@/hooks/use-latest-release";
+import { FEATURED_SCREENSHOTS } from "@/lib/screenshots";
 
 const pillBadges = [
-  { icon: Shield, label: "Privacy as standard" },
-  { icon: Sparkles, label: "Zero Slop" },
-  { icon: Lock,   label: "100% Local" },
+  { icon: LayoutGrid, label: "50+ tools, one APK" },
+  { icon: Shield, label: "On-device first" },
+  { icon: Lock, label: "Encrypted vaults" },
 ];
 
 const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
   const [imgIndex, setImgIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-  // Slides the phone mockup off to the left on scroll-down, back on scroll-up.
-  const [phoneHidden, setPhoneHidden] = useState(false);
-  const lastScrollY = useRef(0);
-  const heroRef = useRef<HTMLElement>(null);
+  const { versionName } = useLatestRelease();
 
-  useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY;
-      const prev = lastScrollY.current;
-      if (y > prev + 4 && y > 80) setPhoneHidden(true);
-      else if (y < prev - 4) setPhoneHidden(false);
-      lastScrollY.current = y;
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const { versionName } = useUpdateManifest();
-
-  // Parallax via scroll
-  const { scrollYProgress } = useScroll({
-    target: heroRef,
-    offset: ["start start", "end start"],
-  });
-
-  const phoneY = useTransform(scrollYProgress, [0, 1], [0, 120]);
-  const phoneRotate = useTransform(scrollYProgress, [0, 1], [0, 12]);
-  const phoneScale = useTransform(scrollYProgress, [0, 0.6], [1, 0.85]);
-
-  const blob1Y = useTransform(scrollYProgress, [0, 1], [0, -100]);
-  const blob1X = useTransform(scrollYProgress, [0, 1], [0, 50]);
-  const blob2Y = useTransform(scrollYProgress, [0, 1], [0, 80]);
-  const blob2X = useTransform(scrollYProgress, [0, 1], [0, -40]);
-
-  const textY = useTransform(scrollYProgress, [0, 1], [0, -60]);
-  const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
-
-  const springConfig = { stiffness: 100, damping: 25, mass: 1 };
-  const springPhone = {
-    y: useSpring(phoneY, springConfig),
-    rotate: useSpring(phoneRotate, springConfig),
-    scale: useSpring(phoneScale, springConfig),
-  };
-
-  const nextImg = useCallback(() => setImgIndex((p) => (p + 1) % allScreenshots.length), []);
+  const nextImg = useCallback(
+    () => setImgIndex((p) => (p + 1) % FEATURED_SCREENSHOTS.length),
+    []
+  );
   useEffect(() => {
     if (paused) return;
     const t = setInterval(nextImg, 3200);
@@ -66,54 +27,23 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
 
   return (
     <section
-      ref={heroRef}
       className="relative min-h-screen flex items-center overflow-hidden pt-24 pb-20"
       style={{ background: "hsl(var(--md-surface))" }}
     >
-      {/* ── Decorative blobs ── */}
+      {/* Single tonal backdrop: one expressive container shape, static. */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <motion.div
-          style={{ y: blob1Y, x: blob1X }}
-          className="absolute -top-40 -left-40 w-[800px] h-[800px] m3-blob opacity-[0.15]"
-          animate={{ scale: [1, 1.1, 1], rotate: [0, 5, 0] }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <div
-            className="w-full h-full rounded-[inherit]"
-            style={{ background: "radial-gradient(circle, hsl(var(--md-primary) / 0.4) 0%, transparent 70%)" }}
-          />
-        </motion.div>
-
-        <motion.div
-          style={{ y: blob2Y, x: blob2X }}
-          className="absolute -bottom-40 -right-40 w-[700px] h-[700px] m3-blob-2 opacity-[0.12]"
-          animate={{ scale: [1, 1.15, 1], rotate: [0, -5, 0] }}
-          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <div
-            className="w-full h-full rounded-[inherit]"
-            style={{ background: "radial-gradient(circle, hsl(var(--md-secondary) / 0.4) 0%, transparent 70%)" }}
-          />
-        </motion.div>
-
-        {/* Floating background elements */}
-        <motion.div
-          animate={{ y: [0, -20, 0], opacity: [0.05, 0.1, 0.05] }}
-          transition={{ duration: 8, repeat: Infinity }}
-          className="absolute top-1/4 right-1/4 w-32 h-32 rounded-full border border-primary/20"
-        />
-        <motion.div
-          animate={{ y: [0, 30, 0], opacity: [0.03, 0.08, 0.03] }}
-          transition={{ duration: 10, repeat: Infinity, delay: 1 }}
-          className="absolute bottom-1/4 left-1/3 w-48 h-48 rounded-full border border-secondary/20"
-        />
-
-        {/* Subtle grid */}
         <div
-          className="absolute inset-0 opacity-[0.03]"
+          className="absolute -top-48 right-[-10%] w-[640px] h-[640px] opacity-[0.12]"
           style={{
-            backgroundImage: "linear-gradient(hsl(var(--md-outline)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--md-outline)) 1px, transparent 1px)",
-            backgroundSize: "80px 80px",
+            background: "hsl(var(--md-primary-container))",
+            borderRadius: "38% 62% 55% 45% / 48% 42% 58% 52%",
+          }}
+        />
+        <div
+          className="absolute bottom-[-20%] left-[-8%] w-[520px] h-[520px] opacity-[0.1]"
+          style={{
+            background: "hsl(var(--md-secondary-container))",
+            borderRadius: "62% 38% 42% 58% / 55% 58% 42% 45%",
           }}
         />
       </div>
@@ -122,10 +52,7 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
         <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
 
           {/* ── Left: Text ── */}
-          <motion.div
-            style={{ y: textY, opacity }}
-            className="flex-1 text-center lg:text-left"
-          >
+          <div className="flex-1 text-center lg:text-left">
             {/* Logo */}
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
@@ -152,16 +79,7 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
             >
               One home.
               <br />
-              All your{" "}
-              <span className="relative">
-                 <span className="relative z-10 m3-gradient-text">tools.</span>
-                 <motion.div
-                   initial={{ scaleX: 0 }}
-                   animate={{ scaleX: 1 }}
-                   transition={{ delay: 0.8, duration: 0.8, ease: "circOut" }}
-                   className="absolute bottom-2 left-0 right-0 h-4 bg-primary/10 -z-10 origin-left rounded-sm"
-                 />
-              </span>
+              All your <span className="m3-gradient-text">tools.</span>
             </motion.h1>
 
             {/* Body */}
@@ -172,7 +90,9 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
               className="m3-body-large mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed text-balance"
               style={{ color: "hsl(var(--md-on-surface-variant))" }}
             >
-              Ditch the folder of single-purpose apps. Toolz is a modern utility suite that brings productivity, media, security, and system tools into one polished, expressive home.
+              Ditch the folder of single-purpose apps. Toolz is a free, open-source
+              utility suite for Android 12 and up — timers, media, vaults and
+              sensors in one place, with no account and no ads.
             </motion.p>
 
             {/* Badge pills */}
@@ -225,31 +145,15 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 Source
               </a>
             </motion.div>
-          </motion.div>
+          </div>
 
           {/* ── Right: Phone mockup ── */}
           <motion.div
-            style={{
-              y: springPhone.y,
-              rotate: springPhone.rotate,
-              scale: springPhone.scale,
-            }}
-            initial={{ opacity: 0, x: 100, scale: 0.8, rotate: 10 }}
-            animate={{ opacity: 1, x: 0, scale: 1, rotate: 0 }}
+            initial={{ opacity: 0, x: 100, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
             transition={{ delay: 0.4, type: "spring", stiffness: 80, damping: 20, mass: 1.2 }}
             className="flex-shrink-0 relative group mt-8 lg:mt-0"
           >
-            {/* Scroll-direction slide: exits left on scroll-down, returns on scroll-up */}
-            <motion.div
-              animate={{ x: phoneHidden ? "-110vw" : "0vw", opacity: phoneHidden ? 0 : 1 }}
-              transition={{ type: "spring", stiffness: 70, damping: 22, mass: 1.1 }}
-            >
-            {/* Glow behind phone */}
-            <div
-              className="absolute inset-0 -m-20 sm:-m-32 rounded-full blur-[80px] sm:blur-[140px] opacity-40 pointer-events-none transition-all duration-1000 group-hover:opacity-60"
-              style={{ background: "radial-gradient(circle, hsl(var(--md-primary) / 0.6), hsl(var(--md-secondary) / 0.4), transparent 70%)" }}
-            />
-
             <div
               className="relative w-[260px] sm:w-[340px] mx-auto"
               onMouseEnter={() => setPaused(true)}
@@ -263,9 +167,9 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 <div className="m3-phone-screen">
                   <AnimatePresence mode="wait">
                     <motion.img
-                      key={allScreenshots[imgIndex]}
-                      src={allScreenshots[imgIndex]}
-                      alt={`Toolz app screenshot ${imgIndex + 1}`}
+                      key={FEATURED_SCREENSHOTS[imgIndex]}
+                      src={FEATURED_SCREENSHOTS[imgIndex]}
+                      alt={`Toolz app screenshot ${imgIndex + 1} of ${FEATURED_SCREENSHOTS.length}`}
                       className="absolute inset-0 w-full h-full object-cover"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -308,30 +212,24 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 />
               </div>
 
+              {/* Screenshot position dots */}
+              <div className="flex justify-center gap-1.5 mt-4" aria-hidden="true">
+                {FEATURED_SCREENSHOTS.map((_, i) => (
+                  <span
+                    key={i}
+                    className="h-1.5 rounded-full transition-all duration-300"
+                    style={{
+                      width: i === imgIndex ? 20 : 6,
+                      background: i === imgIndex
+                        ? "hsl(var(--md-primary))"
+                        : "hsl(var(--md-outline-variant))",
+                    }}
+                  />
+                ))}
+              </div>
             </div>
-            </motion.div>
           </motion.div>
         </div>
-
-        {/* Scroll indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5 }}
-          style={{ opacity }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
-        >
-          <span className="m3-label-medium uppercase tracking-[0.2em]" style={{ color: "hsl(var(--md-on-surface-variant) / 0.6)" }}>
-            Explore
-          </span>
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            style={{ color: "hsl(var(--md-primary))" }}
-          >
-            <ChevronDown size={24} />
-          </motion.div>
-        </motion.div>
       </div>
     </section>
   );

@@ -39,3 +39,6 @@ export const APP_SCREENSHOTS = [
   "https://i.ibb.co/BV2q8cQn/Screenshot-20260801-205902-Toolz.jpg",
   "https://i.ibb.co/C5Zk6tJB/Screenshot-20260801-205939-Toolz.jpg",
 ];
+
+/** Curated subset cycled in the hero phone — the full set lives in Gallery. */
+export const FEATURED_SCREENSHOTS = APP_SCREENSHOTS.slice(0, 6);

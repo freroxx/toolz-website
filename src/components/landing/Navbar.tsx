@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Menu, X, Download, Github } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "react-router-dom";
-import { useUpdateManifest } from "@/hooks/use-update-manifest";
+import { useLatestRelease } from "@/hooks/use-latest-release";
 
 const navLinks = [
   { label: "Tools", href: "/#features" },
@@ -17,7 +17,7 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
   const [activeHref, setActiveHref] = useState("");
   const navRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
-  const { versionName } = useUpdateManifest();
+  const { versionName } = useLatestRelease();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);

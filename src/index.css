@@ -399,6 +399,13 @@
     line-height: 1.25;
     letter-spacing: 0;
   }
+  .m3-headline-small {
+    font-family: 'Google Sans Text', 'Roboto Flex', sans-serif;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.33;
+    letter-spacing: 0;
+  }
   .m3-title-large {
     font-family: 'Google Sans', sans-serif;
     font-size: 22px;
@@ -440,6 +447,27 @@
     font-weight: 400;
     line-height: 1.5;
     letter-spacing: 0.01em;
+  }
+  .m3-label-large {
+    font-family: 'Google Sans Text', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.43;
+    letter-spacing: 0.01em;
+  }
+  .m3-label-medium {
+    font-family: 'Google Sans Text', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.33;
+    letter-spacing: 0.04em;
+  }
+  .m3-label-small {
+    font-family: 'Google Sans Text', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.45;
+    letter-spacing: 0.04em;
   }
 
   /* Gradient text utility */

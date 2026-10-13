@@ -218,7 +218,7 @@ const DownloadsPage = () => {
               className="m3-chip gap-2 bg-primary/10 text-primary border-primary/20"
             >
               <BarChart size={16} />
-              Live Insights
+              From GitHub
             </motion.div>
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
@@ -226,8 +226,7 @@ const DownloadsPage = () => {
               transition={{ delay: 0.1 }}
               className="m3-display-large text-on-surface"
             >
-              Download <br />
-              <span className="m3-gradient-text italic font-serif">Intelligence.</span>
+              Downloads.
             </motion.h1>
           </div>
 
@@ -254,11 +253,11 @@ const DownloadsPage = () => {
               {isLoading ? "..." : <DownloadCounter value={totalDownloads} duration={2.5} />}
             </div>
             <div className="m3-title-large font-bold text-on-surface-variant tracking-widest uppercase opacity-60">
-              Total Reach
+              Total downloads
             </div>
             <div className="mt-6 flex items-center gap-2 text-primary m3-label-medium font-bold uppercase tracking-widest bg-primary/10 px-4 py-1.5 rounded-full">
               <Sparkles size={14} />
-              Realtime
+              Live from GitHub
             </div>
           </motion.div>
         </div>
@@ -269,7 +268,7 @@ const DownloadsPage = () => {
         {/* Releases List */}
         <div className="space-y-8">
           <div className="flex items-center justify-between border-b border-outline-variant pb-4">
-            <h2 className="m3-headline-small text-on-surface">Release Breakdown</h2>
+            <h2 className="m3-headline-small text-on-surface">All releases</h2>
             <span className="m3-label-large text-on-surface-variant opacity-60">
               {releases?.length || 0} Releases tracked
             </span>

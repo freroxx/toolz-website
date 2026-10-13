@@ -1,4 +1,4 @@
-import { Github, MessageSquare, Globe } from "lucide-react";
+import { Github, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
@@ -39,11 +39,11 @@ const columns = [
 const Footer = () => {
   return (
     <footer
-      className="py-24 relative overflow-hidden"
+      className="py-16 md:py-20 relative overflow-hidden"
       style={{ background: "hsl(var(--md-surface-container-low))" }}
     >
       <div className="container mx-auto px-4 relative z-10">
-        <div className="flex flex-col md:flex-row justify-between items-start gap-16 mb-20">
+        <div className="flex flex-col md:flex-row justify-between items-start gap-12 mb-14">
           <div className="max-w-sm">
             <div className="flex items-center gap-4 mb-6 group cursor-pointer">
               <div className="w-14 h-14 rounded-[22%] bg-primary/10 flex items-center justify-center overflow-hidden transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-lg shadow-primary/5">
@@ -132,18 +132,14 @@ const Footer = () => {
                 © 2026 Toolz Project. All rights reserved.
               </motion.div>
               <div className="flex items-center gap-4 m3-label-small opacity-30">
-                <span>Built for Android 16</span>
+                <span>Android 12 and up</span>
                 <div className="w-1 h-1 bg-current rounded-full" />
-                <span>Material 3 Expressive</span>
+                <span>GPL-3.0</span>
               </div>
             </div>
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="m3-chip bg-white/5 border-white/10 gap-2 px-4 py-2"
-            >
-               <Globe size={14} className="text-primary animate-spin-slow" />
-               <span className="text-[10px] font-bold uppercase tracking-widest">Available Globally</span>
-            </motion.div>
+            <div className="m3-chip bg-white/5 border-white/10 gap-2 px-4 py-2">
+               <span className="text-[10px] font-bold uppercase tracking-widest">Free forever · No ads</span>
+            </div>
           </div>
       </div>
     </footer>

@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { LazyMotion, domMax } from "framer-motion";
 import { Analytics } from "@vercel/analytics/react";
+import LoadingIndicator from "./components/landing/LoadingIndicator";
 import Index from "./pages/Index";
 
 // Route-level splitting: the landing page stays lean; heavy routes
@@ -22,7 +23,7 @@ const RouteFallback = () => (
     style={{ background: "hsl(var(--md-surface))" }}
     aria-label="Loading page"
   >
-    <div className="w-10 h-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+    <LoadingIndicator />
   </div>
 );
 

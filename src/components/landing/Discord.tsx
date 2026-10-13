@@ -36,27 +36,17 @@ const Discord = () => {
                 Community
               </div>
               <h2
-                className="m3-display-small mb-6"
+                className="m3-headline-large mb-6"
                 style={{ color: "hsl(var(--md-on-surface))" }}
               >
-                Join the{" "}
-                <span
-                  style={{
-                    background: "linear-gradient(135deg, hsl(var(--md-secondary)), hsl(var(--md-primary)))",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
-                  }}
-                >
-                  network.
-                </span>
+                Join the Discord.
               </h2>
               <p
                 className="m3-body-large"
                 style={{ color: "hsl(var(--md-on-surface-variant))" }}
               >
-                Connect with other operators, share module configs, report bugs,
-                and get direct support from the dev team. Always free.
+                Get help, report bugs and follow development. Reports with
+                steps to reproduce get fixed fastest.
               </p>
             </div>
 

@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Newspaper, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { usePublicNews, formatNewsDate } from "@/hooks/usePublicNews";
 import { stripMarkdown } from "@/lib/stripMarkdown";
+import SectionHeader from "@/components/landing/SectionHeader";
 
 function updatedAgo(at: number): string | null {
   if (!at) return null;
@@ -41,36 +42,18 @@ const NewsSection = () => {
           transition={{ type: "spring", stiffness: 200, damping: 25 }}
         >
           <div className="flex flex-wrap items-end justify-between gap-4 mb-10">
-            <div>
-              <div className="m3-chip inline-flex mb-6 gap-2">
-                <Newspaper size={14} />
-                Announcements
-              </div>
-              <h2
-                className="m3-display-small"
-                style={{ color: "hsl(var(--md-on-surface))" }}
-              >
-                Latest{" "}
-                <span
-                  style={{
-                    background: "linear-gradient(135deg, hsl(var(--md-secondary)), hsl(var(--md-primary)))",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
-                  }}
-                >
-                  news.
-                </span>
-              </h2>
-              <p
-                className="m3-body-large mt-4 max-w-xl"
-                style={{ color: "hsl(var(--md-on-surface-variant))" }}
-              >
-                Changelog highlights and announcements from the Toolz team —
-                the same feed your app shows.
-                {stamp && <span className="m3-label-small ml-2">{stamp}</span>}
-              </p>
-            </div>
+            <SectionHeader
+              align="left"
+              className="mb-0"
+              chip="Announcements"
+              title="Latest news."
+              description={
+                <>
+                  Changelog highlights from the Toolz team — the same feed the app shows.
+                  {stamp && <span className="m3-label-small ml-2">{stamp}</span>}
+                </>
+              }
+            />
             <Link to="/news" className="m3-btn-outlined h-11 px-5 text-sm gap-2">
               All news
               <ArrowRight size={16} />

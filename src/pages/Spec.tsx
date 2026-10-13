@@ -779,7 +779,7 @@ const SpecPage = () => {
             className="text-[2.5rem] font-bold leading-[1.02] tracking-tight text-on-surface sm:text-6xl lg:text-7xl"
           >
             Toolz Device{" "}
-            <span className="m3-gradient-text relative inline-block font-serif italic">
+            <span className="m3-gradient-text relative inline-block">
               Catalog.
             </span>
           </motion.h1>

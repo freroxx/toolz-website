@@ -2,13 +2,13 @@ import { motion } from "framer-motion";
 import { Download, Users, ArrowRight, ArrowUpRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useGithubDownloads } from "@/hooks/use-github-downloads";
-import { useUpdateManifest } from "@/hooks/use-update-manifest";
+import { useLatestRelease } from "@/hooks/use-latest-release";
 import DownloadCounter from "@/components/landing/DownloadCounter";
 
 const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
   const navigate = useNavigate();
   const { totalDownloads, isLoading } = useGithubDownloads();
-  const { versionName } = useUpdateManifest();
+  const { versionName } = useLatestRelease();
 
   return (
     <section className="py-20 md:py-28 relative overflow-hidden">

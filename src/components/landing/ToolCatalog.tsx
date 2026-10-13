@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { categories, totalTools } from "@/lib/tools-catalog";
+import SectionHeader from "@/components/landing/SectionHeader";
 
 
 const colorMap = {
@@ -28,6 +29,7 @@ const colorMap = {
 
 const ToolCatalog = () => {
   const [activeId, setActiveId] = useState(categories[0].id);
+  const [query, setQuery] = useState("");
   const activeIndex = Math.max(0, categories.findIndex((c) => c.id === activeId));
   const active = categories[activeIndex];
   const colors = colorMap[active.color];
@@ -36,6 +38,19 @@ const ToolCatalog = () => {
     const next = (activeIndex + dir + categories.length) % categories.length;
     setActiveId(categories[next].id);
   };
+
+  const q = query.trim().toLowerCase();
+  const results = useMemo(() => {
+    if (!q) return [];
+    return categories.flatMap((c) =>
+      c.tools
+        .filter(
+          (t) =>
+            t.name.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q)
+        )
+        .map((t) => ({ group: c.name, icon: c.icon, color: c.color, tool: t }))
+    );
+  }, [q]);
 
   return (
     <section
@@ -58,29 +73,101 @@ const ToolCatalog = () => {
       />
 
       <div className="container mx-auto px-4 relative z-10">
-        {/* Header */}
+        <SectionHeader
+          chip="Tool catalog"
+          title={`${totalTools}+ tools in ${categories.length} groups.`}
+          description="One APK for Android 12 and up. Search across everything, or pick a group to browse."
+        />
+
+        {/* M3 search bar */}
         <motion.div
-          initial={{ opacity: 0, y: 32 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ type: "spring", stiffness: 200, damping: 25 }}
-          className="text-center mb-8 md:mb-12"
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ type: "spring", stiffness: 180, damping: 26 }}
+          className="max-w-3xl mx-auto mb-4 md:mb-6"
         >
-          <div className="m3-chip inline-flex mb-5 md:mb-6">Toolz Catalog</div>
-          <h2
-            className="m3-display-medium text-3xl md:text-5xl lg:text-6xl mb-4 md:mb-6"
-            style={{ color: "hsl(var(--md-on-surface))" }}
+          <div
+            className="flex items-center gap-3 pl-5 pr-3 py-1.5 rounded-full border transition-colors focus-within:border-primary"
+            style={{
+              background: "hsl(var(--md-surface-container-high))",
+              borderColor: q ? "hsl(var(--md-primary))" : "hsl(var(--md-outline-variant) / 0.35)",
+            }}
           >
-            {totalTools}+ tools in {categories.length} groups.
-          </h2>
-          <p
-            className="m3-body-large max-w-xl mx-auto px-2 text-[15px] md:text-lg"
-            style={{ color: "hsl(var(--md-on-surface-variant))" }}
-          >
-            One APK for Android 12 and up. Select a group to see each tool and what it does.
-          </p>
+            <Search size={20} className="text-on-surface-variant shrink-0" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Escape" && setQuery("")}
+              placeholder="Search tools — try “timer”, “qr”, “vault”…"
+              aria-label="Search tools"
+              className="flex-1 min-w-0 bg-transparent py-3 text-[15px] text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none"
+            />
+            {q && (
+              <button
+                onClick={() => setQuery("")}
+                aria-label="Clear search"
+                className="w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-highest active:scale-90 transition-all shrink-0"
+              >
+                <X size={18} />
+              </button>
+            )}
+          </div>
         </motion.div>
 
+        {q ? (
+          /* Search results replace the group browser */
+          <motion.div
+            key="search-results"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.22 }}
+            className="max-w-3xl mx-auto rounded-[24px] md:rounded-[32px] border p-5 md:p-8"
+            style={{
+              background: "hsl(var(--md-surface-container-low))",
+              borderColor: "hsl(var(--md-outline-variant) / 0.4)",
+            }}
+            role="tabpanel"
+          >
+            <p
+              className="text-[12px] md:text-[13px] font-bold uppercase tracking-[0.14em] mb-2 tabular-nums"
+              style={{ color: "hsl(var(--md-on-surface-variant) / 0.7)" }}
+            >
+              {results.length} result{results.length === 1 ? "" : "s"} for “{query.trim()}”
+            </p>
+            {results.length === 0 ? (
+              <p className="m3-body-medium text-on-surface-variant py-4">
+                Nothing matches. Try a shorter word like “clock”, “pdf” or “coin”.
+              </p>
+            ) : (
+              <ul>
+                {results.map(({ group, icon: Icon, color, tool }) => (
+                  <li
+                    key={`${group}-${tool.name}`}
+                    className="flex items-center gap-3 md:gap-4 py-3 md:py-3.5 border-b last:border-b-0"
+                    style={{ borderColor: "hsl(var(--md-outline-variant) / 0.25)" }}
+                  >
+                    <span
+                      className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                      style={{ background: colorMap[color].soft }}
+                    >
+                      <Icon size={17} style={{ color: colorMap[color].icon }} />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="text-[14px] md:text-[15px] font-bold leading-snug text-on-surface">
+                        {tool.name}
+                      </div>
+                      <div className="text-[12px] md:text-[13px] text-on-surface-variant/70">
+                        in {group}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </motion.div>
+        ) : (
+        <>
         {/* Group selector */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -280,6 +367,8 @@ const ToolCatalog = () => {
             </motion.div>
           </AnimatePresence>
         </motion.div>
+        </>
+        )}
 
         <p
           className="text-center mt-6 md:mt-8 text-[13px] md:text-sm px-4"
