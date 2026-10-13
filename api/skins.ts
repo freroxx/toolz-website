@@ -312,6 +312,41 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method === 'GET') {
+    // Public status lookup for the app's own submissions (?status=id1,id2).
+    // Returns published/archived only — drafts stay hidden until approved.
+    // Missing/deleted ids come back in `removed` (client shows Not approved).
+    const statusQuery = String(req.query.status || '').trim();
+    if (statusQuery) {
+      if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+        return res.status(200).json({ statuses: [], removed: [], degraded: true });
+      }
+      try {
+        const redis = Redis.fromEnv();
+        const ids = statusQuery.split(',').map((s) => cleanStr(s, 64)).filter(Boolean).slice(0, 50);
+        if (ids.length === 0) return res.status(200).json({ statuses: [], removed: [] });
+        const pipe = redis.pipeline();
+        for (const id of ids) pipe.get(`skins:item:${id}`);
+        const raw = await pipe.exec();
+        const statuses: { id: string; status: string }[] = [];
+        const removed: string[] = [];
+        (raw as unknown[]).forEach((r, i) => {
+          const v = (r as any)?.result ?? r;
+          const item = typeof v === 'string' ? safeParse(v) : v;
+          if (!item || typeof item !== 'object' || !item.id) { removed.push(ids[i]); return; }
+          if (item.status === 'draft') return; // still in review — no signal
+          if (item.status === 'published' || item.status === 'archived') {
+            statuses.push({ id: item.id, status: item.status });
+          } else {
+            removed.push(ids[i]);
+          }
+        });
+        res.setHeader('Cache-Control', 'no-store');
+        return res.status(200).json({ statuses, removed });
+      } catch (e) {
+        console.error('[skins] status error', e);
+        return res.status(200).json({ statuses: [], removed: [], degraded: true });
+      }
+    }
     res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60, stale-while-revalidate=120');
     if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
       return res.status(200).json({ version: FEED_VERSION, count: 0, skins: [], removedIds: [], v: -1, fetchedAt: new Date().toISOString(), degraded: true });
