@@ -1,0 +1,2 @@
+# This repo is deployed, not published to npm — nothing to exclude.
+# File exists so npm doesn't fall back to .gitignore with a warning.
