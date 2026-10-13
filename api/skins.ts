@@ -35,11 +35,11 @@ function validSkin(s: any): string | null {
   if (!s || typeof s !== 'object') return 'bad payload';
   const name = cleanStr(s.name, 32);
   if (name.length < 3) return 'Name too short';
-  if (!['SYSTEM', 'LIGHT', 'DARK'].includes(s.themeMode)) return 'Bad themeMode';
+  if (!['SYSTEM', 'LIGHT', 'DARK'].includes(String(s.themeMode || '').toUpperCase())) return 'Bad themeMode (use SYSTEM, LIGHT or DARK)';
   if (typeof s.dynamicColor !== 'boolean') return 'Bad dynamicColor';
-  if (!BUILT_IN_ICONS.has(String(s.iconPresetId || ''))) return 'Unknown icon';
+  if (!BUILT_IN_ICONS.has(String(s.iconPresetId || ''))) return `Unknown icon "${cleanStr(s.iconPresetId, 32)}"`;
   const shape = String(s.iconShape || 'HEXAGON').toUpperCase();
-  if (!['HEXAGON', 'CIRCLE', 'PILL'].includes(shape)) return 'Bad iconShape';
+  if (!['HEXAGON', 'OCTAGON', 'CIRCLE', 'PILL'].includes(shape)) return 'Bad iconShape';
   return null;
 }
 
@@ -127,8 +127,8 @@ function validateSkinAdmin(d: any): { errors: string[]; clean: any } {
   const name = cleanStr(d.name, 32);
   if (name.length < 3) errors.push('name must be 3-32 chars');
   else clean.name = name;
-  if (!['SYSTEM', 'LIGHT', 'DARK'].includes(d.themeMode)) errors.push('bad themeMode');
-  else clean.themeMode = d.themeMode;
+  if (!['SYSTEM', 'LIGHT', 'DARK'].includes(String(d.themeMode || '').toUpperCase())) errors.push('bad themeMode');
+  else clean.themeMode = String(d.themeMode).toUpperCase();
   clean.dynamicColor = !!d.dynamicColor;
   clean.primary = d.primary == null ? null : numOrNull(d.primary);
   clean.secondary = d.secondary == null ? null : numOrNull(d.secondary);
@@ -138,7 +138,7 @@ function validateSkinAdmin(d: any): { errors: string[]; clean: any } {
   clean.iconAdaptTheme = d.iconAdaptTheme !== false;
   clean.iconFollowDynamic = d.iconFollowDynamic !== false;
   const shape = String(d.iconShape || 'HEXAGON').toUpperCase();
-  if (!['HEXAGON', 'CIRCLE', 'PILL'].includes(shape)) errors.push('Bad iconShape');
+  if (!['HEXAGON', 'OCTAGON', 'CIRCLE', 'PILL'].includes(shape)) errors.push('Bad iconShape');
   else clean.iconShape = shape;
   if (d.status !== undefined) {
     if (!['draft', 'published', 'archived'].includes(String(d.status))) errors.push('bad status');
@@ -408,7 +408,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         name,
         author: cleanStr(skin?.author, 32) || null,
         description: cleanStr(skin?.description, 200) || null,
-        themeMode: candidate.themeMode,
+        themeMode: String(candidate.themeMode || 'SYSTEM').toUpperCase(),
         dynamicColor: !!candidate.dynamicColor,
         primary: numOrNull(candidate.primary),
         secondary: numOrNull(candidate.secondary),
