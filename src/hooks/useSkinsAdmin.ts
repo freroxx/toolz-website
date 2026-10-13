@@ -30,6 +30,26 @@ export function useSkinsAdmin() {
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<SkinItem[]>([]);
 
+  const login = useCallback(async (password: string) => {
+    setLoading(true);
+    try {
+      const data = await post('login', { password });
+      setCsrf(String(data.csrf));
+      setAuthed(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const logout = useCallback(async () => {
+    try {
+      await post('logout', {}, csrf);
+    } catch { /* ignore */ }
+    setCsrf(null);
+    setAuthed(false);
+    setItems([]);
+  }, [csrf]);
+
   const refresh = useCallback(async () => {
     const data = await get('list');
     const list = ((data.items as SkinItem[]) ?? []).sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
@@ -61,5 +81,5 @@ export function useSkinsAdmin() {
     return data;
   }, [csrf, refresh]);
 
-  return { authed, restoring, loading, setLoading, items, csrf, refresh, restore, mutate };
+  return { authed, restoring, loading, setLoading, items, csrf, login, logout, refresh, restore, mutate };
 }

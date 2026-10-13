@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useSkinsAdmin } from '@/hooks/useSkinsAdmin';
-import { useNewsAdmin } from '@/hooks/useNewsAdmin';
 import { NewsLoginCard } from '@/components/news-admin/NewsLoginCard';
 import type { SkinItem } from '@/lib/skin-schema';
 
@@ -17,7 +16,6 @@ function argbToCss(n: number | null | undefined): string {
 
 export default function AdminSkins() {
   const skins = useSkinsAdmin();
-  const newsAuth = useNewsAdmin();
   const [tab, setTab] = useState<'all' | 'published' | 'draft' | 'archived'>('all');
   const [q, setQ] = useState('');
   const [err, setErr] = useState<string | null>(null);
@@ -52,11 +50,11 @@ export default function AdminSkins() {
     return (
       <NewsLoginCard
         onLogin={async (password: string) => {
-          // Reuse news login (same password + cookie), then load skins.
-          await newsAuth.login(password);
+          // Own SKINS_ADMIN_PASSWORD session (set it on Vercel), then load skins.
+          await skins.login(password);
           await skins.refresh();
         }}
-        loading={newsAuth.loading}
+        loading={skins.loading}
       />
     );
   }

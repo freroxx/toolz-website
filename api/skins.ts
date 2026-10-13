@@ -7,8 +7,9 @@ import crypto from 'crypto';
  * GET serves published skins from Upstash Redis. Fail-open (degraded empty).
  * POST creates a draft for admin review (rate-limited, validated).
  *
- * Also serves the admin ops at `?action=` (migrated from /api/skins-admin):
- * session+CSRF authed list/create/update/publish/unpublish/archive/delete.
+ * Also serves the admin ops at `?action=`:
+ * login/logout/list/create/update/publish/unpublish/archive/delete,
+ * authed by SKINS_ADMIN_PASSWORD (Vercel env) -> HMAC session cookie + CSRF.
  */
 
 const FEED_VERSION = 1;
@@ -71,11 +72,15 @@ function parseCookies(req: VercelRequest): Record<string, string> {
   return out;
 }
 
-/** Admin session (same NEWS_ADMIN_PASSWORD + news_admin_session cookie as /admin/news). */
+function sha256(s: string): Buffer {
+  return crypto.createHash('sha256').update(s).digest();
+}
+
+/** Admin session (SKINS_ADMIN_PASSWORD + skins_admin_session cookie, separate from news). */
 async function requireAdminSession(req: VercelRequest, redis: any): Promise<{ ok: boolean; csrf?: string }> {
-  const secret = process.env.NEWS_ADMIN_PASSWORD || '';
+  const secret = process.env.SKINS_ADMIN_PASSWORD || '';
   if (!secret) return { ok: false };
-  const raw = parseCookies(req)['news_admin_session'];
+  const raw = parseCookies(req)['skins_admin_session'];
   if (!raw) return { ok: false };
   const dot = raw.lastIndexOf('.');
   if (dot < 0) return { ok: false };
@@ -85,10 +90,27 @@ async function requireAdminSession(req: VercelRequest, redis: any): Promise<{ ok
   try {
     if (!crypto.timingSafeEqual(Buffer.from(mac), Buffer.from(expect))) return { ok: false };
   } catch { return { ok: false }; }
-  const sess = await redis.get(`news_admin_session:${tokenId}`);
+  const sess = await redis.get(`skins_admin_session:${tokenId}`);
   const obj = typeof sess === 'string' ? safeParse(sess) : sess;
   if (!obj || typeof obj !== 'object' || !obj.csrf) return { ok: false };
   return { ok: true, csrf: obj.csrf };
+}
+
+/** Secure flag only on https (localhost dev is http — Secure would drop the cookie). */
+function sessionCookie(tokenId: string, mac: string, maxAge: number, req: VercelRequest): string {
+  const proto = String(req.headers['x-forwarded-proto'] ?? '');
+  const host = String(req.headers.host ?? req.headers['x-forwarded-host'] ?? '');
+  const isLocal = /localhost|127\.0\.0\.1/i.test(host) || process.env.NODE_ENV === 'development';
+  const secure = !isLocal && (proto.includes('https') || process.env.NODE_ENV === 'production' || proto === '');
+  return `skins_admin_session=${tokenId}.${mac}; HttpOnly; ${secure ? 'Secure; ' : ''}SameSite=Lax; Path=/; Max-Age=${maxAge}`;
+}
+
+function clearSessionCookie(req: VercelRequest): string {
+  const proto = String(req.headers['x-forwarded-proto'] ?? '');
+  const host = String(req.headers.host ?? req.headers['x-forwarded-host'] ?? '');
+  const isLocal = /localhost|127\.0\.0\.1/i.test(host) || process.env.NODE_ENV === 'development';
+  const secure = !isLocal && (proto.includes('https') || process.env.NODE_ENV === 'production' || proto === '');
+  return `skins_admin_session=; HttpOnly; ${secure ? 'Secure; ' : ''}SameSite=Lax; Path=/; Max-Age=0`;
 }
 
 function needCsrf(req: VercelRequest, csrf: string): boolean {
@@ -128,9 +150,47 @@ function validateSkinAdmin(d: any): { errors: string[]; clean: any } {
   return { errors, clean };
 }
 
-/** Admin ops (migrated from /api/skins-admin). Routed by ?action=. */
+/** Admin ops. Routed by ?action=. */
 async function handleAdmin(req: VercelRequest, res: VercelResponse, action: string, redis: any) {
-  // Session restore (same cookie as news admin).
+  const ip = clientIp(req);
+  const SECRET = process.env.SKINS_ADMIN_PASSWORD || '';
+
+  // Login (no session needed).
+  if (action === 'login' && req.method === 'POST') {
+    if ((req.query.pw as string) !== undefined) return res.status(400).json({ error: 'Password in URL is rejected. Use JSON body.' });
+    if (!SECRET) return res.status(500).json({ error: 'Skins admin not configured. Set SKINS_ADMIN_PASSWORD on Vercel.' });
+    const pw = String((typeof req.body === 'string' ? safeParse(req.body) : req.body)?.password ?? '');
+    if (!pw) return res.status(400).json({ error: 'Password required.' });
+    let ok = false;
+    try {
+      ok = crypto.timingSafeEqual(sha256(pw.trim()), sha256(SECRET.trim()));
+    } catch { ok = false; }
+    if (!ok) {
+      try {
+        const fails = await redis.incr(`skinsfails:${ip}`);
+        if (fails === 1) await redis.expire(`skinsfails:${ip}`, 900);
+        if (fails >= 5) await redis.set(`skinsban:${ip}`, '1', { ex: 900 });
+      } catch { /* ignore */ }
+      return res.status(401).json({ error: 'Invalid password.' });
+    }
+    try { await redis.del(`skinsfails:${ip}`); } catch { /* ignore */ }
+    const tokenId = crypto.randomBytes(32).toString('hex');
+    const mac = crypto.createHmac('sha256', SECRET).update(tokenId).digest('hex');
+    const csrf = crypto.randomBytes(16).toString('hex');
+    await redis.set(`skins_admin_session:${tokenId}`, JSON.stringify({ csrf }), { ex: 6 * 3600 });
+    res.setHeader('Set-Cookie', sessionCookie(tokenId, mac, 21600, req));
+    return res.status(200).json({ ok: true, csrf });
+  }
+
+  // Ban check (mirrors news-admin).
+  if (process.env.NODE_ENV !== 'development') {
+    try {
+      const banned = await redis.get(`skinsban:${ip}`);
+      if (banned) return res.status(403).json({ error: 'IP locked for 15 minutes after failed attempts.' });
+    } catch { /* ignore */ }
+  }
+
+  // Session restore (own cookie, not the news one).
   if (req.method === 'GET' && action === 'list') {
     const s = await requireAdminSession(req, redis);
     if (!s.ok) return res.status(401).json({ error: 'Unauthorized' });
@@ -151,6 +211,14 @@ async function handleAdmin(req: VercelRequest, res: VercelResponse, action: stri
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
   const s = await requireAdminSession(req, redis);
   if (!s.ok) return res.status(401).json({ error: 'Unauthorized' });
+
+  if (action === 'logout') {
+    const tokenId = (parseCookies(req)['skins_admin_session'] || '').split('.')[0];
+    if (tokenId) { try { await redis.del(`skins_admin_session:${tokenId}`); } catch { /* ignore */ } }
+    res.setHeader('Set-Cookie', clearSessionCookie(req));
+    return res.status(200).json({ ok: true });
+  }
+
   if (!needCsrf(req, s.csrf || '')) return res.status(403).json({ error: 'Bad CSRF' });
   const body = typeof req.body === 'string' ? safeParse(req.body) : (req.body as any) || {};
   const bump = () => redis.incr('skins:version').catch(() => -1);
@@ -225,11 +293,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  // Admin ops (migrated from /api/skins-admin). Routed by ?action=.
+  // Admin ops (own SKINS_ADMIN_PASSWORD session). Routed by ?action=.
   const adminAction = String(req.query.action || '');
   if (adminAction) {
-    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN || !process.env.NEWS_ADMIN_PASSWORD) {
-      return res.status(500).json({ error: 'Missing Redis config' });
+    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN || !process.env.SKINS_ADMIN_PASSWORD) {
+      return res.status(500).json({ error: 'Missing config. Set UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN and SKINS_ADMIN_PASSWORD on Vercel.' });
     }
     const redis = Redis.fromEnv();
     return handleAdmin(req, res, adminAction, redis);
