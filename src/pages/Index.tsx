@@ -9,7 +9,7 @@ import Discord from "@/components/landing/Discord";
 import HowItWorks from "@/components/landing/HowItWorks";
 import CTA from "@/components/landing/CTA";
 import Footer from "@/components/landing/Footer";
-import DownloadDialog from "@/components/landing/DownloadDialog";
+import LazyDownloadDialog from "@/components/landing/LazyDownloadDialog";
 
 const Index = () => {
   const [downloadOpen, setDownloadOpen] = useState(false);
@@ -30,7 +30,7 @@ const Index = () => {
         </div>
       </main>
       <Footer />
-      <DownloadDialog open={downloadOpen} onOpenChange={setDownloadOpen} />
+      <LazyDownloadDialog open={downloadOpen} onOpenChange={setDownloadOpen} />
     </div>
   );
 };

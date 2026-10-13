@@ -10,13 +10,18 @@ export interface GithubAsset {
 export interface GithubRelease {
   tag_name: string;
   name: string;
+  body: string;
+  prerelease: boolean;
+  draft: boolean;
   published_at: string;
   assets: GithubAsset[];
   html_url: string;
 }
 
 async function fetchReleases(): Promise<GithubRelease[]> {
-  const res = await fetch("https://api.github.com/repos/freroxx/toolz/releases");
+  const res = await fetch("https://api.github.com/repos/freroxx/toolz/releases", {
+    headers: { Accept: "application/vnd.github+json" },
+  });
   if (!res.ok) throw new Error("Failed to fetch releases");
   return res.json();
 }
@@ -26,6 +31,7 @@ export function useGithubReleases() {
     queryKey: ["github-releases"],
     queryFn: fetchReleases,
     staleTime: 1000 * 60 * 10,
+    retry: 1,
   });
 }
 

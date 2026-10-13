@@ -1,4 +1,4 @@
-import { MessageSquare, Users, ExternalLink } from "lucide-react";
+import { MessageSquare, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 
 const Discord = () => {
@@ -60,19 +60,19 @@ const Discord = () => {
               </p>
             </div>
 
-            {/* Stats row */}
+            {/* Support row */}
             <div className="flex gap-6">
               <div
                 className="flex-1 flex items-center gap-3 p-4 rounded-2xl"
                 style={{ background: "hsl(var(--md-secondary-container))" }}
               >
-                <Users size={20} style={{ color: "hsl(var(--md-on-secondary-container))" }} />
+                <MessageSquare size={20} style={{ color: "hsl(var(--md-on-secondary-container))" }} />
                 <div>
                   <div className="m3-label-small" style={{ color: "hsl(var(--md-on-secondary-container))" }}>
-                    Members
+                    Support
                   </div>
                   <div className="m3-title-medium font-bold" style={{ color: "hsl(var(--md-on-secondary-container))" }}>
-                    Online
+                    Direct from the dev team
                   </div>
                 </div>
               </div>

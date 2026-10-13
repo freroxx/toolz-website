@@ -1,5 +1,40 @@
-import { Github, MessageSquare, Twitter, Globe } from "lucide-react";
+import { Github, MessageSquare, Globe } from "lucide-react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+
+const REPO = "https://github.com/freroxx/toolz";
+
+const columns = [
+  {
+    title: "Downloads",
+    accent: "text-primary",
+    hover: "#FF6D00",
+    links: [
+      { label: "Latest release", href: `${REPO}/releases/latest`, external: true },
+      { label: "All releases", href: `${REPO}/releases`, external: true },
+      { label: "Download stats", href: "/downloads", external: false },
+    ],
+  },
+  {
+    title: "Community",
+    accent: "text-secondary",
+    hover: "#00BFA5",
+    links: [
+      { label: "Discord server", href: "https://discord.gg/aAswRUerwh", external: true },
+      { label: "Discussions", href: `${REPO}/discussions`, external: true },
+      { label: "News", href: "/news", external: false },
+    ],
+  },
+  {
+    title: "Project",
+    accent: "text-tertiary",
+    hover: "hsl(var(--md-tertiary))",
+    links: [
+      { label: "Source code", href: REPO, external: true },
+      { label: "GPL-3.0 license", href: `${REPO}/blob/master/LICENSE`, external: true },
+    ],
+  },
+];
 
 const Footer = () => {
   return (
@@ -23,13 +58,15 @@ const Footer = () => {
             </p>
             <div className="flex items-center gap-4">
               {[
-                { icon: Github, href: "https://github.com/freroxx/toolz" },
-                { icon: MessageSquare, href: "https://discord.gg/aAswRUerwh" },
-                { icon: Twitter, href: "#" }
+                { icon: Github, href: "https://github.com/freroxx/toolz", label: "GitHub" },
+                { icon: MessageSquare, href: "https://discord.gg/aAswRUerwh", label: "Discord" },
               ].map((social, i) => (
                 <motion.a
-                  key={i}
+                  key={social.label}
                   href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={social.label}
                   initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1 }}
@@ -50,54 +87,35 @@ const Footer = () => {
           </div>
           
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-12 lg:gap-24">
-            <div className="flex flex-col gap-6">
-              <span className="m3-label-large font-bold tracking-widest uppercase opacity-20 text-primary">Downloads</span>
-              <ul className="flex flex-col gap-4">
-                {["Latest Releases", "Source Code", "Changelog"].map((link) => (
-                  <li key={link}>
-                    <motion.a
-                      href="#"
-                      whileHover={{ x: 8, color: "#FF6D00" }}
-                      className="m3-body-medium opacity-50 hover:opacity-100 transition-all inline-block"
-                    >
-                      {link}
-                    </motion.a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="flex flex-col gap-6">
-              <span className="m3-label-large font-bold tracking-widest uppercase opacity-20 text-secondary">Community</span>
-              <ul className="flex flex-col gap-4">
-                {["Discord Server", "Discussions", "App Status"].map((link) => (
-                  <li key={link}>
-                    <motion.a
-                      href="#"
-                      whileHover={{ x: 8, color: "#00BFA5" }}
-                      className="m3-body-medium opacity-50 hover:opacity-100 transition-all inline-block"
-                    >
-                      {link}
-                    </motion.a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="flex flex-col gap-6">
-              <span className="m3-label-large font-bold tracking-widest uppercase opacity-20 text-tertiary">Legal</span>
-              <ul className="flex flex-col gap-4">
-                {["Privacy Policy", "GPL License"].map((link) => (
-                  <li key={link}>
-                    <motion.a
-                      href="#"
-                      whileHover={{ x: 8, color: "hsl(var(--md-tertiary))" }}
-                      className="m3-body-medium opacity-50 hover:opacity-100 transition-all inline-block"
-                    >
-                      {link}
-                    </motion.a>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {columns.map((col) => (
+              <div key={col.title} className="flex flex-col gap-6">
+                <span className={`m3-label-large font-bold tracking-widest uppercase opacity-20 ${col.accent}`}>{col.title}</span>
+                <ul className="flex flex-col gap-4">
+                  {col.links.map((link) => (
+                    <li key={link.label}>
+                      {link.external ? (
+                        <motion.a
+                          href={link.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          whileHover={{ x: 8, color: col.hover }}
+                          className="m3-body-medium opacity-50 hover:opacity-100 transition-all inline-block"
+                        >
+                          {link.label}
+                        </motion.a>
+                      ) : (
+                        <Link
+                          to={link.href}
+                          className="m3-body-medium opacity-50 hover:opacity-100 transition-all inline-block hover:text-primary"
+                        >
+                          {link.label}
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </div>
         

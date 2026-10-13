@@ -1,47 +1,8 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useCallback } from "react";
 import { X, ZoomIn, ChevronLeft, ChevronRight } from "lucide-react";
-
-const allScreenshots = [
-  "https://i.ibb.co/JPmYCs5/Screenshot-20260801-202638-Toolz.jpg",
-  "https://i.ibb.co/8LyXD7gL/Screenshot-20260801-202824-Toolz.jpg",
-  "https://i.ibb.co/x8dPC604/Screenshot-20260801-202836-Toolz.jpg",
-  "https://i.ibb.co/B5ddDr3B/Screenshot-20260801-202943-Toolz.jpg",
-  "https://i.ibb.co/HvXvq7b/Screenshot-20260801-203047-Toolz.jpg",
-  "https://i.ibb.co/bgZhLpFC/Screenshot-20260801-203255-Toolz.jpg",
-  "https://i.ibb.co/KxBCH1N0/Screenshot-20260801-203650-Toolz.jpg",
-  "https://i.ibb.co/fY4P78H0/Screenshot-20260801-203726-Toolz.jpg",
-  "https://i.ibb.co/1f6nwgh2/Screenshot-20260801-203837-Toolz.jpg",
-  "https://i.ibb.co/VcXgd7Ln/Screenshot-20260801-203956-Toolz.jpg",
-  "https://i.ibb.co/TBWstnFX/Screenshot-20260801-204050-Toolz.jpg",
-  "https://i.ibb.co/fdJTKt21/Screenshot-20260801-204136-Toolz.jpg",
-  "https://i.ibb.co/YB78db4d/Screenshot-20260801-204152-Toolz.jpg",
-  "https://i.ibb.co/QFjpfKM3/Screenshot-20260801-204227-Toolz.jpg",
-  "https://i.ibb.co/6c0JdSJb/Screenshot-20260801-204253-Toolz.jpg",
-  "https://i.ibb.co/60Y3Kfyd/Screenshot-20260801-204349-Toolz.jpg",
-  "https://i.ibb.co/gZpPwFYB/Screenshot-20260801-204451-Toolz.jpg",
-  "https://i.ibb.co/LdJkX9W8/Screenshot-20260801-204508-Toolz.jpg",
-  "https://i.ibb.co/NdV9Zvvx/Screenshot-20260801-204523-Toolz.jpg",
-  "https://i.ibb.co/7xrctBk2/Screenshot-20260801-204546-Toolz.jpg",
-  "https://i.ibb.co/3yVtRJK9/Screenshot-20260801-204556-Toolz.jpg",
-  "https://i.ibb.co/kg8DK78X/Screenshot-20260801-204625-Toolz.jpg",
-  "https://i.ibb.co/PZ5C7W3d/Screenshot-20260801-204720-Toolz.jpg",
-  "https://i.ibb.co/pjjRVt11/Screenshot-20260801-204746-Toolz.jpg",
-  "https://i.ibb.co/21KCCVnq/Screenshot-20260801-204951-Toolz.jpg",
-  "https://i.ibb.co/YFwsHXGX/Screenshot-20260801-205032-Toolz.jpg",
-  "https://i.ibb.co/Gf9G1HSD/Screenshot-20260801-205053-Toolz.jpg",
-  "https://i.ibb.co/PG37z8B9/Screenshot-20260801-205157-Toolz.jpg",
-  "https://i.ibb.co/rfHmrYzG/Screenshot-20260801-205233-Toolz.jpg",
-  "https://i.ibb.co/hFcfWbcK/Screenshot-20260801-205252-Toolz.jpg",
-  "https://i.ibb.co/vvJcqG6k/Screenshot-20260801-205311-Toolz.jpg",
-  "https://i.ibb.co/mVc23hyP/Screenshot-20260801-205448-Toolz.jpg",
-  "https://i.ibb.co/przVxJQw/Screenshot-20260801-205634-Toolz.jpg",
-  "https://i.ibb.co/TBX23hW8/Screenshot-20260801-205655-Toolz.jpg",
-  "https://i.ibb.co/6cS4Ps4k/Screenshot-20260801-205740-Toolz.jpg",
-  "https://i.ibb.co/bgWHNyJ/Screenshot-20260801-205820-Toolz.jpg",
-  "https://i.ibb.co/BV2q8cQn/Screenshot-20260801-205902-Toolz.jpg",
-  "https://i.ibb.co/C5Zk6tJB/Screenshot-20260801-205939-Toolz.jpg",
-];
+import { APP_SCREENSHOTS as allScreenshots } from "@/lib/screenshots";
+import { categories as toolCategories } from "@/lib/tools-catalog";
 
 interface ScrollingColumnProps {
   items: string[];
@@ -157,9 +118,9 @@ const Gallery = () => {
             {/* Stats */}
             <div className="flex gap-8 mt-10">
               {[
-                { value: `${allScreenshots.length}+`, label: "Screens" },
-                { value: "8", label: "Categories" },
-                { value: "M3", label: "Expressive" },
+                { value: `${allScreenshots.length}`, label: "Screens" },
+                { value: `${toolCategories.length}`, label: "Groups" },
+                { value: `${toolCategories.reduce((n, c) => n + c.tools.length, 0)}+`, label: "Tools" },
               ].map(({ value, label }) => (
                 <div key={label}>
                   <div
@@ -209,28 +170,28 @@ const Gallery = () => {
           >
             {/* Close FAB - Improved visibility */}
             <button
-              className="absolute top-8 right-8 w-16 h-16 rounded-[24px] flex items-center justify-center transition-all z-[120] shadow-2xl bg-white text-black hover:bg-primary hover:text-white"
+              className="absolute top-4 right-4 sm:top-8 sm:right-8 w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-[24px] flex items-center justify-center transition-all z-[120] shadow-2xl bg-white text-black hover:bg-primary hover:text-white"
               onClick={(e) => { e.stopPropagation(); setSelectedIndex(null); }}
               aria-label="Close"
             >
-              <X size={32} />
+              <X size={24} className="sm:w-8 sm:h-8" />
             </button>
 
             {/* Navigation Buttons - More prominent */}
             <button
-              className="absolute left-12 w-20 h-20 rounded-full flex items-center justify-center transition-all z-[120] bg-black/40 backdrop-blur-xl border border-white/10 hover:bg-primary/20 text-white hover:scale-110"
+              className="absolute left-2 sm:left-12 w-12 h-12 sm:w-20 sm:h-20 rounded-full flex items-center justify-center transition-all z-[120] bg-black/40 backdrop-blur-xl border border-white/10 hover:bg-primary/20 text-white hover:scale-110"
               onClick={prev}
               aria-label="Previous"
             >
-              <ChevronLeft size={48} />
+              <ChevronLeft size={28} className="sm:w-12 sm:h-12" />
             </button>
 
             <button
-              className="absolute right-12 w-20 h-20 rounded-full flex items-center justify-center transition-all z-[120] bg-black/40 backdrop-blur-xl border border-white/10 hover:bg-primary/20 text-white hover:scale-110"
+              className="absolute right-2 sm:right-12 w-12 h-12 sm:w-20 sm:h-20 rounded-full flex items-center justify-center transition-all z-[120] bg-black/40 backdrop-blur-xl border border-white/10 hover:bg-primary/20 text-white hover:scale-110"
               onClick={next}
               aria-label="Next"
             >
-              <ChevronRight size={48} />
+              <ChevronRight size={28} className="sm:w-12 sm:h-12" />
             </button>
 
             <motion.div

@@ -89,7 +89,7 @@ const HowItWorks = () => {
             className="m3-body-large max-w-xl mx-auto px-2 text-[15px] md:text-lg"
             style={{ color: "hsl(var(--md-on-surface-variant))" }}
           >
-            Toolz is an offline-first toolkit: 48+ tools in one APK, and vault
+            Toolz is an offline-first toolkit: 50+ tools in one APK, and vault
             data that never leaves your device.
           </p>
         </motion.div>

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Newspaper, ArrowLeft, Megaphone, ExternalLink, Link2, Check } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
-import DownloadDialog from "@/components/landing/DownloadDialog";
+import LazyDownloadDialog from "@/components/landing/LazyDownloadDialog";
 import { NewsBody } from "@/components/news/NewsBody";
 import { usePublicNews, formatNewsDate } from "@/hooks/usePublicNews";
 
@@ -317,7 +317,7 @@ const News = () => {
         )}
       </main>
       <Footer />
-      <DownloadDialog open={downloadOpen} onOpenChange={setDownloadOpen} />
+      <LazyDownloadDialog open={downloadOpen} onOpenChange={setDownloadOpen} />
     </div>
   );
 };

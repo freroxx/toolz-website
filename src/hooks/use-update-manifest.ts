@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-
+import { detectAbi } from "@/lib/release";
 
 export interface ManifestRelease {
   abi: string;
@@ -13,26 +13,7 @@ export interface UpdateManifest {
   releases: ManifestRelease[];
 }
 
-/**
- * Best-effort device ABI detection from the browser.
- * On most mobile Android browsers navigator.userAgent contains the ABI.
- * Falls back to arm64-v8a (most common modern Android).
- */
-function detectAbi(): string {
-  const ua = navigator.userAgent.toLowerCase();
-  if (ua.includes("x86_64") || ua.includes("amd64")) return "x86_64";
-  if (ua.includes("x86") && !ua.includes("x86_64")) return "x86";
-  if (
-    ua.includes("armv7") ||
-    ua.includes("armeabi-v7a") ||
-    (ua.includes("arm") && !ua.includes("arm64"))
-  )
-    return "armeabi-v7a";
-  // Default: arm64-v8a (>90% of modern Android devices)
-  return "arm64-v8a";
-}
-
-async function fetchManifest(): Promise<UpdateManifest> {
+export async function fetchManifest(): Promise<UpdateManifest> {
   const url = `https://raw.githubusercontent.com/freroxx/toolz/master/update_manifest.json?t=${Date.now()}`;
   const res = await fetch(url, { cache: "no-cache" });
   if (!res.ok) throw new Error(`Failed to fetch manifest: ${res.status}`);
@@ -49,9 +30,10 @@ export function useUpdateManifest() {
 
   const detectedAbi = detectAbi();
 
-  const bestRelease = data?.releases.find((r) => r.abi === detectedAbi)
-    ?? data?.releases.find((r) => r.abi === "arm64-v8a")
-    ?? data?.releases?.[0];
+  const bestRelease =
+    data?.releases.find((r) => r.abi === detectedAbi) ??
+    data?.releases.find((r) => r.abi === "arm64-v8a") ??
+    data?.releases?.[0];
 
   return {
     manifest: data,

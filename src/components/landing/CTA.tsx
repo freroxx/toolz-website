@@ -1,24 +1,9 @@
-import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import { motion } from "framer-motion";
 import { Download, Users, ArrowRight, ArrowUpRight } from "lucide-react";
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGithubDownloads } from "@/hooks/use-github-downloads";
 import { useUpdateManifest } from "@/hooks/use-update-manifest";
-
-const DownloadCounter = ({ value }: { value: number }) => {
-  const count = useMotionValue(0);
-  const rounded = useTransform(count, (latest) => Math.round(latest).toLocaleString());
-
-  useEffect(() => {
-    const animation = animate(count, value, {
-      duration: 2.5,
-      ease: "circOut"
-    });
-    return animation.stop;
-  }, [value, count]);
-
-  return <motion.span>{rounded}</motion.span>;
-};
+import DownloadCounter from "@/components/landing/DownloadCounter";
 
 const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
   const navigate = useNavigate();
@@ -131,7 +116,7 @@ const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
               </div>
 
               <div className="m3-display-medium text-5xl md:text-6xl font-bold tracking-tight text-on-surface mb-2 tabular-nums">
-                {isLoading ? "…" : <DownloadCounter value={totalDownloads || 0} />}
+                {isLoading ? "…" : <DownloadCounter value={totalDownloads || 0} duration={2.5} />}
               </div>
 
               <div className="text-[12px] md:text-[13px] font-bold uppercase tracking-[0.16em] text-on-surface-variant/60 mb-6 md:mb-7">

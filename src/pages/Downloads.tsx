@@ -1,22 +1,11 @@
-import { motion, useMotionValue, useTransform, animate, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useGithubDownloads, GithubRelease } from "@/hooks/use-github-downloads";
-import { Download, ArrowLeft, RefreshCw, BarChart, Clock, Package, ExternalLink, Sparkles, Smartphone, Layers, Plus } from "lucide-react";
+import { Download, ArrowLeft, RefreshCw, BarChart, Clock, Package, ExternalLink, Sparkles, Smartphone, Layers } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import DownloadDialog from "@/components/landing/DownloadDialog";
-
-const RollingNumber = ({ value }: { value: number }) => {
-  const count = useMotionValue(0);
-  const rounded = useTransform(count, (latest) => Math.round(latest).toLocaleString());
-
-  useEffect(() => {
-    const animation = animate(count, value, { duration: 2.5, ease: "circOut" });
-    return animation.stop;
-  }, [value, count]);
-
-  return <motion.span>{rounded}</motion.span>;
-};
+import LazyDownloadDialog from "@/components/landing/LazyDownloadDialog";
+import DownloadCounter from "@/components/landing/DownloadCounter";
 
 const RankingSection = ({ releases }: { releases: GithubRelease[] }) => {
   const topArchitectures = (() => {
@@ -262,7 +251,7 @@ const DownloadsPage = () => {
             </div>
 
             <div className="m3-display-large font-black tracking-tighter text-primary text-6xl md:text-8xl">
-              {isLoading ? "..." : <RollingNumber value={totalDownloads} />}
+              {isLoading ? "..." : <DownloadCounter value={totalDownloads} duration={2.5} />}
             </div>
             <div className="m3-title-large font-bold text-on-surface-variant tracking-widest uppercase opacity-60">
               Total Reach
@@ -324,7 +313,7 @@ const DownloadsPage = () => {
         </div>
       </motion.button>
 
-      <DownloadDialog open={downloadOpen} onOpenChange={setDownloadOpen} />
+      <LazyDownloadDialog open={downloadOpen} onOpenChange={setDownloadOpen} />
     </div>
   );
 };
