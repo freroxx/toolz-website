@@ -12,15 +12,25 @@ async function post(action: string, body: unknown, csrf?: string | null) {
     body: JSON.stringify(body ?? {}),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error((data as { error?: string }).error || `Request failed (${res.status})`);
+  if (!res.ok) throw httpError(res.status, (data as { error?: string }).error);
   return data as Record<string, unknown>;
 }
 
 async function get(action: string) {
   const res = await fetch(`/api/skins?action=${action}`, { credentials: 'include' });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error((data as { error?: string }).error || `Request failed (${res.status})`);
+  if (!res.ok) throw httpError(res.status, (data as { error?: string }).error);
   return data as Record<string, unknown>;
+}
+
+function httpError(status: number, message?: string) {
+  const err = new Error(message || `Request failed (${status})`);
+  (err as unknown as { status: number }).status = status;
+  return err;
+}
+
+function isAuthError(e: unknown) {
+  return e instanceof Error && (e as unknown as { status?: number }).status === 401;
 }
 
 export function useSkinsAdmin() {
@@ -51,12 +61,23 @@ export function useSkinsAdmin() {
   }, [csrf]);
 
   const refresh = useCallback(async () => {
-    const data = await get('list');
-    const list = ((data.items as SkinItem[]) ?? []).sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
-    setItems(list);
-    if (data.csrf) setCsrf(String(data.csrf));
-    setAuthed(true);
-    return list;
+    try {
+      const data = await get('list');
+      const list = ((data.items as SkinItem[]) ?? []).sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+      setItems(list);
+      if (data.csrf) setCsrf(String(data.csrf));
+      setAuthed(true);
+      return list;
+    } catch (e) {
+      // Only an expired/invalid session logs out. Server/network errors keep
+      // the session so a bad refresh never kicks back to login.
+      if (isAuthError(e)) {
+        setCsrf(null);
+        setAuthed(false);
+        setItems([]);
+      }
+      throw e;
+    }
   }, []);
 
   const restore = useCallback(async () => {
@@ -68,8 +89,12 @@ export function useSkinsAdmin() {
         if (data.csrf) setCsrf(String(data.csrf));
         setAuthed(true);
       });
-    } catch {
-      setAuthed(false);
+    } catch (e) {
+      // No session (401) means show login. Anything else (500/network) leaves
+      // existing state alone so a transient failure never wipes the session.
+      if (isAuthError(e)) {
+        setAuthed(false);
+      }
     } finally {
       setRestoring(false);
     }

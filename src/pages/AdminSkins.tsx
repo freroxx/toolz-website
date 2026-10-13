@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useSkinsAdmin } from '@/hooks/useSkinsAdmin';
-import { NewsLoginCard } from '@/components/news-admin/NewsLoginCard';
+import { SkinsLoginCard } from '@/components/skins-admin/SkinsLoginCard';
 import type { SkinItem } from '@/lib/skin-schema';
 
 function argbToCss(n: number | null | undefined): string {
@@ -48,7 +48,7 @@ export default function AdminSkins() {
 
   if (!skins.authed) {
     return (
-      <NewsLoginCard
+      <SkinsLoginCard
         onLogin={async (password: string) => {
           // Own SKINS_ADMIN_PASSWORD session (set it on Vercel), then load skins.
           await skins.login(password);
@@ -80,7 +80,7 @@ export default function AdminSkins() {
         <div className="ml-auto flex flex-wrap gap-2">
           <Button variant="outline" className="rounded-full" onClick={() => window.open('/api/skins', '_blank')}>Public JSON</Button>
           <Button variant="outline" className="rounded-full" onClick={() => window.open('/admin/news', '_self')}>News admin</Button>
-          <Button variant="ghost" className="rounded-full" onClick={() => skins.refresh().catch(() => {})}>Refresh</Button>
+          <Button variant="ghost" className="rounded-full" onClick={() => skins.refresh().catch((e) => setErr(e instanceof Error ? e.message : 'Refresh failed'))}>Refresh</Button>
         </div>
       </div>
 

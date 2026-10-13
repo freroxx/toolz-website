@@ -300,7 +300,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Missing config. Set UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN and SKINS_ADMIN_PASSWORD on Vercel.' });
     }
     const redis = Redis.fromEnv();
-    return handleAdmin(req, res, adminAction, redis);
+    try {
+      return await handleAdmin(req, res, adminAction, redis);
+    } catch (e) {
+      console.error('[skins] admin error:', e);
+      return res.status(500).json({ error: `Admin failed: ${e instanceof Error ? e.message : 'unknown error'}` });
+    }
   }
 
   if (req.method === 'GET') {
