@@ -195,6 +195,9 @@ async function handleAdmin(req: VercelRequest, res: VercelResponse, action: stri
     const s = await requireAdminSession(req, redis);
     if (!s.ok) return res.status(401).json({ error: 'Unauthorized' });
     const ids = (await redis.zrange('skins:index', 0, -1)) ?? [];
+    if (ids.length === 0) {
+      return res.status(200).json({ items: [], csrf: s.csrf });
+    }
     const pipe = redis.pipeline();
     for (const id of ids.slice(0, 200)) pipe.get(`skins:item:${id}`);
     const raw = await pipe.exec();
