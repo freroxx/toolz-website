@@ -20,7 +20,8 @@ const BUILT_IN_ICONS = new Set([
   'legacy-citrus', 'legacy-ocean', 'legacy-night',
   'paper-light', 'paper-dark', 'citrus-pop', 'ocean-pop', 'royal', 'rose',
   'mint', 'sand', 'slate', 'snow', 'carbon', 'cobalt', 'sunset', 'forest',
-  'lavender', 'peach', 'system-auto', 'dynamic-glow', 'custom',
+  'lavender', 'peach', 'crimson', 'ember', 'arctic', 'dusk', 'moss', 'amber',
+  'system-auto', 'dynamic-glow', 'custom',
 ]);
 
 function newId(): string {
