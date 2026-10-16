@@ -47,7 +47,7 @@ function validSkin(s: any): string | null {
 }
 
 /** Canonical look identity — mirrors SkinDto.fingerprint() on Android. */
-function skinFingerprint(s: any): string {
+export function skinFingerprint(s: any): string {
   const shape = String(s.iconShape || 'HEXAGON').toUpperCase();
   const canonShape = shape === 'HEXAGON' ? 'OCTAGON' : shape === 'PILL' ? 'CIRCLE' : shape;
   return [
@@ -485,6 +485,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 }
 
 function numOrNull(v: unknown): number | null {
+  if (v == null) return null;
   const n = Number(v);
   if (!Number.isFinite(n) || n < 0 || n > 4294967295) return null;
   return Math.floor(n);
