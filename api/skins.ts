@@ -21,6 +21,8 @@ const BUILT_IN_ICONS = new Set([
   'paper-light', 'paper-dark', 'citrus-pop', 'ocean-pop', 'royal', 'rose',
   'mint', 'sand', 'slate', 'snow', 'carbon', 'cobalt', 'sunset', 'forest',
   'lavender', 'peach', 'crimson', 'ember', 'arctic', 'dusk', 'moss', 'amber',
+  'bubblegum', 'tangerine', 'lime', 'teal-pop', 'sky', 'indigo-pop',
+  'violet-haze', 'mocha', 'olive', 'rose-gold', 'storm', 'crimson-deep',
   'system-auto', 'dynamic-glow', 'custom',
 ]);
 
@@ -42,6 +44,27 @@ function validSkin(s: any): string | null {
   const shape = String(s.iconShape || 'HEXAGON').toUpperCase();
   if (!['HEXAGON', 'OCTAGON', 'CIRCLE', 'PILL'].includes(shape)) return 'Bad iconShape';
   return null;
+}
+
+/** Canonical look identity — mirrors SkinDto.fingerprint() on Android. */
+function skinFingerprint(s: any): string {
+  const shape = String(s.iconShape || 'HEXAGON').toUpperCase();
+  const canonShape = shape === 'HEXAGON' ? 'OCTAGON' : shape === 'PILL' ? 'CIRCLE' : shape;
+  return [
+    String(s.themeMode || 'SYSTEM').toUpperCase(),
+    String(!!s.dynamicColor),
+    String(s.primary ?? -1),
+    String(s.secondary ?? -1),
+    String(s.gradient !== false),
+    String(s.iconPresetId || ''),
+    String(s.iconAdaptTheme !== false),
+    String(s.iconFollowDynamic !== false),
+    canonShape,
+    String(s.iconGradient !== false),
+    String(s.iconBg ?? -1),
+    String(s.iconFg ?? -1),
+    String(s.iconStroke ?? -1),
+  ].join('|');
 }
 
 async function rateLimited(redis: any, ip: string, key: string, limit = 60): Promise<boolean> {
@@ -137,6 +160,10 @@ function validateSkinAdmin(d: any): { errors: string[]; clean: any } {
   if (!BUILT_IN_ICONS.has(String(d.iconPresetId || ''))) errors.push('Unknown icon');
   else clean.iconPresetId = String(d.iconPresetId);
   clean.iconAdaptTheme = d.iconAdaptTheme !== false;
+  clean.iconGradient = d.iconGradient !== false;
+  clean.iconBg = d.iconBg == null ? null : numOrNull(d.iconBg);
+  clean.iconFg = d.iconFg == null ? null : numOrNull(d.iconFg);
+  clean.iconStroke = d.iconStroke == null ? null : numOrNull(d.iconStroke);
   clean.iconFollowDynamic = d.iconFollowDynamic !== false;
   const shape = String(d.iconShape || 'HEXAGON').toUpperCase();
   if (!['HEXAGON', 'OCTAGON', 'CIRCLE', 'PILL'].includes(shape)) errors.push('Bad iconShape');
@@ -401,6 +428,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const candidate = { ...(skin || {}), name, status: 'draft' };
       const err = validSkin(candidate);
       if (err) return res.status(400).json({ ok: false, error: err });
+      const fp = skinFingerprint(candidate);
+      try {
+        const ids = (await redis.zrange('skins:index', 0, -1)) ?? [];
+        if (ids.length > 0) {
+          const pipe = redis.pipeline();
+          for (const existingId of ids.slice(0, 200)) pipe.get(`skins:item:${existingId}`);
+          const raw = await pipe.exec();
+          for (const r of raw as unknown[]) {
+            const v = (r as any)?.result ?? r;
+            const it = typeof v === 'string' ? safeParse(v) : v;
+            if (it && typeof it === 'object' && it.id && skinFingerprint(it) === fp) {
+              return res.status(409).json({ ok: false, error: `This look already exists as \"${cleanStr(it.name, 32)}\"`, existingName: cleanStr(it.name, 32) });
+            }
+          }
+        }
+      } catch { /* duplicate guard is best-effort */ }
       const id = newId();
       const now = new Date().toISOString();
       const item = {
@@ -418,6 +461,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         iconAdaptTheme: candidate.iconAdaptTheme !== false,
         iconFollowDynamic: candidate.iconFollowDynamic !== false,
         iconShape: String(candidate.iconShape || 'HEXAGON').toUpperCase(),
+        iconGradient: candidate.iconGradient !== false,
+        iconBg: numOrNull(candidate.iconBg),
+        iconFg: numOrNull(candidate.iconFg),
+        iconStroke: numOrNull(candidate.iconStroke),
         featured: false,
         status: 'draft',
         createdAt: now,

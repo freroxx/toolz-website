@@ -2,14 +2,17 @@ import { z } from 'zod';
 
 export const skinThemeModes = ['SYSTEM', 'LIGHT', 'DARK'] as const;
 export const skinStatuses = ['draft', 'published', 'archived'] as const;
-export const skinShapes = ['HEXAGON', 'CIRCLE', 'PILL'] as const;
+export const skinShapes = ['HEXAGON', 'OCTAGON', 'CIRCLE', 'PILL'] as const;
 
 export const BUILT_IN_ICON_IDS = [
   'midnight', 'mono-grey', 'grape-haze', 'grape-deep', 'lagoon',
   'legacy-citrus', 'legacy-ocean', 'legacy-night',
   'paper-light', 'paper-dark', 'citrus-pop', 'ocean-pop', 'royal', 'rose',
   'mint', 'sand', 'slate', 'snow', 'carbon', 'cobalt', 'sunset', 'forest',
-  'lavender', 'peach', 'system-auto', 'dynamic-glow',
+  'lavender', 'peach', 'crimson', 'ember', 'arctic', 'dusk', 'moss', 'amber',
+  'bubblegum', 'tangerine', 'lime', 'teal-pop', 'sky', 'indigo-pop',
+  'violet-haze', 'mocha', 'olive', 'rose-gold', 'storm', 'crimson-deep',
+  'system-auto', 'dynamic-glow',
 ] as const;
 
 const argbLong = z.number().int().min(0).max(4294967295);
@@ -28,6 +31,10 @@ export const skinItemSchema = z.object({
   iconAdaptTheme: z.boolean().default(true),
   iconFollowDynamic: z.boolean().default(true),
   iconShape: z.enum(skinShapes).default('HEXAGON'),
+  iconGradient: z.boolean().default(true),
+  iconBg: argbLong.nullable().optional(),
+  iconFg: argbLong.nullable().optional(),
+  iconStroke: argbLong.nullable().optional(),
   featured: z.boolean().default(false),
   status: z.enum(skinStatuses).default('draft'),
 });
