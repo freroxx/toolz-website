@@ -47,7 +47,7 @@ Every save then re-checks the live public feed (CDN bypassed) and reports
 "verified live" or the exact mismatch (e.g. image differs, not in feed yet).
 Cloning opens a "(copy)" draft. Multi-select + bulk bar publishes/unpublishes/archives/deletes in one round-trip; single deletes show an Undo toast (7-day trash). `n` = new, `/` = search. Sort by updated/publish/title; Critical/Scheduled tabs; duplicate-title warning. Unsaved changes ask before discarding. List rows
 show LIVE-on-/news vs reason badges with local-time tooltips; the "Feed check" section auto-runs on mount and answers
-"will /news show anything?" with generation, next-transition, per-item reasons and orphan detection. "Test lab" dry-runs any item × version (local + server `simulate`, no writes). "Status + backups" shows the last 50 feed changes plus Export/Import (UTC filenames, confirm before overwrite).
+"will /news show anything?" with generation, next-transition, per-item reasons and orphan detection. "Test lab" dry-runs any item × version (local + server `simulate`, no writes). "Status + backups" shows the last 50 feed changes plus Export/Import (UTC filenames, confirm before overwrite). Body markdown links: `https://`/`mailto:` open in a new tab, `toolz://` deep links render as inert text ("Opens inside the Toolz app") on the website and live in the app, and any other scheme renders as plain text (XSS hardening — a `javascript:` href is never emitted).
 
 ## Troubleshooting: published but not on /news
 
