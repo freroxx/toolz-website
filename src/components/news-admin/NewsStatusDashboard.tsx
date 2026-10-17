@@ -79,18 +79,18 @@ export function NewsStatusDashboard({
   };
 
   return (
-    <Card className="rounded-[24px]">
+    <Card className="rounded-2xl">
       <CardHeader className="flex flex-row flex-wrap items-center gap-3">
         <div>
           <CardTitle className="text-base font-extrabold">Status + backups</CardTitle>
-          <p className="text-xs text-muted-foreground">Last 50 feed changes (from audit trail) + full JSON backup.</p>
+          <p className="text-xs text-[hsl(var(--md-on-surface-variant))]">Last 50 feed changes (from audit trail) + full JSON backup.</p>
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" className="rounded-full" disabled={loading} onClick={load}>
+          <Button size="sm" variant="outline" className="rounded-xl" disabled={loading} onClick={load}>
             {loading ? 'Loading…' : history.length ? 'Refresh history' : 'Load history'}
           </Button>
-          <Button size="sm" variant="outline" className="rounded-full" onClick={download}>Export backup</Button>
-          <Button size="sm" variant="outline" className="rounded-full" asChild>
+          <Button size="sm" variant="outline" className="rounded-xl" onClick={download}>Export backup</Button>
+          <Button size="sm" variant="outline" className="rounded-xl" asChild>
             <label className="cursor-pointer">
               Import
               <input
@@ -109,16 +109,16 @@ export function NewsStatusDashboard({
       </CardHeader>
       {(err || note || history.length > 0) && (
         <CardContent className="grid gap-2 text-sm">
-          {err && <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 font-semibold text-red-300">{err}</div>}
-          {note && <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 font-semibold text-emerald-300">{note}</div>}
+          {err && <div className="rounded-xl border border-transparent bg-[hsl(var(--md-error-container))] px-4 py-3 font-semibold text-[hsl(var(--md-on-error-container))]">{err}</div>}
+          {note && <div className="rounded-xl border border-transparent bg-[hsl(var(--md-secondary-container))] px-4 py-3 font-semibold text-[hsl(var(--md-on-secondary-container))]">{note}</div>}
           {history.map((h, i) => (
-            <div key={i} className="flex flex-wrap items-center gap-2 border-b border-white/5 py-1.5 text-xs last:border-0">
+            <div key={i} className="flex flex-wrap items-center gap-2 border-b border-[hsl(var(--md-outline-variant)/0.6)] py-1.5 text-xs last:border-0">
               <Badge variant="outline" className="rounded-full">{String(h.action ?? '?')}</Badge>
               <span className="min-w-0 flex-1 truncate font-medium">{String(h.title ?? h.id ?? '')}</span>
-              <span className="font-mono text-muted-foreground">{String(h.ts ?? '').slice(0, 16).replace('T', ' ')}</span>
+              <span className="font-mono text-[hsl(var(--md-on-surface-variant))]">{String(h.ts ?? '').slice(0, 16).replace('T', ' ')}</span>
             </div>
           ))}
-          {history.length === 0 && !loading && <p className="text-xs text-muted-foreground">No feed changes yet — publish something and it appears here.</p>}
+          {history.length === 0 && !loading && <p className="text-xs text-[hsl(var(--md-on-surface-variant))]">No feed changes yet — publish something and it appears here.</p>}
         </CardContent>
       )}
     </Card>

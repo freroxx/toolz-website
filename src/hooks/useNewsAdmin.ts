@@ -83,15 +83,19 @@ export function useNewsAdmin() {
   }, []);
 
   const feedHealth = useCallback(async () => {
-    const data = await get('feed-health');
-    return data as unknown as {
-      indexSize: number;
-      payloadCount: number;
-      liveCount: number;
-      feedVersion: number;
-      nextTransitionAt: string | null;
-      orphanIds: string[];
-      items: { id: string; title: string; status: string; liveOnPublicFeed: boolean; reason: string }[];
+    // Normalize the wired shape: a partial/legacy feed-health response must
+    // never blank the dashboard over a missing array field.
+    const raw = (await get('feed-health')) as Record<string, unknown> | null | undefined;
+    return {
+      indexSize: Number(raw?.indexSize ?? 0),
+      payloadCount: Number(raw?.payloadCount ?? 0),
+      liveCount: Number(raw?.liveCount ?? 0),
+      feedVersion: Number(raw?.feedVersion ?? 0),
+      nextTransitionAt: typeof raw?.nextTransitionAt === 'string' ? raw.nextTransitionAt : null,
+      orphanIds: Array.isArray(raw?.orphanIds) ? (raw.orphanIds as string[]) : [],
+      items: Array.isArray(raw?.items)
+        ? (raw.items as { id: string; title: string; status: string; liveOnPublicFeed: boolean; reason: string }[])
+        : [],
     };
   }, []);
 

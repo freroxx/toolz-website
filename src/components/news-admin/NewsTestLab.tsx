@@ -38,10 +38,10 @@ export function NewsTestLab({
   }, [item, version]);
 
   return (
-    <Card className="rounded-[24px]">
+    <Card className="rounded-2xl">
       <CardHeader>
         <CardTitle className="text-base font-extrabold">Test lab — dry run, no writes</CardTitle>
-        <p className="text-xs text-muted-foreground">Pick an item + app version. Local rules answer instantly; server check is authoritative.</p>
+        <p className="text-xs text-[hsl(var(--md-on-surface-variant))]">Pick an item + app version. Local rules answer instantly; server check is authoritative.</p>
       </CardHeader>
       <CardContent className="grid gap-3 text-sm">
         <div className="grid gap-2 md:grid-cols-2">
@@ -60,14 +60,14 @@ export function NewsTestLab({
           </div>
           <div className="grid gap-2">
             <Label>App version</Label>
-            <Input value={version} onChange={(e) => { setVersion(e.target.value); setServerResult(null); }} placeholder="1.1.6" className="rounded-2xl" />
+            <Input value={version} onChange={(e) => { setVersion(e.target.value); setServerResult(null); }} placeholder="1.1.6" className="rounded-xl" />
           </div>
         </div>
         {item && local && (
           <>
             <div className="flex flex-wrap gap-2">
               <Badge variant="outline" className="rounded-full">{describeTargeting(item)}</Badge>
-              <Badge className={`rounded-full ${local.live ? 'border-emerald-500/30 bg-emerald-500/15 text-emerald-300' : 'border-amber-500/30 bg-amber-500/10 text-amber-300'}`}>
+              <Badge className={`rounded-full border-transparent ${local.live ? 'bg-[hsl(var(--md-secondary-container))] text-[hsl(var(--md-on-secondary-container))]' : 'bg-[hsl(var(--md-tertiary-container))] text-[hsl(var(--md-on-tertiary-container))]'}`}>
                 {local.live ? 'WOULD SEE' : 'HIDDEN'}
               </Badge>
               {!local.verdict.live && <Badge variant="outline" className="rounded-full">{local.verdict.reason}</Badge>}
@@ -76,7 +76,7 @@ export function NewsTestLab({
               {item.priority === 'critical' && <Badge variant="outline" className="rounded-full">critical bypasses toggles</Badge>}
             </div>
             {local.timeline.length > 0 && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-[hsl(var(--md-on-surface-variant))]">
                 Timeline: {local.timeline.map((t) => `${t.label} ${describeWhen(t.at)}`).join(' → ')}
               </p>
             )}
@@ -84,7 +84,7 @@ export function NewsTestLab({
               <Button
                 size="sm"
                 variant="outline"
-                className="rounded-full"
+                className="rounded-xl"
                 disabled={checking}
                 onClick={async () => {
                   setChecking(true);
@@ -101,7 +101,7 @@ export function NewsTestLab({
               >
                 {checking ? 'Checking…' : 'Confirm with server'}
               </Button>
-              {serverResult && <p className="mt-2 text-xs text-muted-foreground">{serverResult}</p>}
+              {serverResult && <p className="mt-2 text-xs text-[hsl(var(--md-on-surface-variant))]">{serverResult}</p>}
             </div>
           </>
         )}

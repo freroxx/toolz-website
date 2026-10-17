@@ -51,29 +51,29 @@ export function NewsFeedCheck({
   }, [autoRun]);
 
   return (
-    <Card className="rounded-[24px]">
+    <Card className="rounded-2xl">
       <CardHeader className="flex flex-row flex-wrap items-center gap-3">
         <div>
           <CardTitle className="text-base font-extrabold">Feed check — will /news show anything?</CardTitle>
-          <p className="text-xs text-muted-foreground">Same status + time rules as the public feed (version targeting is per-device).</p>
+          <p className="text-xs text-[hsl(var(--md-on-surface-variant))]">Same status + time rules as the public feed (version targeting is per-device).</p>
         </div>
         <Button
           size="sm"
           variant="outline"
-          className="ml-auto rounded-full"
+          className="ml-auto rounded-xl"
           disabled={checking}
           onClick={runCheck}
         >
           {checking ? 'Checking…' : data ? 'Re-check' : 'Run feed check'}
         </Button>
-        <Button size="sm" variant="ghost" className="rounded-full" onClick={() => window.open('/api/news?all=1', '_blank')}>
+        <Button size="sm" variant="ghost" className="rounded-xl" onClick={() => window.open('/api/news?all=1', '_blank')}>
           Public JSON (all)
         </Button>
-        {(data?.orphanIds.length ?? 0) > 0 && (
+        {(data?.orphanIds?.length ?? 0) > 0 && (
           <Button
             size="sm"
             variant="destructive"
-            className="rounded-full"
+            className="rounded-xl"
             disabled={repairing}
             onClick={async () => {
               setRepairing(true);
@@ -89,15 +89,15 @@ export function NewsFeedCheck({
               }
             }}
           >
-            {repairing ? 'Repairing…' : `Repair index (${data?.orphanIds.length})`}
+            {repairing ? 'Repairing…' : `Repair index (${data?.orphanIds?.length ?? 0})`}
           </Button>
         )}
       </CardHeader>
       {(err || data) && (
         <CardContent className="grid gap-2 text-sm">
-          {err && <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 font-semibold text-red-300">{err}</div>}
+          {err && <div className="rounded-xl border border-transparent bg-[hsl(var(--md-error-container))] px-4 py-3 font-semibold text-[hsl(var(--md-on-error-container))]">{err}</div>}
           {repaired !== null && !err && (
-            <p className="text-emerald-300">Removed {repaired} orphan index {repaired === 1 ? 'entry' : 'entries'}.</p>
+            <p className="text-[hsl(var(--md-on-secondary-container))]">Removed {repaired} orphan index {repaired === 1 ? 'entry' : 'entries'}.</p>
           )}
           {data && (
             <>
@@ -110,28 +110,28 @@ export function NewsFeedCheck({
                     next: {data.nextTransitionAt.slice(0, 16).replace('T', ' ')}
                   </Badge>
                 )}
-                <Badge className={`rounded-full ${data.liveCount > 0 ? 'border-emerald-500/30 bg-emerald-500/15 text-emerald-300' : 'border-amber-500/30 bg-amber-500/10 text-amber-300'}`}>
+                <Badge className={`rounded-full border-transparent ${data.liveCount > 0 ? 'bg-[hsl(var(--md-secondary-container))] text-[hsl(var(--md-on-secondary-container))]' : 'bg-[hsl(var(--md-tertiary-container))] text-[hsl(var(--md-on-tertiary-container))]'}`}>
                   live on /news: {data.liveCount}
                 </Badge>
-                {data.orphanIds.length > 0 && (
+                {data.orphanIds?.length > 0 && (
                   <Badge variant="destructive" className="rounded-full">orphans: {data.orphanIds.length}</Badge>
                 )}
               </div>
               {data.liveCount === 0 && (
-                <p className="text-muted-foreground">
+                <p className="text-[hsl(var(--md-on-surface-variant))]">
                   Nothing would render on /news right now. Publish an item with an open time window,
                   or check the per-item reasons below (draft / scheduled / expired / orphan).
                 </p>
               )}
-              {data.orphanIds.length > 0 && (
-                <p className="font-mono text-xs text-muted-foreground">orphan index ids (no payload): {data.orphanIds.join(', ')}</p>
+              {data.orphanIds?.length > 0 && (
+                <p className="font-mono text-xs text-[hsl(var(--md-on-surface-variant))]">orphan index ids (no payload): {data.orphanIds.join(', ')}</p>
               )}
               <div className="grid gap-1">
-                {data.items.map((it) => (
-                  <div key={it.id} className="flex flex-wrap items-center gap-2 border-b border-white/5 py-1.5 last:border-0">
+                {(data.items ?? []).map((it) => (
+                  <div key={it.id} className="flex flex-wrap items-center gap-2 border-b border-[hsl(var(--md-outline-variant)/0.6)] py-1.5 last:border-0">
                     <span className="min-w-0 flex-1 truncate font-medium">{it.title}</span>
                     {it.liveOnPublicFeed ? (
-                      <Badge className="rounded-full border-emerald-500/30 bg-emerald-500/15 text-emerald-300">LIVE</Badge>
+                      <Badge className="rounded-full border-transparent bg-[hsl(var(--md-secondary-container))] text-[hsl(var(--md-on-secondary-container))]">LIVE</Badge>
                     ) : (
                       <Badge variant="outline" className="rounded-full" title={it.reason}>{it.reason}</Badge>
                     )}
