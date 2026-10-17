@@ -5,6 +5,8 @@
  * blocks and horizontal rules. No raw HTML is ever injected.
  */
 
+import { isSafeWebHref } from "@/lib/newsStyle";
+
 function Inline({ text }: { text: string }) {
   const parts: React.ReactNode[] = [];
   const re = /(\[([^\]]+)\]\(([^)]+)\)|(https?:\/\/[^\s)]+)|`([^`]+)`|\*\*([^*]+)\*\*|\*([^*]+)\*)/g;
@@ -14,21 +16,41 @@ function Inline({ text }: { text: string }) {
   const pushText = (s: string) => {
     if (s) parts.push(<span key={`t${k++}`}>{s}</span>);
   };
+  /** toolz:// deep links and unsafe schemes render inert — a browser tab
+   *  can't honor them, and unknown schemes are an XSS vector. */
+  const renderLink = (label: React.ReactNode, url: string, key: string) => {
+    if (url.startsWith("toolz://") || url.startsWith("toolz:")) {
+      return (
+        <span
+          key={key}
+          className="underline break-all cursor-default"
+          style={{ color: "hsl(var(--md-on-surface-variant))" }}
+          title="Opens inside the Toolz app"
+        >
+          {label}
+        </span>
+      );
+    }
+    if (!isSafeWebHref(url)) {
+      return (
+        <span key={key} className="break-all">
+          {label}
+        </span>
+      );
+    }
+    return (
+      <a key={key} href={url} target="_blank" rel="noopener noreferrer" className="underline break-all" style={{ color: "hsl(var(--md-primary))" }}>
+        {label}
+      </a>
+    );
+  };
   while ((m = re.exec(text)) !== null) {
     pushText(text.slice(last, m.index));
     last = m.index + m[0].length;
     if (m[2] && m[3]) {
-      parts.push(
-        <a key={`l${k++}`} href={m[3]} target="_blank" rel="noopener noreferrer" className="underline break-all" style={{ color: "hsl(var(--md-primary))" }}>
-          {m[2]}
-        </a>,
-      );
+      parts.push(renderLink(m[2], m[3], `l${k++}`));
     } else if (m[4]) {
-      parts.push(
-        <a key={`l${k++}`} href={m[4]} target="_blank" rel="noopener noreferrer" className="underline break-all" style={{ color: "hsl(var(--md-primary))" }}>
-          {m[4]}
-        </a>,
-      );
+      parts.push(renderLink(m[4], m[4], `l${k++}`));
     } else if (m[5]) {
       parts.push(
         <code key={`c${k++}`} className="px-1.5 py-0.5 rounded-md text-[0.9em]" style={{ background: "hsl(var(--md-surface-container-highest))" }}>
