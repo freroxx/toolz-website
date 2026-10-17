@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -17,6 +18,7 @@ import { NewsStatusDashboard } from '@/components/news-admin/NewsStatusDashboard
 /**
  * Collapsible tool section: the announcement list stays the hero of the page;
  * diagnostics, backups and audit history expand on demand with a one-line hint.
+ * <h2><button> is the proper disclosure pattern (valid HTML, one tab stop).
  */
 function AdminSection({ title, hint, defaultOpen = false, children }: {
   title: string;
@@ -27,17 +29,38 @@ function AdminSection({ title, hint, defaultOpen = false, children }: {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <section className="mt-10">
-      <button onClick={() => setOpen((o) => !o)} aria-expanded={open} className="mb-3 flex w-full items-center gap-3 text-left">
-        <h2 className="text-lg font-extrabold">{title}</h2>
-        {!open && <span className="hidden truncate text-xs text-muted-foreground sm:inline">{hint}</span>}
-        <span className="ml-auto shrink-0 rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-muted-foreground">
-          {open ? 'Hide' : 'Show'}
-        </span>
-      </button>
+      <h2>
+        <button
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+          className="mb-3 flex w-full items-center gap-3 rounded-full py-1.5 pl-3 pr-2 text-left transition-colors hover:bg-white/5"
+        >
+          <ChevronDown
+            className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? '' : '-rotate-90'}`}
+            aria-hidden="true"
+          />
+          <span className="text-lg font-extrabold">{title}</span>
+          {!open && <span className="hidden truncate text-xs text-muted-foreground sm:inline">{hint}</span>}
+          <span className="ml-auto shrink-0 rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-muted-foreground">
+            {open ? 'Collapse' : 'Expand'}
+          </span>
+        </button>
+      </h2>
       {open ? children : null}
     </section>
   );
 }
+
+/** Plain-language per-tab empty copy; only shown when nothing is filtered out by a search term. */
+const EMPTY_TAB_COPY: Record<string, string> = {
+  all: 'No announcements yet — create the first one.',
+  published: 'Nothing published right now.',
+  drafts: 'No drafts. New items start as drafts.',
+  archived: 'Nothing archived.',
+  critical: 'No critical announcements. That is usually good news.',
+  scheduled: 'Nothing scheduled in the future.',
+  expired: 'No expired items.',
+};
 
 export default function AdminNews() {
   const { authed, restoring, loading, items, audit, login, logout, refresh, refreshAudit, restore, feedHealth, bulk, restoreItem, feedHistory, simulate, exportBackup, importBackup, uploadImage, verifySaved, mutate } = useNewsAdmin();
@@ -115,6 +138,9 @@ export default function AdminNews() {
       setSelected(new Set());
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Bulk action failed');
+      // The error banner sits at the top of the page; bring it into view instead
+      // of failing silently offscreen while the user is scrolled deep in the list.
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setBulkBusy(false);
     }
@@ -140,7 +166,7 @@ export default function AdminNews() {
           </p>
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
-          <Button variant="outline" className="rounded-full" onClick={() => window.open('/api/news?appVersion=1.1.6', '_blank')}>Public JSON</Button>
+          <Button variant="outline" className="rounded-full" onClick={() => window.open('/api/news?appVersion=1.1.6', '_blank')}>Public JSON (app)</Button>
           <Button variant="outline" className="rounded-full" onClick={() => logout()}>Lock</Button>
           <Button
             className="rounded-full font-bold"
@@ -191,49 +217,64 @@ export default function AdminNews() {
         </div>
       )}
 
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="rounded-full">
-            <TabsTrigger value="all" className="rounded-full">All {counts.all}</TabsTrigger>
-            <TabsTrigger value="published" className="rounded-full">Published {counts.published}</TabsTrigger>
-            <TabsTrigger value="drafts" className="rounded-full">Drafts {counts.drafts}</TabsTrigger>
-            <TabsTrigger value="archived" className="rounded-full">Archived {counts.archived}</TabsTrigger>
-            <TabsTrigger value="critical" className="rounded-full">Critical {counts.critical}</TabsTrigger>
-            <TabsTrigger value="scheduled" className="rounded-full">Scheduled {counts.scheduled}</TabsTrigger>
-            <TabsTrigger value="expired" className="rounded-full">Expired {counts.expired}</TabsTrigger>
-          </TabsList>
-        </Tabs>
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search title/body… (/ focuses)" className="max-w-xs rounded-full" />
-        <select value={sort} onChange={(e) => setSort(e.target.value as NewsSort)} className="h-10 rounded-full border border-input bg-background px-3 text-sm" aria-label="Sort">
-          <option value="updated">Updated</option>
-          <option value="published">Publish date</option>
-          <option value="title">Title</option>
-        </select>
-        <Button variant="ghost" className="rounded-full" disabled={refreshing} onClick={async () => { setRefreshing(true); try { await refresh(); await refreshAudit(); } catch { /* list keeps its last state */ } finally { setRefreshing(false); } }}>
-          {refreshing ? 'Refreshing…' : 'Refresh'}
-        </Button>
-        <span className="text-xs text-muted-foreground">{filtered.length}/{items.length}{selected.size > 0 ? ` · ${selected.size} selected` : ''}</span>
-      </div>
-
-      {selected.size > 0 && (
-        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 px-4 py-3 text-sm">
-          <span className="font-bold">{selected.size} selected</span>
-          <Button size="sm" variant="ghost" className="rounded-full" onClick={() => setSelected(new Set(filtered.map((n) => n.id)))}>Select shown</Button>
-          <Button size="sm" variant="ghost" className="rounded-full" onClick={() => setSelected(new Set())}>Clear</Button>
-          <span className="ml-auto flex flex-wrap gap-2">
-            {(['publish', 'unpublish', 'archive', 'delete'] as const).map((a) => (
-              <Button key={a} size="sm" variant={a === 'delete' ? 'destructive' : 'outline'} className="rounded-full capitalize" disabled={bulkBusy} onClick={() => runBulk(a)}>
-                {bulkBusy ? 'Working…' : a}
-              </Button>
-            ))}
-          </span>
+      {/* Sticky command bar — filters and the bulk bar stay reachable while the
+          long list scrolls. This route has no fixed navbar, so top-0 is correct. */}
+      <div className="sticky top-0 z-30 -mx-4 mb-4 border-b border-white/5 bg-background/90 px-4 py-3 backdrop-blur-xl">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="min-w-0 overflow-x-auto">
+            <Tabs value={tab} onValueChange={setTab}>
+              <TabsList className="w-max rounded-full">
+                <TabsTrigger value="all" className="rounded-full">All <span className="ml-1.5 text-xs tabular-nums text-muted-foreground">{counts.all}</span></TabsTrigger>
+                <TabsTrigger value="published" className="rounded-full">Published <span className="ml-1.5 text-xs tabular-nums text-muted-foreground">{counts.published}</span></TabsTrigger>
+                <TabsTrigger value="drafts" className="rounded-full">Drafts <span className="ml-1.5 text-xs tabular-nums text-muted-foreground">{counts.drafts}</span></TabsTrigger>
+                <TabsTrigger value="archived" className="rounded-full">Archived <span className="ml-1.5 text-xs tabular-nums text-muted-foreground">{counts.archived}</span></TabsTrigger>
+                <TabsTrigger value="critical" className="rounded-full">Critical <span className="ml-1.5 text-xs tabular-nums text-muted-foreground">{counts.critical}</span></TabsTrigger>
+                <TabsTrigger value="scheduled" className="rounded-full">Scheduled <span className="ml-1.5 text-xs tabular-nums text-muted-foreground">{counts.scheduled}</span></TabsTrigger>
+                <TabsTrigger value="expired" className="rounded-full">Expired <span className="ml-1.5 text-xs tabular-nums text-muted-foreground">{counts.expired}</span></TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search title/body… (/ focuses)" className="max-w-xs rounded-full" />
+          <select value={sort} onChange={(e) => setSort(e.target.value as NewsSort)} className="h-10 rounded-full border border-input bg-background px-3 text-sm" aria-label="Sort">
+            <option value="updated">Updated</option>
+            <option value="published">Publish date</option>
+            <option value="title">Title</option>
+          </select>
+          <Button variant="ghost" className="rounded-full" disabled={refreshing} onClick={async () => { setRefreshing(true); try { await refresh(); await refreshAudit(); } catch { /* list keeps its last state */ } finally { setRefreshing(false); } }}>
+            {refreshing ? 'Refreshing…' : 'Refresh'}
+          </Button>
+          <span className="tabular-nums text-xs text-muted-foreground">{filtered.length}/{items.length}{selected.size > 0 ? ` · ${selected.size} selected` : ''}</span>
         </div>
-      )}
+
+        {/* Bulk bar lives inside the sticky command bar so a selection made deep
+            in the list stays actionable without scrolling back up. */}
+        {selected.size > 0 && (
+          <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-white/5 pt-2.5 text-sm">
+            <span className="font-bold">{selected.size} selected</span>
+            <Button size="sm" variant="ghost" className="rounded-full" onClick={() => setSelected(new Set(filtered.map((n) => n.id)))}>Select shown</Button>
+            <Button size="sm" variant="ghost" className="rounded-full" onClick={() => setSelected(new Set())}>Clear</Button>
+            <span className="ml-auto flex flex-wrap gap-2">
+              {(['publish', 'unpublish', 'archive', 'delete'] as const).map((a) => (
+                <Button key={a} size="sm" variant={a === 'delete' ? 'destructive' : 'outline'} className="rounded-full capitalize" disabled={bulkBusy} onClick={() => runBulk(a)}>
+                  {bulkBusy ? 'Working…' : a}
+                </Button>
+              ))}
+            </span>
+          </div>
+        )}
+      </div>
 
       <NewsListTable
         items={filtered}
+        loading={loading}
         selected={selected}
         onToggleSelect={toggleSelect}
+        emptyTitle={q.trim() ? `No matches for “${q.trim().slice(0, 60)}”` : (EMPTY_TAB_COPY[tab] ?? 'No announcements here')}
+        emptyHint={q.trim() ? 'Try another tab or clear the search.' : undefined}
+        onCreate={() => {
+          setEditing(null);
+          setEditorOpen(true);
+        }}
         onEdit={(n) => {
           setEditing(n);
           setEditorOpen(true);
@@ -252,6 +293,8 @@ export default function AdminNews() {
             if (action === 'delete' && target) setLastDeleted({ id, title: target.title });
           } catch (e) {
             setErr(e instanceof Error ? e.message : 'Action failed');
+            // Same as bulk: surface the page-top banner instead of failing offscreen.
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }
         }}
       />
