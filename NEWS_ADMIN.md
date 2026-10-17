@@ -37,14 +37,20 @@ Vercel picks up `api/news.ts` (public feed + generation counter, 10s), `api/news
 
 ## Editor guide
 
-The New/Edit dialog is tabbed: Content (templates, counters, markdown toolbar,
-thumbnail check), Targeting (Everyone reset, Latest-version shortcut, "who sees
-this" + version simulator), Behavior (recurrence presets, plain-language
-toggles, schedule quick chips in your local time with UTC storage note and a live verdict line "~1 min"), Preview (popup +
-website article). Preview mirrors the app: exactly one filled button — the CTA
+The New/Edit dialog is a two-pane layout: Content (templates, counters, markdown
+toolbar, thumbnail check), Targeting (Everyone reset, Latest-version shortcut,
+"who sees this" + version simulator), Behavior (recurrence presets,
+plain-language toggles, schedule quick chips in your local time with UTC
+storage note). The live preview is pinned beside the form on desktop and stacks
+under it on phones — no preview tab; it updates while you type and shows a
+live/not-live verdict line ("~1 min") plus the app-popup and /news-article
+previews. The preview mirrors the app: exactly one filled button — the CTA
 labelled by Action label when an Action URL is set, otherwise "Got it"; there
 is no "Later" button anywhere (snoozing is a gesture in the app: scrim tap,
-system back or pull-down). Rule: a custom Action label requires an Action URL —
+system back or pull-down). The dialog body is the only scrollable region:
+header, status/priority strip and footer stay pinned, save errors and the
+discard warning render above the action bar where they are always visible.
+Rule: a custom Action label requires an Action URL —
 the editor warns inline and blocks the save if the label is set without one
 (the server would silently drop the label otherwise, and the app would show no
 CTA at all). Footer: Cancel / Save draft / Publish now (Update/Unpublish

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ChevronDown, Loader2, Plus, RefreshCw } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, Loader2, Plus, RefreshCw, Search } from 'lucide-react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -208,7 +208,16 @@ export default function AdminNews() {
                 style={{ background: 'hsl(var(--md-secondary))' }}
                 aria-hidden="true"
               />
-              <span className="tabular-nums">{counts.live}</span> live on /news
+              <a
+                href="/news"
+                target="_blank"
+                rel="noreferrer"
+                title="Open the public /news feed"
+                className="inline-flex items-center gap-1 underline-offset-2 hover:underline"
+              >
+                <span className="tabular-nums">{counts.live}</span> live on /news
+                <ArrowUpRight className="h-3.5 w-3.5 opacity-60" aria-hidden="true" />
+              </a>
             </span>
             <span className="tabular-nums">{counts.published} published</span>
             <span className="tabular-nums">{counts.drafts} drafts</span>
@@ -308,12 +317,15 @@ export default function AdminNews() {
           slides in under them so selections made deep in the list stay actionable. */}
       <div className="sticky top-0 z-30 -mx-4 mb-4 border-b border-[hsl(var(--md-outline-variant)/0.5)] bg-[hsl(var(--md-surface)/0.92)] px-4 py-3 backdrop-blur-xl">
         <div className="flex flex-wrap items-center gap-2">
-          <Input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search title/body… (/ focuses)"
-            className="w-full max-w-sm rounded-xl border-[hsl(var(--md-outline-variant)/0.6)] bg-[hsl(var(--md-surface-container-low))]"
-          />
+          <div className="relative w-full max-w-sm">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[hsl(var(--md-on-surface-variant))]" aria-hidden="true" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search title/body… (/ focuses)"
+              className="w-full rounded-xl border-[hsl(var(--md-outline-variant)/0.6)] bg-[hsl(var(--md-surface-container-low))] pl-9"
+            />
+          </div>
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as NewsSort)}
