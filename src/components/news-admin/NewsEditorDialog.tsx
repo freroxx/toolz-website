@@ -169,6 +169,14 @@ export function NewsEditorDialog({
     setForm((f) => ({ ...f, [k]: v }));
   };
 
+  // A custom action label is the text of the app popup's CTA button — it only
+  // exists when there is an Action URL. The server would silently drop the
+  // label otherwise; make that rule plain instead of losing the text.
+  const actionProblem = (f: Form): string | null =>
+    (f.actionLabel ?? '').trim() && !(f.actionUrl ?? '').trim()
+      ? 'Action label needs an Action URL — the label is the text of the popup button. Without a URL the card shows "Got it" and the label is dropped.'
+      : null;
+
   const setPriority = (p: Form['priority']) => {
     setDirty(true);
     setForm((f) => ({ ...f, priority: p, requiresAction: p === 'critical' ? true : false }));
@@ -224,29 +232,17 @@ export function NewsEditorDialog({
     }));
   };
 
-  const validate = (): boolean => {
-    const parsed = newsItemSchema.safeParse({ ...form, onlyVersions: form.onlyVersions ?? [], excludedVersions: form.excludedVersions ?? [] });
-    if (parsed.success) {
-      setTabErrors({});
-      setErr(null);
-      return true;
-    }
-    const counts: Partial<Record<TabId, number>> = {};
-    for (const issue of parsed.error.issues) {
-      const t = tabForPath(issue.path);
-      counts[t] = (counts[t] ?? 0) + 1;
-    }
-    setTabErrors(counts);
-    setErr(parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; '));
-    const first = parsed.error.issues[0];
-    if (first) setTab(tabForPath(first.path));
-    return false;
-  };
-
   const saveWith = async (patch: Partial<Form>) => {
     setErr(null);
     const next = { ...form, ...patch };
     setForm(next);
+    const linkProblem = actionProblem(next);
+    if (linkProblem) {
+      setTabErrors({});
+      setErr(linkProblem);
+      setTab('content');
+      return;
+    }
     const parsed = newsItemSchema.safeParse({ ...next, onlyVersions: next.onlyVersions ?? [], excludedVersions: next.excludedVersions ?? [] });
     if (!parsed.success) {
       const counts: Partial<Record<TabId, number>> = {};
@@ -424,6 +420,11 @@ export function NewsEditorDialog({
                 <Label>Action URL</Label>
                 <Input value={form.actionUrl ?? ''} onChange={(e) => set('actionUrl', e.target.value || null)} placeholder="https://… or toolz://…" className="rounded-2xl" />
               </div>
+              {(form.actionLabel ?? '').trim() && !(form.actionUrl ?? '').trim() ? (
+                <p className="col-span-2 text-xs font-semibold text-amber-300">
+                  Action label needs an Action URL — the label is the text of the popup button. Without a URL the card shows “Got it” and the label is dropped.
+                </p>
+              ) : null}
             </div>
           </TabsContent>
 

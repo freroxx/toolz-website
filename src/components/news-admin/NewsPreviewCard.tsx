@@ -24,6 +24,7 @@ export function NewsPreviewCard({ item }: { item: Partial<NewsItem> }) {
             <Badge className={`rounded-full border ${priorityColor(item.priority ?? 'info')}`}>{item.priority ?? 'info'}</Badge>
             {item.pinned ? <Badge variant="outline" className="rounded-full">Pinned</Badge> : null}
             <span className="ml-auto text-xs text-muted-foreground">{item.frequency ?? 'once'}</span>
+            {item.dismissible !== false ? <span title="Dismiss" className="text-xs text-muted-foreground">✕</span> : null}
           </div>
           {item.imageUrl ? (
             <img src={item.imageUrl} alt="" className="aspect-video w-full rounded-[20px] object-cover" loading="lazy" />
@@ -32,12 +33,14 @@ export function NewsPreviewCard({ item }: { item: Partial<NewsItem> }) {
           <div className="text-sm text-muted-foreground">
             <NewsBody body={item.body || 'Body preview…'} compact />
           </div>
-          <div className="flex gap-2 pt-1">
-            <Button className="flex-1 rounded-full font-bold" disabled={!item.actionUrl}>
-              {item.actionLabel || 'Open'}
-            </Button>
-            <Button variant="secondary" className="rounded-full">Later</Button>
-            <Button variant="ghost" className="rounded-full px-3">✕</Button>
+          {/* One filled primary button, like the app: the CTA when an Action URL
+              is set, otherwise Got it. A custom label without a URL never shows. */}
+          <div className="pt-1">
+            {item.actionUrl ? (
+              <Button className="w-full rounded-full font-bold">{item.actionLabel || 'Open'}</Button>
+            ) : (
+              <Button variant="secondary" className="w-full rounded-full font-bold">Got it</Button>
+            )}
           </div>
           <Button variant="link" className="h-auto justify-start p-0 text-xs">View all news →</Button>
         </div>
