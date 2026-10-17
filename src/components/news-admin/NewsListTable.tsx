@@ -13,6 +13,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { describeTargeting, type NewsItem } from '@/lib/news-schema';
 import { getVisibilityVerdict } from '@/lib/newsVerdict';
+import { newsPriorityChipStyle } from '@/lib/newsStyle';
 
 /**
  * Copies the stable public anchor (same URL the app's share button hands out).
@@ -52,7 +53,7 @@ function LoadingRows() {
   return (
     <div className="grid gap-3" aria-busy="true" aria-label="Loading announcements">
       {[0, 1, 2].map((i) => (
-        <Card key={i} className="rounded-[24px]">
+        <Card key={i} className="rounded-2xl">
           <CardContent className="flex flex-col gap-3 p-5 md:flex-row md:items-center">
             <div className="min-w-0 flex-1 space-y-2.5">
               <div className="flex flex-wrap gap-2">
@@ -103,12 +104,12 @@ export function NewsListTable({
 
   if (items.length === 0) {
     return (
-      <Card className="rounded-[28px]">
+      <Card className="rounded-2xl">
         <CardContent className="grid place-items-center gap-2 p-10 text-center">
           <p className="font-bold">{emptyTitle}</p>
-          {emptyHint ? <p className="text-sm text-muted-foreground">{emptyHint}</p> : null}
+          {emptyHint ? <p className="text-sm text-[hsl(var(--md-on-surface-variant))]">{emptyHint}</p> : null}
           {onCreate ? (
-            <Button className="mt-2 rounded-full font-bold" onClick={onCreate}>
+            <Button className="mt-2 rounded-xl font-bold" onClick={onCreate}>
               + New announcement
             </Button>
           ) : null}
@@ -125,7 +126,7 @@ export function NewsListTable({
         return (
           <Card
             key={n.id}
-            className={`rounded-[24px] transition-colors ${checked ? 'border-primary/40 ring-1 ring-inset ring-primary/50' : ''}`}
+            className={`rounded-2xl border-[hsl(var(--md-outline-variant)/0.5)] bg-[hsl(var(--md-surface-container-low))] transition-colors hover:border-[hsl(var(--md-outline-variant))] hover:bg-[hsl(var(--md-surface-container))] ${checked ? 'border-[hsl(var(--md-primary)/0.5)] bg-[hsl(var(--md-primary)/0.07)] ring-1 ring-inset ring-[hsl(var(--md-primary)/0.4)]' : ''}`}
           >
             <CardContent className="flex flex-col gap-3 p-5 md:flex-row md:items-center">
               {onToggleSelect && (
@@ -134,13 +135,13 @@ export function NewsListTable({
                   checked={checked}
                   onChange={() => onToggleSelect(n.id)}
                   aria-label={`Select ${n.title}`}
-                  className="h-5 w-5 shrink-0 accent-current"
+                  className="h-5 w-5 shrink-0 accent-[hsl(var(--md-primary))]"
                 />
               )}
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant={n.status === 'published' ? 'default' : 'secondary'} className="rounded-full">{n.status}</Badge>
-                  <Badge variant="outline" className="rounded-full capitalize">{n.priority}</Badge>
+                  <Badge variant="outline" className="rounded-full border-transparent capitalize" style={newsPriorityChipStyle(n.priority)}>{n.priority}</Badge>
                   {n.pinned ? <Badge variant="outline" className="rounded-full">Pinned</Badge> : null}
                   {n.notify === false ? <Badge variant="outline" className="rounded-full">Silent</Badge> : null}
                   {n.disappearing ? <Badge variant="outline" className="rounded-full">Disappearing</Badge> : null}
@@ -150,7 +151,7 @@ export function NewsListTable({
                     </Badge>
                   ) : null}
                   {verdict.live ? (
-                    <Badge className="rounded-full border-emerald-500/30 bg-emerald-500/15 text-emerald-300">LIVE on /news</Badge>
+                    <Badge className="rounded-full border-transparent bg-[hsl(var(--md-secondary-container))] text-[hsl(var(--md-on-secondary-container))]">LIVE on /news</Badge>
                   ) : (
                     <Badge variant="outline" className="rounded-full" title={verdict.reason}>
                       {verdict.reason.length > 40 ? `${verdict.reason.slice(0, 40)}…` : verdict.reason}
@@ -158,16 +159,16 @@ export function NewsListTable({
                   )}
                 </div>
                 <div className="mt-2 truncate text-base font-bold" title={n.title}>{n.title}</div>
-                <div className="text-xs text-muted-foreground" title={`Updated ${n.updatedAt ? new Date(n.updatedAt).toLocaleString() : '—'} local · publish ${n.publishAt ? new Date(n.publishAt).toLocaleString() : 'now'} · expiry ${n.expiresAt ? new Date(n.expiresAt).toLocaleString() : 'never'}`}>
+                <div className="text-xs text-[hsl(var(--md-on-surface-variant))]" title={`Updated ${n.updatedAt ? new Date(n.updatedAt).toLocaleString() : '—'} local · publish ${n.publishAt ? new Date(n.publishAt).toLocaleString() : 'now'} · expiry ${n.expiresAt ? new Date(n.expiresAt).toLocaleString() : 'never'}`}>
                   {describeTargeting(n)} · {n.frequency}{n.frequency === 'interval' ? `/${n.intervalHours}h` : ''} · upd {n.updatedAt?.slice(0, 16).replace('T', ' ')}
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" className="rounded-full" onClick={() => onEdit(n)}>Edit</Button>
+                <Button size="sm" variant="outline" className="rounded-xl" onClick={() => onEdit(n)}>Edit</Button>
                 {n.status !== 'published' ? (
-                  <Button size="sm" className="rounded-full" onClick={() => onAction('publish', n.id)}>Publish</Button>
+                  <Button size="sm" className="rounded-xl" onClick={() => onAction('publish', n.id)}>Publish</Button>
                 ) : (
-                  <Button size="sm" variant="secondary" className="rounded-full" onClick={() => onAction('unpublish', n.id)}>Unpublish</Button>
+                  <Button size="sm" variant="secondary" className="rounded-xl" onClick={() => onAction('unpublish', n.id)}>Unpublish</Button>
                 )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -180,7 +181,7 @@ export function NewsListTable({
                       <MoreVertical className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="rounded-2xl">
+                  <DropdownMenuContent align="end" className="rounded-xl">
                     <CopyLinkMenuItem id={n.id} />
                     <DropdownMenuItem className="gap-2" onClick={() => onClone(n)}>Clone</DropdownMenuItem>
                     {n.status !== 'archived' ? (
@@ -188,7 +189,7 @@ export function NewsListTable({
                     ) : null}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      className="gap-2 text-red-300 focus:bg-red-500/10 focus:text-red-200"
+                      className="gap-2 text-[hsl(var(--md-error))] focus:bg-[hsl(var(--md-error-container))] focus:text-[hsl(var(--md-on-error-container))]"
                       onClick={async () => {
                         if (confirm(`Delete "${n.title}"?`)) await onAction('delete', n.id);
                       }}

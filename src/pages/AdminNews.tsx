@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Loader2, Plus, RefreshCw } from 'lucide-react';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNewsAdmin } from '@/hooks/useNewsAdmin';
 import type { NewsItem } from '@/lib/news-schema';
 import { duplicateTitles, filterAdminItems, sortAdminItems, type NewsSort } from '@/lib/newsAdminTools';
@@ -15,45 +15,82 @@ import { NewsFeedCheck } from '@/components/news-admin/NewsFeedCheck';
 import { NewsTestLab } from '@/components/news-admin/NewsTestLab';
 import { NewsStatusDashboard } from '@/components/news-admin/NewsStatusDashboard';
 
+/* Shared M3 expressive motion: springs tuned like the landing page, one
+   entrance gesture — nothing loops, nothing bounces for decoration. */
+const GESTURE = { type: 'spring', stiffness: 260, damping: 26 } as const;
+
 /**
- * Collapsible tool section: the announcement list stays the hero of the page;
- * diagnostics, backups and audit history expand on demand with a one-line hint.
- * <h2><button> is the proper disclosure pattern (valid HTML, one tab stop).
+ * M3 collapsible disclosure for the audit trail. <h2><button> is the proper
+ * pattern (valid HTML, one tab stop); chevron mirrors the open state.
  */
-function AdminSection({ title, hint, defaultOpen = false, children }: {
-  title: string;
-  hint: string;
-  defaultOpen?: boolean;
-  children: ReactNode;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
+function AuditSection({ count, children }: { count: number; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
   return (
     <section className="mt-10">
       <h2>
         <button
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
-          className="mb-3 flex w-full items-center gap-3 rounded-full py-1.5 pl-3 pr-2 text-left transition-colors hover:bg-white/5"
+          className="flex w-full items-center gap-3 rounded-xl py-2 pl-2 pr-3 text-left transition-colors hover:bg-[hsl(var(--md-surface-container-low))]"
         >
           <ChevronDown
-            className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? '' : '-rotate-90'}`}
+            className={`h-4 w-4 shrink-0 text-[hsl(var(--md-on-surface-variant))] transition-transform ${open ? '' : '-rotate-90'}`}
             aria-hidden="true"
           />
-          <span className="text-lg font-extrabold">{title}</span>
-          {!open && <span className="hidden truncate text-xs text-muted-foreground sm:inline">{hint}</span>}
-          <span className="ml-auto shrink-0 rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-muted-foreground">
-            {open ? 'Collapse' : 'Expand'}
-          </span>
+          <span className="font-extrabold">Audit log</span>
+          <span className="rounded-md bg-[hsl(var(--md-surface-container-high))] px-1.5 py-0.5 text-xs tabular-nums text-[hsl(var(--md-on-surface-variant))]">{count}</span>
+          {!open && (
+            <span className="ml-auto hidden text-xs text-[hsl(var(--md-on-surface-variant))] sm:inline">Login, publish and edit history — 90 days</span>
+          )}
         </button>
       </h2>
-      {open ? children : null}
+      {open ? <div className="mt-3">{children}</div> : null}
     </section>
   );
 }
 
-/** Plain-language per-tab empty copy; only shown when nothing is filtered out by a search term. */
+/**
+ * Consolidated M3 notice banner. Tones come straight from Material roles:
+ * ok → secondary container (positive), warn → tertiary container, error →
+ * error container, info → surface container high. Enters with one spring.
+ */
+function Notice({ tone = 'info', children }: { tone?: 'ok' | 'warn' | 'error' | 'info'; children: ReactNode }) {
+  const styles: Record<string, string> = {
+    ok: 'border-[hsl(var(--md-secondary-container))] bg-[hsl(var(--md-secondary-container))] text-[hsl(var(--md-on-secondary-container))]',
+    warn: 'border-[hsl(var(--md-tertiary-container))] bg-[hsl(var(--md-tertiary-container))] text-[hsl(var(--md-on-tertiary-container))]',
+    error: 'border-[hsl(var(--md-error-container))] bg-[hsl(var(--md-error-container))] text-[hsl(var(--md-on-error-container))]',
+    info: 'border-[hsl(var(--md-outline-variant))] bg-[hsl(var(--md-surface-container-high))] text-[hsl(var(--md-on-surface))]',
+  };
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={GESTURE}
+      className={`mb-3 rounded-xl border px-4 py-3 text-sm font-semibold ${styles[tone]}`}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/* Filter tiles: the overview IS the list filter. Active tile fills with its
+   Material container; every tile keeps a 2px category accent so the palette
+   reads at a glance. */
+const TILES: { id: string; label: string; accent: string; active: string }[] = [
+  { id: 'all', label: 'All', accent: 'hsl(var(--md-outline-variant))', active: 'bg-[hsl(var(--md-surface-container-high))]' },
+  { id: 'live', label: 'Live on /news', accent: 'hsl(var(--md-primary))', active: 'bg-[hsl(var(--md-primary-container))] text-[hsl(var(--md-on-primary-container))]' },
+  { id: 'published', label: 'Published', accent: 'hsl(var(--md-secondary))', active: 'bg-[hsl(var(--md-secondary-container))] text-[hsl(var(--md-on-secondary-container))]' },
+  { id: 'drafts', label: 'Drafts', accent: 'hsl(var(--md-tertiary))', active: 'bg-[hsl(var(--md-tertiary-container))] text-[hsl(var(--md-on-tertiary-container))]' },
+  { id: 'scheduled', label: 'Scheduled', accent: 'hsl(var(--md-on-surface-variant))', active: 'bg-[hsl(var(--md-surface-container-high))]' },
+  { id: 'critical', label: 'Critical', accent: 'hsl(var(--md-error))', active: 'bg-[hsl(var(--md-error-container))] text-[hsl(var(--md-on-error-container))]' },
+  { id: 'expired', label: 'Expired', accent: 'hsl(var(--md-outline))', active: 'bg-[hsl(var(--md-surface-container-high))]' },
+  { id: 'archived', label: 'Archived', accent: 'hsl(var(--md-outline))', active: 'bg-[hsl(var(--md-surface-container-high))]' },
+];
+
+/** Plain-language per-tile empty copy, used when no search term is active. */
 const EMPTY_TAB_COPY: Record<string, string> = {
   all: 'No announcements yet — create the first one.',
+  live: 'Nothing is visible on /news right now.',
   published: 'Nothing published right now.',
   drafts: 'No drafts. New items start as drafts.',
   archived: 'Nothing archived.',
@@ -80,9 +117,9 @@ export default function AdminNews() {
   // Headline numbers: what is on /news right now, and how the list splits.
   const counts = useMemo(() => {
     const keys = ['all', 'published', 'drafts', 'archived', 'critical', 'scheduled', 'expired'] as const;
-    return Object.fromEntries(keys.map((k) => [k, filterAdminItems(items, k, '').length])) as Record<(typeof keys)[number], number>;
+    const base = Object.fromEntries(keys.map((k) => [k, filterAdminItems(items, k, '').length])) as Record<(typeof keys)[number], number>;
+    return { ...base, live: items.filter((n) => getVisibilityVerdict(n).live).length };
   }, [items]);
-  const liveCount = useMemo(() => items.filter((n) => getVisibilityVerdict(n).live).length, [items]);
 
   useEffect(() => {
     restore().catch(() => {});
@@ -96,13 +133,15 @@ export default function AdminNews() {
     }
   }, [authed, refresh, refreshAudit]);
 
+  // 'live' is a client-side view over the same time-window rules the feed uses.
   const filtered = useMemo(() => {
-    return sortAdminItems(filterAdminItems(items, tab, q), sort);
+    const base = tab === 'live' ? items.filter((n) => getVisibilityVerdict(n).live) : filterAdminItems(items, tab, q);
+    return sortAdminItems(base, sort);
   }, [items, tab, q, sort]);
 
   const dupes = useMemo(() => duplicateTitles(items), [items]);
 
-  // Keyboard shortcuts: n = new, / = search. No AI slop — plain, predictable.
+  // Keyboard shortcuts: n = new, / = search. Plain, predictable.
   useEffect(() => {
     if (!authed) return;
     const onKey = (e: KeyboardEvent) => {
@@ -138,8 +177,8 @@ export default function AdminNews() {
       setSelected(new Set());
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Bulk action failed');
-      // The error banner sits at the top of the page; bring it into view instead
-      // of failing silently offscreen while the user is scrolled deep in the list.
+      // The banner sits at the top of the page; bring it into view instead
+      // of failing silently offscreen while the user is scrolled deep.
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setBulkBusy(false);
@@ -148,8 +187,8 @@ export default function AdminNews() {
 
   if (restoring) {
     return (
-      <div className="mx-auto flex min-h-[70vh] w-full max-w-md items-center justify-center px-4">
-        <p className="text-sm text-muted-foreground">Checking session…</p>
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <p className="text-sm text-[hsl(var(--md-on-surface-variant))]">Checking session…</p>
       </div>
     );
   }
@@ -157,169 +196,225 @@ export default function AdminNews() {
   if (!authed) return <NewsLoginCard onLogin={login} loading={loading} />;
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8">
-      <div className="mb-6 flex flex-wrap items-center gap-3">
+    <div className="mx-auto w-full max-w-7xl px-4 pb-16">
+      {/* Header: identity + live pulse + global actions */}
+      <div className="flex flex-wrap items-center gap-3 py-6">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Toolz News Admin</h1>
-          <p className="text-sm text-muted-foreground">
-            {liveCount} live on /news · {counts.published} published · {counts.drafts} drafts · apps pick up changes within ~1 min
+          <h1 className="text-3xl font-extrabold tracking-tight">News admin</h1>
+          <p className="mt-1 flex flex-wrap items-center gap-x-3 text-sm text-[hsl(var(--md-on-surface-variant))]">
+            <span className="inline-flex items-center gap-1.5 font-semibold">
+              <span
+                className="inline-block h-2 w-2 rounded-full"
+                style={{ background: 'hsl(var(--md-secondary))' }}
+                aria-hidden="true"
+              />
+              <span className="tabular-nums">{counts.live}</span> live on /news
+            </span>
+            <span className="tabular-nums">{counts.published} published</span>
+            <span className="tabular-nums">{counts.drafts} drafts</span>
+            <span>apps pick up changes within ~1 min</span>
           </p>
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
-          <Button variant="outline" className="rounded-full" onClick={() => window.open('/api/news?appVersion=1.1.6', '_blank')}>Public JSON (app)</Button>
-          <Button variant="outline" className="rounded-full" onClick={() => logout()}>Lock</Button>
+          <Button variant="outline" size="sm" className="rounded-xl font-semibold" onClick={() => window.open('/api/news?appVersion=1.1.6', '_blank')}>
+            Public JSON (app)
+          </Button>
+          <Button variant="outline" size="sm" className="rounded-xl font-semibold" onClick={() => logout()}>
+            Lock
+          </Button>
           <Button
-            className="rounded-full font-bold"
+            size="sm"
+            className="rounded-xl font-bold"
             onClick={() => {
               setEditing(null);
               setEditorOpen(true);
             }}
           >
-            + New announcement
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            New announcement
           </Button>
         </div>
       </div>
 
-      {err && <div className="mb-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-300">{err}</div>}
-      {saveNote && (
-        <div className={`mb-4 rounded-2xl border px-4 py-3 text-sm font-semibold ${saveNote.live ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-amber-500/30 bg-amber-500/10 text-amber-200'}`}>
-          {saveNote.text}
-        </div>
-      )}
-
+      {/* Notices */}
+      {err && <Notice tone="error">{err}</Notice>}
+      {saveNote && <Notice tone={saveNote.live ? 'ok' : 'warn'}>{saveNote.text}</Notice>}
       {dupes.length > 0 && (
-        <div className="mb-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm font-semibold text-amber-200">
+        <Notice tone="warn">
           Duplicate titles: {dupes.slice(0, 3).join(' · ')}{dupes.length > 3 ? ` +${dupes.length - 3} more` : ''} — consider renaming before publishing.
-        </div>
+        </Notice>
       )}
       {lastDeleted && (
-        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 px-4 py-3 text-sm font-semibold">
-          Deleted “{lastDeleted.title}”. Undo within 7 days?
-          <span className="ml-auto flex gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              className="rounded-full"
-              onClick={async () => {
-                setErr(null);
-                try {
-                  await restoreItem(lastDeleted.id);
-                  setLastDeleted(null);
-                } catch (e) {
-                  setErr(e instanceof Error ? e.message : 'Restore failed');
-                }
-              }}
-            >
-              Undo delete
-            </Button>
-            <Button size="sm" variant="ghost" className="rounded-full" onClick={() => setLastDeleted(null)}>Dismiss</Button>
+        <Notice tone="info">
+          <span className="flex flex-wrap items-center gap-2">
+            <span>
+              Deleted “{lastDeleted.title}”. Undo within 7 days?
+            </span>
+            <span className="ml-auto flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-xl font-semibold"
+                onClick={async () => {
+                  setErr(null);
+                  try {
+                    await restoreItem(lastDeleted.id);
+                    setLastDeleted(null);
+                  } catch (e) {
+                    setErr(e instanceof Error ? e.message : 'Restore failed');
+                  }
+                }}
+              >
+                Undo delete
+              </Button>
+              <Button size="sm" variant="ghost" className="rounded-xl font-semibold" onClick={() => setLastDeleted(null)}>Dismiss</Button>
+            </span>
           </span>
-        </div>
+        </Notice>
       )}
 
-      {/* Sticky command bar — filters and the bulk bar stay reachable while the
-          long list scrolls. This route has no fixed navbar, so top-0 is correct. */}
-      <div className="sticky top-0 z-30 -mx-4 mb-4 border-b border-white/5 bg-background/90 px-4 py-3 backdrop-blur-xl">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="min-w-0 overflow-x-auto">
-            <Tabs value={tab} onValueChange={setTab}>
-              <TabsList className="w-max rounded-full">
-                <TabsTrigger value="all" className="rounded-full">All <span className="ml-1.5 text-xs tabular-nums text-muted-foreground">{counts.all}</span></TabsTrigger>
-                <TabsTrigger value="published" className="rounded-full">Published <span className="ml-1.5 text-xs tabular-nums text-muted-foreground">{counts.published}</span></TabsTrigger>
-                <TabsTrigger value="drafts" className="rounded-full">Drafts <span className="ml-1.5 text-xs tabular-nums text-muted-foreground">{counts.drafts}</span></TabsTrigger>
-                <TabsTrigger value="archived" className="rounded-full">Archived <span className="ml-1.5 text-xs tabular-nums text-muted-foreground">{counts.archived}</span></TabsTrigger>
-                <TabsTrigger value="critical" className="rounded-full">Critical <span className="ml-1.5 text-xs tabular-nums text-muted-foreground">{counts.critical}</span></TabsTrigger>
-                <TabsTrigger value="scheduled" className="rounded-full">Scheduled <span className="ml-1.5 text-xs tabular-nums text-muted-foreground">{counts.scheduled}</span></TabsTrigger>
-                <TabsTrigger value="expired" className="rounded-full">Expired <span className="ml-1.5 text-xs tabular-nums text-muted-foreground">{counts.expired}</span></TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search title/body… (/ focuses)" className="max-w-xs rounded-full" />
-          <select value={sort} onChange={(e) => setSort(e.target.value as NewsSort)} className="h-10 rounded-full border border-input bg-background px-3 text-sm" aria-label="Sort">
+      {/* Overview tiles = one-click filters */}
+      <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-8">
+        {TILES.map((t, i) => {
+          const active = tab === t.id;
+          const value = counts[t.id as keyof typeof counts] ?? 0;
+          return (
+            <motion.button
+              key={t.id}
+              type="button"
+              aria-pressed={active}
+              onClick={() => setTab(t.id)}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ ...GESTURE, delay: Math.min(i * 0.04, 0.28) }}
+              whileTap={{ scale: 0.97 }}
+              className={`relative overflow-hidden rounded-2xl p-3 text-left transition-colors ${
+                active
+                  ? t.active
+                  : 'bg-[hsl(var(--md-surface-container-lowest))] text-[hsl(var(--md-on-surface))] hover:bg-[hsl(var(--md-surface-container-low))]'
+              }`}
+            >
+              <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1" style={{ background: t.accent, opacity: active ? 1 : 0.55 }} />
+              <span className={`block text-2xl font-extrabold tabular-nums ${!active && t.id === 'critical' && value > 0 ? 'text-[hsl(var(--md-error))]' : ''}`}>
+                {value}
+              </span>
+              <span className={`mt-0.5 block text-xs ${active ? 'opacity-80' : 'text-[hsl(var(--md-on-surface-variant))]'}`}>{t.label}</span>
+            </motion.button>
+          );
+        })}
+      </div>
+
+      {/* Sticky command bar: search / sort / refresh stay reachable, bulk bar
+          slides in under them so selections made deep in the list stay actionable. */}
+      <div className="sticky top-0 z-30 -mx-4 mb-4 border-b border-[hsl(var(--md-outline-variant)/0.5)] bg-[hsl(var(--md-surface)/0.92)] px-4 py-3 backdrop-blur-xl">
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search title/body… (/ focuses)"
+            className="w-full max-w-sm rounded-xl border-[hsl(var(--md-outline-variant)/0.6)] bg-[hsl(var(--md-surface-container-low))]"
+          />
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as NewsSort)}
+            aria-label="Sort"
+            className="h-10 rounded-xl border border-[hsl(var(--md-outline-variant)/0.6)] bg-[hsl(var(--md-surface-container-low))] px-3 text-sm"
+          >
             <option value="updated">Updated</option>
             <option value="published">Publish date</option>
             <option value="title">Title</option>
           </select>
-          <Button variant="ghost" className="rounded-full" disabled={refreshing} onClick={async () => { setRefreshing(true); try { await refresh(); await refreshAudit(); } catch { /* list keeps its last state */ } finally { setRefreshing(false); } }}>
+          <Button variant="outline" size="sm" className="rounded-xl font-semibold" disabled={refreshing} onClick={async () => { setRefreshing(true); try { await refresh(); await refreshAudit(); } catch { /* list keeps its last state */ } finally { setRefreshing(false); } }}>
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} aria-hidden="true" />
             {refreshing ? 'Refreshing…' : 'Refresh'}
           </Button>
-          <span className="tabular-nums text-xs text-muted-foreground">{filtered.length}/{items.length}{selected.size > 0 ? ` · ${selected.size} selected` : ''}</span>
+          <span className="tabular-nums text-xs text-[hsl(var(--md-on-surface-variant))]">
+            {filtered.length}/{items.length}
+            {selected.size > 0 ? ` · ${selected.size} selected` : ''}
+          </span>
         </div>
 
-        {/* Bulk bar lives inside the sticky command bar so a selection made deep
-            in the list stays actionable without scrolling back up. */}
-        {selected.size > 0 && (
-          <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-white/5 pt-2.5 text-sm">
-            <span className="font-bold">{selected.size} selected</span>
-            <Button size="sm" variant="ghost" className="rounded-full" onClick={() => setSelected(new Set(filtered.map((n) => n.id)))}>Select shown</Button>
-            <Button size="sm" variant="ghost" className="rounded-full" onClick={() => setSelected(new Set())}>Clear</Button>
-            <span className="ml-auto flex flex-wrap gap-2">
-              {(['publish', 'unpublish', 'archive', 'delete'] as const).map((a) => (
-                <Button key={a} size="sm" variant={a === 'delete' ? 'destructive' : 'outline'} className="rounded-full capitalize" disabled={bulkBusy} onClick={() => runBulk(a)}>
-                  {bulkBusy ? 'Working…' : a}
-                </Button>
-              ))}
-            </span>
-          </div>
-        )}
+        <AnimatePresence initial={false}>
+          {selected.size > 0 && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={GESTURE}
+              className="overflow-hidden"
+            >
+              <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-[hsl(var(--md-outline-variant)/0.5)] pt-2.5 text-sm">
+                <span className="font-bold tabular-nums">{selected.size} selected</span>
+                <Button size="sm" variant="ghost" className="rounded-xl font-semibold" onClick={() => setSelected(new Set(filtered.map((n) => n.id)))}>Select shown</Button>
+                <Button size="sm" variant="ghost" className="rounded-xl font-semibold" onClick={() => setSelected(new Set())}>Clear</Button>
+                <span className="ml-auto flex flex-wrap gap-2">
+                  {(['publish', 'unpublish', 'archive', 'delete'] as const).map((a) => (
+                    <Button key={a} size="sm" variant={a === 'delete' ? 'destructive' : 'outline'} className="rounded-xl font-semibold capitalize" disabled={bulkBusy} onClick={() => runBulk(a)}>
+                      {bulkBusy ? 'Working…' : a}
+                    </Button>
+                  ))}
+                </span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      <NewsListTable
-        items={filtered}
-        loading={loading}
-        selected={selected}
-        onToggleSelect={toggleSelect}
-        emptyTitle={q.trim() ? `No matches for “${q.trim().slice(0, 60)}”` : (EMPTY_TAB_COPY[tab] ?? 'No announcements here')}
-        emptyHint={q.trim() ? 'Try another tab or clear the search.' : undefined}
-        onCreate={() => {
-          setEditing(null);
-          setEditorOpen(true);
-        }}
-        onEdit={(n) => {
-          setEditing(n);
-          setEditorOpen(true);
-        }}
-        onClone={(n) => {
-          const { id: _drop, ...rest } = n;
-          void _drop;
-          setEditing({ ...rest, id: '', title: `${n.title} (copy)`, status: 'draft', createdAt: '', updatedAt: '' } as NewsItem);
-          setEditorOpen(true);
-        }}
-        onAction={async (action, id) => {
-          setErr(null);
-          try {
-            const target = items.find((n) => n.id === id);
-            await mutate(action, { id });
-            if (action === 'delete' && target) setLastDeleted({ id, title: target.title });
-          } catch (e) {
-            setErr(e instanceof Error ? e.message : 'Action failed');
-            // Same as bulk: surface the page-top banner instead of failing offscreen.
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }
-        }}
-      />
+      {/* Main dashboard: list first, tools in the rail; stacks on small screens. */}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="min-w-0">
+          <NewsListTable
+            items={filtered}
+            loading={loading}
+            selected={selected}
+            onToggleSelect={toggleSelect}
+            emptyTitle={q.trim() ? `No matches for “${q.trim().slice(0, 60)}”` : (EMPTY_TAB_COPY[tab] ?? 'No announcements here')}
+            emptyHint={q.trim() ? 'Try another filter or clear the search.' : undefined}
+            onCreate={() => {
+              setEditing(null);
+              setEditorOpen(true);
+            }}
+            onEdit={(n) => {
+              setEditing(n);
+              setEditorOpen(true);
+            }}
+            onClone={(n) => {
+              const { id: _drop, ...rest } = n;
+              void _drop;
+              setEditing({ ...rest, id: '', title: `${n.title} (copy)`, status: 'draft', createdAt: '', updatedAt: '' } as NewsItem);
+              setEditorOpen(true);
+            }}
+            onAction={async (action, id) => {
+              setErr(null);
+              try {
+                const target = items.find((n) => n.id === id);
+                await mutate(action, { id });
+                if (action === 'delete' && target) setLastDeleted({ id, title: target.title });
+              } catch (e) {
+                setErr(e instanceof Error ? e.message : 'Action failed');
+                // Same as bulk: surface the page-top banner instead of failing offscreen.
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            }}
+          />
 
-      <AdminSection title="Test lab" hint="Send yourself a test popup / push notification" defaultOpen>
-        <NewsTestLab items={items} onSimulate={simulate} />
-      </AdminSection>
+          <AuditSection count={audit.length}>
+            <NewsAuditLog audit={audit} />
+          </AuditSection>
+        </div>
 
-      <AdminSection title="Feed check" hint="Public feed health + index repair">
-        <NewsFeedCheck
-          onCheck={feedHealth}
-          onRepair={async () => {
-            const data = await mutate('repair-index', {});
-            return { removed: Number((data as Record<string, unknown>).removed ?? 0) };
-          }}
-        />
-      </AdminSection>
-
-      <AdminSection title="Status + backups" hint="Delivery history, JSON export / import">
-        <NewsStatusDashboard onHistory={feedHistory} onExport={exportBackup} onImport={importBackup} />
-      </AdminSection>
-
-      <AdminSection title="Audit log" hint={`Last ${audit.length} recorded changes`}>
-        <NewsAuditLog audit={audit} />
-      </AdminSection>
+        <aside className="grid content-start gap-4 lg:sticky lg:top-[72px]">
+          <NewsFeedCheck
+            onCheck={feedHealth}
+            onRepair={async () => {
+              const data = await mutate('repair-index', {});
+              return { removed: Number((data as Record<string, unknown>).removed ?? 0) };
+            }}
+          />
+          <NewsTestLab items={items} onSimulate={simulate} />
+          <NewsStatusDashboard onHistory={feedHistory} onExport={exportBackup} onImport={importBackup} />
+        </aside>
+      </div>
 
       <NewsEditorDialog
         open={editorOpen}
