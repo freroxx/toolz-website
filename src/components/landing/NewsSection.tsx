@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { usePublicNews, formatNewsDate } from "@/hooks/usePublicNews";
 import { stripMarkdown } from "@/lib/stripMarkdown";
+import { newsPriorityChipStyle } from "@/lib/newsStyle";
 import SectionHeader from "@/components/landing/SectionHeader";
 
 function updatedAgo(at: number): string | null {
@@ -91,14 +92,7 @@ const NewsSection = () => {
                     <div className="flex items-center gap-2 mb-4">
                       <span
                         className="m3-label-small px-3 py-1 rounded-full font-bold uppercase tracking-wider"
-                        style={{
-                          background: n.priority === "critical"
-                            ? "hsl(var(--md-error-container))"
-                            : "hsl(var(--md-secondary-container))",
-                          color: n.priority === "critical"
-                            ? "hsl(var(--md-on-error-container))"
-                            : "hsl(var(--md-on-secondary-container))",
-                        }}
+                        style={newsPriorityChipStyle(n.priority)}
                       >
                         {n.priority}
                       </span>
