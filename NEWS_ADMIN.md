@@ -24,7 +24,7 @@ Vercel picks up `api/news.ts` (public feed + generation counter, 10s), `api/news
 - Skins: `GET/POST /api/skins` (public feed + community submit) and `?action=` admin ops (`list/create/update/publish/unpublish/archive/delete`, same session+CSRF auth; old `/api/skins-admin` URL still works via rewrite).
 - Saves return a `visibility` verdict (`live` vs reason) so the panel can confirm immediately whether the item is on `/news`.
 - `GET /api/news?all=1` — unfiltered public feed behind `/news` and the home teaser (status + time window only).
-- `?action=feed-health` — `{ indexSize, payloadCount, liveCount, feedVersion, nextTransitionAt, orphanIds, items: [{ id, title, status, liveOnPublicFeed, reason }] }`; also powers the admin "Feed check" section (auto-runs on mount).
+- `?action=feed-health` — `{ indexSize, payloadCount, liveCount, feedVersion, nextTransitionAt, orphanIds, items: [{ id, title, status, liveOnPublicFeed, reason }] }`; also powers the admin "Feed check" section (auto-runs whenever the section is expanded).
 
 ## Security
 
@@ -41,12 +41,21 @@ The New/Edit dialog is tabbed: Content (templates, counters, markdown toolbar,
 thumbnail check), Targeting (Everyone reset, Latest-version shortcut, "who sees
 this" + version simulator), Behavior (recurrence presets, plain-language
 toggles, schedule quick chips in your local time with UTC storage note and a live verdict line "~1 min"), Preview (popup +
-website article). Footer: Cancel / Save draft / Publish now (Update/Unpublish
+website article). Preview mirrors the app: exactly one filled button — the CTA
+labelled by Action label when an Action URL is set, otherwise "Got it"; there
+is no "Later" button anywhere (snoozing is a gesture in the app: scrim tap,
+system back or pull-down). Rule: a custom Action label requires an Action URL —
+the editor warns inline and blocks the save if the label is set without one
+(the server would silently drop the label otherwise, and the app would show no
+CTA at all). Footer: Cancel / Save draft / Publish now (Update/Unpublish
 when editing). "Publish now" forces `published` with immediate visibility.
 Every save then re-checks the live public feed (CDN bypassed) and reports
 "verified live" or the exact mismatch (e.g. image differs, not in feed yet).
-Cloning opens a "(copy)" draft. Multi-select + bulk bar publishes/unpublishes/archives/deletes in one round-trip; single deletes show an Undo toast (7-day trash). `n` = new, `/` = search. Sort by updated/publish/title; Critical/Scheduled tabs; duplicate-title warning. Unsaved changes ask before discarding. List rows
-show LIVE-on-/news vs reason badges with local-time tooltips; the "Feed check" section auto-runs on mount and answers
+Cloning opens a "(copy)" draft. Multi-select + bulk bar publishes/unpublishes/archives/deletes in one round-trip; single deletes show an Undo toast (7-day trash). `n` = new, `/` = search. Sort by updated/publish/title; Critical/Scheduled tabs (all tabs carry counts); duplicate-title warning. Unsaved changes ask before discarding. List rows
+show LIVE-on-/news vs reason badges with local-time tooltips, an `↗ action
+label` chip for Action-URL items and a "Copy link" button producing the same
+`/news#news-<id>` anchor the app's Share button hands out; the "Feed check"
+section auto-runs whenever you expand it and answers
 "will /news show anything?" with generation, next-transition, per-item reasons and orphan detection. "Test lab" dry-runs any item × version (local + server `simulate`, no writes). "Status + backups" shows the last 50 feed changes plus Export/Import (UTC filenames, confirm before overwrite). Body markdown links: `https://`/`mailto:` open in a new tab, `toolz://` deep links render as inert text ("Opens inside the Toolz app") on the website and live in the app, and any other scheme renders as plain text (XSS hardening — a `javascript:` href is never emitted).
 
 ## Troubleshooting: published but not on /news
