@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNewsAdmin } from '@/hooks/useNewsAdmin';
 import type { NewsItem } from '@/lib/news-schema';
 import { duplicateTitles, filterAdminItems, sortAdminItems, type NewsSort } from '@/lib/newsAdminTools';
+import { getVisibilityVerdict } from '@/lib/newsVerdict';
 import { NewsLoginCard } from '@/components/news-admin/NewsLoginCard';
 import { NewsListTable } from '@/components/news-admin/NewsListTable';
 import { NewsEditorDialog } from '@/components/news-admin/NewsEditorDialog';
@@ -12,6 +13,31 @@ import { NewsAuditLog } from '@/components/news-admin/NewsAuditLog';
 import { NewsFeedCheck } from '@/components/news-admin/NewsFeedCheck';
 import { NewsTestLab } from '@/components/news-admin/NewsTestLab';
 import { NewsStatusDashboard } from '@/components/news-admin/NewsStatusDashboard';
+
+/**
+ * Collapsible tool section: the announcement list stays the hero of the page;
+ * diagnostics, backups and audit history expand on demand with a one-line hint.
+ */
+function AdminSection({ title, hint, defaultOpen = false, children }: {
+  title: string;
+  hint: string;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <section className="mt-10">
+      <button onClick={() => setOpen((o) => !o)} aria-expanded={open} className="mb-3 flex w-full items-center gap-3 text-left">
+        <h2 className="text-lg font-extrabold">{title}</h2>
+        {!open && <span className="hidden truncate text-xs text-muted-foreground sm:inline">{hint}</span>}
+        <span className="ml-auto shrink-0 rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-muted-foreground">
+          {open ? 'Hide' : 'Show'}
+        </span>
+      </button>
+      {open ? children : null}
+    </section>
+  );
+}
 
 export default function AdminNews() {
   const { authed, restoring, loading, items, audit, login, logout, refresh, refreshAudit, restore, feedHealth, bulk, restoreItem, feedHistory, simulate, exportBackup, importBackup, uploadImage, verifySaved, mutate } = useNewsAdmin();
@@ -26,6 +52,14 @@ export default function AdminNews() {
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [saveNote, setSaveNote] = useState<{ live: boolean; text: string } | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Headline numbers: what is on /news right now, and how the list splits.
+  const counts = useMemo(() => {
+    const keys = ['all', 'published', 'drafts', 'archived', 'critical', 'scheduled', 'expired'] as const;
+    return Object.fromEntries(keys.map((k) => [k, filterAdminItems(items, k, '').length])) as Record<(typeof keys)[number], number>;
+  }, [items]);
+  const liveCount = useMemo(() => items.filter((n) => getVisibilityVerdict(n).live).length, [items]);
 
   useEffect(() => {
     restore().catch(() => {});
@@ -102,7 +136,7 @@ export default function AdminNews() {
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight">Toolz News Admin</h1>
           <p className="text-sm text-muted-foreground">
-            {items.filter((i) => i.status === 'published').length} published · {items.filter((i) => i.status === 'draft').length} drafts · visible to apps within ~1 min (auto-sync on change)
+            {liveCount} live on /news · {counts.published} published · {counts.drafts} drafts · apps pick up changes within ~1 min
           </p>
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
@@ -160,13 +194,13 @@ export default function AdminNews() {
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="rounded-full">
-            <TabsTrigger value="all" className="rounded-full">All</TabsTrigger>
-            <TabsTrigger value="published" className="rounded-full">Published</TabsTrigger>
-            <TabsTrigger value="drafts" className="rounded-full">Drafts</TabsTrigger>
-            <TabsTrigger value="archived" className="rounded-full">Archived</TabsTrigger>
-            <TabsTrigger value="critical" className="rounded-full">Critical</TabsTrigger>
-            <TabsTrigger value="scheduled" className="rounded-full">Scheduled</TabsTrigger>
-            <TabsTrigger value="expired" className="rounded-full">Expired</TabsTrigger>
+            <TabsTrigger value="all" className="rounded-full">All {counts.all}</TabsTrigger>
+            <TabsTrigger value="published" className="rounded-full">Published {counts.published}</TabsTrigger>
+            <TabsTrigger value="drafts" className="rounded-full">Drafts {counts.drafts}</TabsTrigger>
+            <TabsTrigger value="archived" className="rounded-full">Archived {counts.archived}</TabsTrigger>
+            <TabsTrigger value="critical" className="rounded-full">Critical {counts.critical}</TabsTrigger>
+            <TabsTrigger value="scheduled" className="rounded-full">Scheduled {counts.scheduled}</TabsTrigger>
+            <TabsTrigger value="expired" className="rounded-full">Expired {counts.expired}</TabsTrigger>
           </TabsList>
         </Tabs>
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search title/body… (/ focuses)" className="max-w-xs rounded-full" />
@@ -175,7 +209,9 @@ export default function AdminNews() {
           <option value="published">Publish date</option>
           <option value="title">Title</option>
         </select>
-        <Button variant="ghost" className="rounded-full" onClick={() => { refresh().catch(() => {}); refreshAudit().catch(() => {}); }}>Refresh</Button>
+        <Button variant="ghost" className="rounded-full" disabled={refreshing} onClick={async () => { setRefreshing(true); try { await refresh(); await refreshAudit(); } catch { /* list keeps its last state */ } finally { setRefreshing(false); } }}>
+          {refreshing ? 'Refreshing…' : 'Refresh'}
+        </Button>
         <span className="text-xs text-muted-foreground">{filtered.length}/{items.length}{selected.size > 0 ? ` · ${selected.size} selected` : ''}</span>
       </div>
 
@@ -220,23 +256,27 @@ export default function AdminNews() {
         }}
       />
 
-      <h2 className="mb-3 mt-10 text-lg font-extrabold">Test lab</h2>
-      <NewsTestLab items={items} onSimulate={simulate} />
+      <AdminSection title="Test lab" hint="Send yourself a test popup / push notification" defaultOpen>
+        <NewsTestLab items={items} onSimulate={simulate} />
+      </AdminSection>
 
-      <h2 className="mb-3 mt-10 text-lg font-extrabold">Feed check</h2>
-      <NewsFeedCheck
-        onCheck={feedHealth}
-        onRepair={async () => {
-          const data = await mutate('repair-index', {});
-          return { removed: Number((data as Record<string, unknown>).removed ?? 0) };
-        }}
-      />
+      <AdminSection title="Feed check" hint="Public feed health + index repair">
+        <NewsFeedCheck
+          onCheck={feedHealth}
+          onRepair={async () => {
+            const data = await mutate('repair-index', {});
+            return { removed: Number((data as Record<string, unknown>).removed ?? 0) };
+          }}
+        />
+      </AdminSection>
 
-      <h2 className="mb-3 mt-10 text-lg font-extrabold">Status + backups</h2>
-      <NewsStatusDashboard onHistory={feedHistory} onExport={exportBackup} onImport={importBackup} />
+      <AdminSection title="Status + backups" hint="Delivery history, JSON export / import">
+        <NewsStatusDashboard onHistory={feedHistory} onExport={exportBackup} onImport={importBackup} />
+      </AdminSection>
 
-      <h2 className="mb-3 mt-10 text-lg font-extrabold">Audit log</h2>
-      <NewsAuditLog audit={audit} />
+      <AdminSection title="Audit log" hint={`Last ${audit.length} recorded changes`}>
+        <NewsAuditLog audit={audit} />
+      </AdminSection>
 
       <NewsEditorDialog
         open={editorOpen}

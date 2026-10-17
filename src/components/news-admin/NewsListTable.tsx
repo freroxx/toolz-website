@@ -1,8 +1,37 @@
+import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { describeTargeting, type NewsItem } from '@/lib/news-schema';
 import { getVisibilityVerdict } from '@/lib/newsVerdict';
+
+/** Copies the stable public anchor (same URL the app's share button hands out). */
+function CopyLinkButton({ id }: { id: string }) {
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!copied) return;
+    const t = setTimeout(() => setCopied(false), 1600);
+    return () => clearTimeout(t);
+  }, [copied]);
+  return (
+    <Button
+      size="sm"
+      variant="ghost"
+      className="rounded-full"
+      title="Copy the public /news#news-<id> link"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(`${window.location.origin}/news#news-${id}`);
+          setCopied(true);
+        } catch {
+          // Clipboard unavailable (_permissions) — not worth an error banner.
+        }
+      }}
+    >
+      {copied ? 'Copied ✓' : 'Copy link'}
+    </Button>
+  );
+}
 
 export function NewsListTable({
   items,
@@ -50,6 +79,11 @@ export function NewsListTable({
                 {n.pinned ? <Badge variant="outline" className="rounded-full">Pinned</Badge> : null}
                 {n.notify === false ? <Badge variant="outline" className="rounded-full">Silent</Badge> : null}
                 {n.disappearing ? <Badge variant="outline" className="rounded-full">Disappearing</Badge> : null}
+                {n.actionUrl ? (
+                  <Badge variant="outline" className="max-w-[180px] truncate rounded-full" title={`Action: ${n.actionUrl}`}>
+                    ↗ {n.actionLabel || 'Action'}
+                  </Badge>
+                ) : null}
                 {verdict.live ? (
                   <Badge className="rounded-full border-emerald-500/30 bg-emerald-500/15 text-emerald-300">LIVE on /news</Badge>
                 ) : (
@@ -65,6 +99,7 @@ export function NewsListTable({
             </div>
             <div className="flex flex-wrap gap-2">
               <Button size="sm" variant="outline" className="rounded-full" onClick={() => onEdit(n)}>Edit</Button>
+              <CopyLinkButton id={n.id} />
               <Button size="sm" variant="ghost" className="rounded-full" onClick={() => onClone(n)}>Clone</Button>
               {n.status !== 'published' ? (
                 <Button size="sm" className="rounded-full" onClick={() => onAction('publish', n.id)}>Publish</Button>
