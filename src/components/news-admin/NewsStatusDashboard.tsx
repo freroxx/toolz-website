@@ -90,19 +90,21 @@ export function NewsStatusDashboard({
             {loading ? 'Loading…' : history.length ? 'Refresh history' : 'Load history'}
           </Button>
           <Button size="sm" variant="outline" className="rounded-full" onClick={download}>Export backup</Button>
-          <label className="inline-flex h-8 cursor-pointer items-center rounded-full border border-white/10 px-3 text-xs font-bold">
-            Import
-            <input
-              type="file"
-              accept="application/json"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                e.target.value = '';
-                if (f) upload(f).catch(() => {});
-              }}
-            />
-          </label>
+          <Button size="sm" variant="outline" className="rounded-full" asChild>
+            <label className="cursor-pointer">
+              Import
+              <input
+                type="file"
+                accept="application/json"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = '';
+                  if (f) upload(f).catch(() => {});
+                }}
+              />
+            </label>
+          </Button>
         </div>
       </CardHeader>
       {(err || note || history.length > 0) && (

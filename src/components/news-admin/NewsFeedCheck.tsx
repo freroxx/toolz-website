@@ -67,7 +67,7 @@ export function NewsFeedCheck({
           {checking ? 'Checking…' : data ? 'Re-check' : 'Run feed check'}
         </Button>
         <Button size="sm" variant="ghost" className="rounded-full" onClick={() => window.open('/api/news?all=1', '_blank')}>
-          Public JSON
+          Public JSON (all)
         </Button>
         {(data?.orphanIds.length ?? 0) > 0 && (
           <Button
