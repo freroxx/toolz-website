@@ -51,10 +51,16 @@ CTA at all). Footer: Cancel / Save draft / Publish now (Update/Unpublish
 when editing). "Publish now" forces `published` with immediate visibility.
 Every save then re-checks the live public feed (CDN bypassed) and reports
 "verified live" or the exact mismatch (e.g. image differs, not in feed yet).
-Cloning opens a "(copy)" draft. Multi-select + bulk bar publishes/unpublishes/archives/deletes in one round-trip; single deletes show an Undo toast (7-day trash). `n` = new, `/` = search. Sort by updated/publish/title; Critical/Scheduled tabs (all tabs carry counts); duplicate-title warning. Unsaved changes ask before discarding. List rows
+Cloning opens a "(copy)" draft. Multi-select + bulk actions publish/unpublish/archive/delete in one round-trip; single deletes show an Undo toast (7-day trash). `n` = new, `/` = search. Sort by updated/publish/title; the tabs all carry counts, and the command bar (tabs + search + sort + refresh + bulk bar) is sticky — filters and a selection stay actionable while a long list scrolls. Unsaved changes ask before discarding. List rows
 show LIVE-on-/news vs reason badges with local-time tooltips, an `↗ action
-label` chip for Action-URL items and a "Copy link" button producing the same
-`/news#news-<id>` anchor the app's Share button hands out; the "Feed check"
+label` chip for Action-URL items and a title tooltip when the title truncates;
+row actions split by frequency — Edit + Publish/Unpublish as buttons, Copy
+public link / Clone / Archive / Delete behind the `⋯` menu ("Copy public link"
+copies the same `/news#news-<id>` anchor the app's Share button hands out and
+flashes "Link copied ✓"). Selected rows highlight in place; the first load
+after login shows skeleton rows instead of a fake "No news yet", and empty
+tabs/searches say why ("No drafts…", "No matches for …"). A failed row/bulk
+action surfaces the page-top error banner by scrolling it into view. The "Feed check"
 section auto-runs whenever you expand it and answers
 "will /news show anything?" with generation, next-transition, per-item reasons and orphan detection. "Test lab" dry-runs any item × version (local + server `simulate`, no writes). "Status + backups" shows the last 50 feed changes plus Export/Import (UTC filenames, confirm before overwrite). Body markdown links: `https://`/`mailto:` open in a new tab, `toolz://` deep links render as inert text ("Opens inside the Toolz app") on the website and live in the app, and any other scheme renders as plain text (XSS hardening — a `javascript:` href is never emitted).
 
@@ -63,7 +69,7 @@ section auto-runs whenever you expand it and answers
 1. Open `/api/news?all=1` raw: `degraded: true` = backend/Redis/env problem
    (check Vercel function logs + env vars, then redeploy); 404 = not deployed.
    `429` = per-IP throttle tripped (fail-open retry after 60 s).
-2. Run admin "Feed check" (auto-runs on mount): `draft` = never published (use Publish now or
+2. Expand admin "Feed check" (auto-runs when the section is expanded): `draft` = never published (use Publish now or
    "Publish all drafts");
    `scheduled at …` = future `publishAt` (see `next:` badge for the exact flip; apps/website wake on it);
    `expired at …` = past `expiresAt`;
