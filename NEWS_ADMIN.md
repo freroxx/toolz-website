@@ -51,7 +51,20 @@ CTA at all). Footer: Cancel / Save draft / Publish now (Update/Unpublish
 when editing). "Publish now" forces `published` with immediate visibility.
 Every save then re-checks the live public feed (CDN bypassed) and reports
 "verified live" or the exact mismatch (e.g. image differs, not in feed yet).
-Cloning opens a "(copy)" draft. Multi-select + bulk actions publish/unpublish/archive/delete in one round-trip; single deletes show an Undo toast (7-day trash). `n` = new, `/` = search. Sort by updated/publish/title; the tabs all carry counts, and the command bar (tabs + search + sort + refresh + bulk bar) is sticky — filters and a selection stay actionable while a long list scrolls. Unsaved changes ask before discarding. List rows
+Cloning opens a "(copy)" draft. Multi-select + bulk actions publish/unpublish/archive/delete in one round-trip; single deletes show an Undo toast (7-day trash). `n` = new, `/` = search. Sort by updated/publish/title; eight filter tiles
+(All · Live on /news · Published · Drafts · Scheduled · Critical · Expired ·
+Archived) are the overview AND the filter — one click switches the list, the
+active tile fills with its Material container color, and a 2px category accent
+bar keeps the palette legible. Search + sort + refresh + the selection counter
+sit in a sticky command bar; the bulk bar slides in beneath it, so selections
+made deep in the list stay actionable while scrolling. Unsaved changes ask
+before discarding. Tool cards (Feed check / Test lab / Status + backups) live
+in a sticky right rail on desktop and stack under the list on mobile; Audit log
+is a collapsible section under the list. The design uses the site's Material 3
+token scheme throughout: tonal surface containers for cards (16px) and chips
+(12px), priority chips speaking the same container colors as the public /news
+page, notice banners colored by meaning (teal = live/success, amber = warning,
+red = error), and one soft spring for entrances — no gradients, no decoration. List rows
 show LIVE-on-/news vs reason badges with local-time tooltips, an `↗ action
 label` chip for Action-URL items and a title tooltip when the title truncates;
 row actions split by frequency — Edit + Publish/Unpublish as buttons, Copy
@@ -60,8 +73,8 @@ copies the same `/news#news-<id>` anchor the app's Share button hands out and
 flashes "Link copied ✓"). Selected rows highlight in place; the first load
 after login shows skeleton rows instead of a fake "No news yet", and empty
 tabs/searches say why ("No drafts…", "No matches for …"). A failed row/bulk
-action surfaces the page-top error banner by scrolling it into view. The "Feed check"
-section auto-runs whenever you expand it and answers
+action surfaces the page-top error banner by scrolling it into view. The "Feed check" card
+sits in the tools rail, auto-runs on dashboard load and answers
 "will /news show anything?" with generation, next-transition, per-item reasons and orphan detection. "Test lab" dry-runs any item × version (local + server `simulate`, no writes). "Status + backups" shows the last 50 feed changes plus Export/Import (UTC filenames, confirm before overwrite). Body markdown links: `https://`/`mailto:` open in a new tab, `toolz://` deep links render as inert text ("Opens inside the Toolz app") on the website and live in the app, and any other scheme renders as plain text (XSS hardening — a `javascript:` href is never emitted).
 
 ## Troubleshooting: published but not on /news
@@ -69,7 +82,7 @@ section auto-runs whenever you expand it and answers
 1. Open `/api/news?all=1` raw: `degraded: true` = backend/Redis/env problem
    (check Vercel function logs + env vars, then redeploy); 404 = not deployed.
    `429` = per-IP throttle tripped (fail-open retry after 60 s).
-2. Expand admin "Feed check" (auto-runs when the section is expanded): `draft` = never published (use Publish now or
+2. The admin "Feed check" card (tools rail, auto-runs on load): `draft` = never published (use Publish now or
    "Publish all drafts");
    `scheduled at …` = future `publishAt` (see `next:` badge for the exact flip; apps/website wake on it);
    `expired at …` = past `expiresAt`;
