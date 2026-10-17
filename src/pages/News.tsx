@@ -6,6 +6,7 @@ import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import LazyDownloadDialog from "@/components/landing/LazyDownloadDialog";
 import { NewsBody } from "@/components/news/NewsBody";
+import { newsPriorityChipStyle } from "@/lib/newsStyle";
 import { usePublicNews, formatNewsDate } from "@/hooks/usePublicNews";
 
 const filters = ["all", "critical", "feature", "fix", "promo", "info"] as const;
@@ -44,18 +45,33 @@ const News = () => {
     if (meta) meta.setAttribute("content", "Every Toolz announcement — changelogs, fixes and notices. Same feed the app shows.");
   }, []);
 
-  // Deep-link: /news#news-<id> scrolls + highlights (matches the app's Read on website).
+  // Deep-link: /news#news-<id> highlights the item (matches the app's "Read on website").
+  // First just remember the anchor; rendering depends on the filter state below.
   useEffect(() => {
     if (loading || items.length === 0) return;
     const hash = window.location.hash.replace(/^#/, "");
     if (!hash.startsWith("news-")) return;
     setActiveHash(hash);
-    const el = document.getElementById(hash);
+  }, [loading, items]);
+
+  // The anchor must actually be in the DOM to scroll to it. An active
+  // filter/search or the initial 10-item page can hide the target, so a
+  // deep link clears filters and paginates until its card renders — then
+  // scrolls smoothly. Converges: once the element exists nothing re-sets.
+  useEffect(() => {
+    if (!activeHash || loading) return;
+    const el = document.getElementById(activeHash);
     if (el) {
       const t = setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
       return () => clearTimeout(t);
     }
-  }, [loading, items]);
+    const target = items.find((x) => `news-${x.id}` === activeHash);
+    if (!target) return;
+    if (filter !== "all") setFilter("all");
+    if (query.trim()) setQuery("");
+    const idx = visible.findIndex((x) => x.id === target.id);
+    if (idx >= shown) setShown(idx + 5);
+  }, [activeHash, loading, items, visible, filter, query, shown]);
 
   // Per-anchor OG so shares show the right card when crawlers execute JS.
   useEffect(() => {
@@ -209,10 +225,18 @@ const News = () => {
           <div className="rounded-3xl p-12 text-center" style={{ background: "hsl(var(--md-surface-container-high))" }}>
             <Megaphone size={28} className="mx-auto mb-4" style={{ color: "hsl(var(--md-primary))" }} />
             <div className="m3-title-large font-bold mb-2" style={{ color: "hsl(var(--md-on-surface))" }}>
-              {items.length === 0 ? "No announcements yet" : "Nothing in this category"}
+              {query.trim()
+                ? `No matches for “${query.trim()}”`
+                : items.length === 0
+                  ? "No announcements yet"
+                  : "Nothing in this category"}
             </div>
             <p className="m3-body-large" style={{ color: "hsl(var(--md-on-surface-variant))" }}>
-              {items.length === 0 ? "Check back soon — news will appear here first." : "Try another filter."}
+              {query.trim()
+                ? "Try a different search or clear the filter."
+                : items.length === 0
+                  ? "Check back soon — news will appear here first."
+                  : "Try another filter."}
             </p>
           </div>
         ) : (
@@ -239,14 +263,7 @@ const News = () => {
                 <div className="flex flex-wrap items-center gap-2 mb-4">
                   <span
                     className="m3-label-small px-3 py-1 rounded-full font-bold uppercase tracking-wider"
-                    style={{
-                      background: n.priority === "critical"
-                        ? "hsl(var(--md-error-container))"
-                        : "hsl(var(--md-secondary-container))",
-                      color: n.priority === "critical"
-                        ? "hsl(var(--md-on-error-container))"
-                        : "hsl(var(--md-on-secondary-container))",
-                    }}
+                    style={newsPriorityChipStyle(n.priority)}
                   >
                     {n.priority}
                   </span>
