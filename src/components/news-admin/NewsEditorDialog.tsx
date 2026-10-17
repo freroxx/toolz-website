@@ -11,6 +11,7 @@ import { describeWhen, getVisibilityVerdict } from '@/lib/newsVerdict';
 import { useUpdateManifest } from '@/hooks/use-update-manifest';
 import { NewsPreviewCard } from './NewsPreviewCard';
 import { NewsBody } from '@/components/news/NewsBody';
+import { newsPriorityChipStyle } from '@/lib/newsStyle';
 
 type Form = typeof newsDefaults & { id?: string };
 type TabId = 'content' | 'targeting' | 'behavior' | 'preview';
@@ -72,13 +73,8 @@ function downscaleImage(file: File): Promise<string> {
   });
 }
 
-const PRIORITY_COLORS: Record<string, string> = {
-  info: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
-  feature: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-  fix: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-  promo: 'bg-violet-500/15 text-violet-300 border-violet-500/30',
-  critical: 'bg-red-500/15 text-red-300 border-red-500/30',
-};
+// Priority chip colors come from lib/newsStyle (shared with the /news page),
+// so the editor speaks the same color language as the public feed.
 
 const TEMPLATES: { name: string; title: string; body: string; priority: Form['priority']; frequency: Form['frequency'] }[] = [
   {
@@ -283,7 +279,7 @@ export function NewsEditorDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) tryClose(); }}>
-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto rounded-[28px]">
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto rounded-3xl">
         <DialogHeader>
           <DialogTitle className="text-xl font-extrabold">{isNew ? 'New announcement' : 'Edit announcement'}</DialogTitle>
         </DialogHeader>
@@ -291,64 +287,65 @@ export function NewsEditorDialog({
         {/* Status + priority header */}
         <div className="grid gap-3">
           <div>
-            <Label className="mb-2 block text-xs uppercase tracking-widest text-muted-foreground">Status</Label>
+            <Label className="mb-2 block text-xs uppercase tracking-widest text-[hsl(var(--md-on-surface-variant))]">Status</Label>
             <div className="grid grid-cols-3 gap-2">
               {(['draft', 'published', 'archived'] as const).map((s) => (
                 <button
                   key={s}
                   onClick={() => set('status', s)}
-                  className={`h-10 rounded-full text-sm font-bold capitalize transition-all active:scale-95 ${form.status === s ? 'bg-primary text-primary-foreground' : 'border border-white/10 text-muted-foreground'}`}
+                  className={`h-10 rounded-xl text-sm font-bold capitalize transition-all active:scale-95 ${form.status === s ? 'bg-primary text-primary-foreground' : 'border border-[hsl(var(--md-outline-variant))] text-[hsl(var(--md-on-surface-variant))]'}`}
                 >
                   {s}
                 </button>
               ))}
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">{statusCaption}</p>
+            <p className="mt-1 text-xs text-[hsl(var(--md-on-surface-variant))]">{statusCaption}</p>
           </div>
           <div>
-            <Label className="mb-2 block text-xs uppercase tracking-widest text-muted-foreground">Priority</Label>
+            <Label className="mb-2 block text-xs uppercase tracking-widest text-[hsl(var(--md-on-surface-variant))]">Priority</Label>
             <div className="flex flex-wrap gap-2">
               {(['info', 'feature', 'fix', 'promo', 'critical'] as const).map((p) => (
                 <button
                   key={p}
                   onClick={() => setPriority(p)}
-                  className={`rounded-full border px-4 py-2 text-sm font-bold capitalize transition-all active:scale-95 ${form.priority === p ? PRIORITY_COLORS[p] : 'border-white/10 text-muted-foreground'}`}
+                  style={form.priority === p ? newsPriorityChipStyle(p) : undefined}
+                  className={`rounded-xl border px-4 py-2 text-sm font-bold capitalize transition-all active:scale-95 ${form.priority === p ? 'border-transparent' : 'border-[hsl(var(--md-outline-variant))] text-[hsl(var(--md-on-surface-variant))]'}`}
                 >
                   {p}
                 </button>
               ))}
             </div>
             {form.priority === 'critical' && (
-              <p className="mt-1 text-xs text-red-300">Critical bypasses user toggles — use sparingly.</p>
+              <p className="mt-1 text-xs text-[hsl(var(--md-error))]">Critical bypasses user toggles — use sparingly.</p>
             )}
           </div>
         </div>
 
-        {err && <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-300">{err}</div>}
+        {err && <div className="rounded-xl bg-[hsl(var(--md-error-container))] px-4 py-3 text-sm font-semibold text-[hsl(var(--md-on-error-container))]">{err}</div>}
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as TabId)}>
-          <TabsList className="rounded-full">
-            <TabsTrigger value="content" className="rounded-full">Content{tabErrors.content ? ` (${tabErrors.content})` : ''}</TabsTrigger>
-            <TabsTrigger value="targeting" className="rounded-full">Targeting{tabErrors.targeting ? ` (${tabErrors.targeting})` : ''}</TabsTrigger>
-            <TabsTrigger value="behavior" className="rounded-full">Behavior{tabErrors.behavior ? ` (${tabErrors.behavior})` : ''}</TabsTrigger>
-            <TabsTrigger value="preview" className="rounded-full">Preview</TabsTrigger>
+          <TabsList className="rounded-xl">
+            <TabsTrigger value="content" className="rounded-xl">Content{tabErrors.content ? ` (${tabErrors.content})` : ''}</TabsTrigger>
+            <TabsTrigger value="targeting" className="rounded-xl">Targeting{tabErrors.targeting ? ` (${tabErrors.targeting})` : ''}</TabsTrigger>
+            <TabsTrigger value="behavior" className="rounded-xl">Behavior{tabErrors.behavior ? ` (${tabErrors.behavior})` : ''}</TabsTrigger>
+            <TabsTrigger value="preview" className="rounded-xl">Preview</TabsTrigger>
           </TabsList>
 
           <TabsContent value="content" className="grid gap-4 pt-4">
             <div>
-              <Label className="mb-2 block text-xs uppercase tracking-widest text-muted-foreground">Template</Label>
+              <Label className="mb-2 block text-xs uppercase tracking-widest text-[hsl(var(--md-on-surface-variant))]">Template</Label>
               <div className="flex flex-wrap gap-2">
                 {TEMPLATES.map((t) => (
-                  <Button key={t.name} variant="outline" size="sm" className="rounded-full" onClick={() => applyTemplate(t)}>
+                  <Button key={t.name} variant="outline" size="sm" className="rounded-xl" onClick={() => applyTemplate(t)}>
                     {t.name}
                   </Button>
                 ))}
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">Fills priority + frequency; title/body only when empty.</p>
+              <p className="mt-1 text-xs text-[hsl(var(--md-on-surface-variant))]">Fills priority + frequency; title/body only when empty.</p>
             </div>
             <div className="grid gap-2">
               <Label>Title ({form.title.length}/120)</Label>
-              <Input autoFocus value={form.title} maxLength={120} onChange={(e) => set('title', e.target.value)} placeholder="What's new in 1.2" className="rounded-2xl" />
+              <Input autoFocus value={form.title} maxLength={120} onChange={(e) => set('title', e.target.value)} placeholder="What's new in 1.2" className="rounded-xl" />
             </div>
             <div className="grid gap-2">
               <Label>Body ({form.body.length}/2000, markdown, no HTML)</Label>
@@ -363,21 +360,21 @@ export function NewsEditorDialog({
                   { l: 'Quote', fn: () => insertAtCursor('', '', '> ') },
                   { l: 'Code', fn: () => insertAtCursor('```\n', '\n```') },
                 ].map((b) => (
-                  <Button key={b.l} variant="ghost" size="sm" className="rounded-full px-3 font-mono" onClick={b.fn}>
+                  <Button key={b.l} variant="ghost" size="sm" className="rounded-xl px-3 font-mono" onClick={b.fn}>
                     {b.l}
                   </Button>
                 ))}
               </div>
-              <Textarea ref={bodyRef} value={form.body} maxLength={2000} rows={10} onChange={(e) => set('body', e.target.value)} placeholder="## Highlights&#10;&#10;- **Faster** downloads&#10;- [Changelog](https://…)" className="rounded-2xl font-mono text-sm" />
-              <p className="text-xs text-muted-foreground">Renders on popup, history, /news and admin preview: headings, bold/italic/code, links, lists, quotes, code blocks, tables.</p>
+              <Textarea ref={bodyRef} value={form.body} maxLength={2000} rows={10} onChange={(e) => set('body', e.target.value)} placeholder="## Highlights&#10;&#10;- **Faster** downloads&#10;- [Changelog](https://…)" className="rounded-xl font-mono text-sm" />
+              <p className="text-xs text-[hsl(var(--md-on-surface-variant))]">Renders on popup, history, /news and admin preview: headings, bold/italic/code, links, lists, quotes, code blocks, tables.</p>
             </div>
             <div className="grid gap-2">
               <Label>Image (upload to imgbb, or paste URL)</Label>
               <div className="flex gap-2">
-                <Input value={form.imageUrl ?? ''} onChange={(e) => set('imageUrl', e.target.value || null)} placeholder="https://…" className="rounded-2xl" />
+                <Input value={form.imageUrl ?? ''} onChange={(e) => set('imageUrl', e.target.value || null)} placeholder="https://…" className="rounded-xl" />
                 <Button
                   variant="outline"
-                  className="shrink-0 rounded-full"
+                  className="shrink-0 rounded-xl"
                   disabled={uploading}
                   onClick={() => fileRef.current?.click()}
                 >
@@ -407,21 +404,21 @@ export function NewsEditorDialog({
                 />
               </div>
               {form.imageUrl && (
-                <img src={form.imageUrl} alt="" loading="lazy" className="max-h-64 w-full rounded-2xl object-contain" />
+                <img src={form.imageUrl} alt="" loading="lazy" className="max-h-64 w-full rounded-xl object-contain" />
               )}
-              <p className="text-xs text-muted-foreground">Images are downscaled in-browser (max 1600px, JPEG) then hosted on imgbb.</p>
+              <p className="text-xs text-[hsl(var(--md-on-surface-variant))]">Images are downscaled in-browser (max 1600px, JPEG) then hosted on imgbb.</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-2">
                 <Label>Action label ({(form.actionLabel ?? '').length}/50)</Label>
-                <Input value={form.actionLabel ?? ''} maxLength={50} onChange={(e) => set('actionLabel', e.target.value || null)} placeholder="Try it" className="rounded-2xl" />
+                <Input value={form.actionLabel ?? ''} maxLength={50} onChange={(e) => set('actionLabel', e.target.value || null)} placeholder="Try it" className="rounded-xl" />
               </div>
               <div className="grid gap-2">
                 <Label>Action URL</Label>
-                <Input value={form.actionUrl ?? ''} onChange={(e) => set('actionUrl', e.target.value || null)} placeholder="https://… or toolz://…" className="rounded-2xl" />
+                <Input value={form.actionUrl ?? ''} onChange={(e) => set('actionUrl', e.target.value || null)} placeholder="https://… or toolz://…" className="rounded-xl" />
               </div>
               {(form.actionLabel ?? '').trim() && !(form.actionUrl ?? '').trim() ? (
-                <p className="col-span-2 text-xs font-semibold text-amber-300">
+                <p className="col-span-2 text-xs font-semibold text-[hsl(var(--md-on-tertiary-container))]">
                   Action label needs an Action URL — the label is the text of the popup button. Without a URL the card shows “Got it” and the label is dropped.
                 </p>
               ) : null}
@@ -429,41 +426,41 @@ export function NewsEditorDialog({
           </TabsContent>
 
           <TabsContent value="targeting" className="grid gap-4 pt-4">
-            <Button variant="outline" className="w-fit rounded-full" onClick={() => { setDirty(true); setForm((f) => ({ ...f, minAppVersion: null, maxAppVersion: null, onlyVersions: [], excludedVersions: [] })); }}>
+            <Button variant="outline" className="w-fit rounded-xl" onClick={() => { setDirty(true); setForm((f) => ({ ...f, minAppVersion: null, maxAppVersion: null, onlyVersions: [], excludedVersions: [] })); }}>
               Reset to everyone
             </Button>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-2">
                 <Label>Min version (optional)</Label>
-                <Input value={form.minAppVersion ?? ''} onChange={(e) => set('minAppVersion', e.target.value || null)} placeholder="1.1.0" className="rounded-2xl" />
+                <Input value={form.minAppVersion ?? ''} onChange={(e) => set('minAppVersion', e.target.value || null)} placeholder="1.1.0" className="rounded-xl" />
               </div>
               <div className="grid gap-2">
                 <Label>Max version (optional)</Label>
-                <Input value={form.maxAppVersion ?? ''} onChange={(e) => set('maxAppVersion', e.target.value || null)} placeholder="1.9.9" className="rounded-2xl" />
+                <Input value={form.maxAppVersion ?? ''} onChange={(e) => set('maxAppVersion', e.target.value || null)} placeholder="1.9.9" className="rounded-xl" />
               </div>
             </div>
             <div className="grid gap-2">
               <Label>Only versions (comma separated, empty = all)</Label>
               <div className="flex gap-2">
-                <Input value={(form.onlyVersions ?? []).join(', ')} onChange={(e) => set('onlyVersions', e.target.value.split(',').map((s) => s.trim()).filter(Boolean))} placeholder="1.1.6, 1.2.0" className="rounded-2xl" />
-                <Button variant="outline" className="shrink-0 rounded-full" onClick={() => set('onlyVersions', latestVersion ? [latestVersion] : [])}>
+                <Input value={(form.onlyVersions ?? []).join(', ')} onChange={(e) => set('onlyVersions', e.target.value.split(',').map((s) => s.trim()).filter(Boolean))} placeholder="1.1.6, 1.2.0" className="rounded-xl" />
+                <Button variant="outline" className="shrink-0 rounded-xl" onClick={() => set('onlyVersions', latestVersion ? [latestVersion] : [])}>
                   Latest ({latestVersion})
                 </Button>
               </div>
             </div>
             <div className="grid gap-2">
               <Label>Excluded versions (comma separated)</Label>
-              <Input value={(form.excludedVersions ?? []).join(', ')} onChange={(e) => set('excludedVersions', e.target.value.split(',').map((s) => s.trim()).filter(Boolean))} placeholder="1.1.5-beta" className="rounded-2xl" />
+              <Input value={(form.excludedVersions ?? []).join(', ')} onChange={(e) => set('excludedVersions', e.target.value.split(',').map((s) => s.trim()).filter(Boolean))} placeholder="1.1.5-beta" className="rounded-xl" />
             </div>
-            <div className="rounded-2xl border border-white/10 p-4 text-sm">
+            <div className="rounded-xl border border-[hsl(var(--md-outline-variant))] p-4 text-sm">
               <div className="mb-2 font-bold">Who sees this</div>
-              <p className="text-muted-foreground">
+              <p className="text-[hsl(var(--md-on-surface-variant))]">
                 {describeTargeting({ ...form, onlyVersions: form.onlyVersions ?? [], excludedVersions: form.excludedVersions ?? [] })}
               </p>
               <div className="mt-3 flex items-center gap-2">
-                <Input value={simVersion} onChange={(e) => setSimVersion(e.target.value)} placeholder="Test version, e.g. 1.1.6" className="max-w-[200px] rounded-2xl" />
+                <Input value={simVersion} onChange={(e) => setSimVersion(e.target.value)} placeholder="Test version, e.g. 1.1.6" className="max-w-[200px] rounded-xl" />
                 {simResult !== null && (
-                  <span className={`font-bold ${simResult ? 'text-emerald-300' : 'text-red-300'}`}>
+                  <span className={`font-bold ${simResult ? 'text-[hsl(var(--md-on-secondary-container))]' : 'text-[hsl(var(--md-error))]'}`}>
                     {simResult ? '✓ sees it' : '✕ hidden'}
                   </span>
                 )}
@@ -473,7 +470,7 @@ export function NewsEditorDialog({
 
           <TabsContent value="behavior" className="grid gap-4 pt-4">
             <div>
-              <Label className="mb-2 block text-xs uppercase tracking-widest text-muted-foreground">Recurrence preset</Label>
+              <Label className="mb-2 block text-xs uppercase tracking-widest text-[hsl(var(--md-on-surface-variant))]">Recurrence preset</Label>
               <div className="flex flex-wrap gap-2">
                 {FREQUENCY_PRESETS.map((p) => {
                   const active = form.frequency === p.frequency && (p.frequency !== 'interval' || form.intervalHours === p.intervalHours);
@@ -481,7 +478,7 @@ export function NewsEditorDialog({
                     <button
                       key={p.name}
                       onClick={() => { setDirty(true); setForm((f) => ({ ...f, frequency: p.frequency, intervalHours: p.intervalHours, maxImpressions: p.maxImpressions })); }}
-                      className={`rounded-full border px-4 py-2 text-sm font-bold transition-all active:scale-95 ${active ? 'bg-primary text-primary-foreground' : 'border-white/10 text-muted-foreground'}`}
+                      className={`rounded-xl border px-4 py-2 text-sm font-bold transition-all active:scale-95 ${active ? 'bg-primary text-primary-foreground' : 'border-[hsl(var(--md-outline-variant))] text-[hsl(var(--md-on-surface-variant))]'}`}
                     >
                       {p.name}
                     </button>
@@ -492,21 +489,21 @@ export function NewsEditorDialog({
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-2">
                 <Label>Frequency</Label>
-                <select value={form.frequency} onChange={(e) => set('frequency', e.target.value as Form['frequency'])} className="h-10 rounded-2xl border border-input bg-background px-3 text-sm">
+                <select value={form.frequency} onChange={(e) => set('frequency', e.target.value as Form['frequency'])} className="h-10 rounded-xl border border-input bg-background px-3 text-sm">
                   {newsFrequencies.map((f) => <option key={f} value={f}>{f}</option>)}
                 </select>
               </div>
               <div className="grid gap-2">
                 <Label>Every N hours</Label>
-                <Input type="number" min={1} max={720} value={form.intervalHours ?? ''} onChange={(e) => set('intervalHours', e.target.value ? Number(e.target.value) : null)} className="rounded-2xl" />
+                <Input type="number" min={1} max={720} value={form.intervalHours ?? ''} onChange={(e) => set('intervalHours', e.target.value ? Number(e.target.value) : null)} className="rounded-xl" />
               </div>
             </div>
             <div className="grid gap-2">
               <Label>Max impressions per device (empty = unlimited)</Label>
-              <Input type="number" min={1} max={100} value={form.maxImpressions ?? ''} onChange={(e) => set('maxImpressions', e.target.value ? Number(e.target.value) : null)} className="rounded-2xl" />
+              <Input type="number" min={1} max={100} value={form.maxImpressions ?? ''} onChange={(e) => set('maxImpressions', e.target.value ? Number(e.target.value) : null)} className="rounded-xl" />
             </div>
             <div>
-              <Label className="mb-2 block text-xs uppercase tracking-widest text-muted-foreground">Disappear after (auto-delete from devices)</Label>
+              <Label className="mb-2 block text-xs uppercase tracking-widest text-[hsl(var(--md-on-surface-variant))]">Disappear after (auto-delete from devices)</Label>
               <div className="flex flex-wrap gap-2">
                 {[
                   { l: 'Never', hours: null as number | null },
@@ -527,13 +524,13 @@ export function NewsEditorDialog({
                         setForm((f) => ({ ...f, disappearing: true, expiresAt: new Date(base + (b.hours as number) * 3_600_000).toISOString() }));
                       }
                     }}
-                    className={`rounded-full border px-4 py-2 text-sm font-bold transition-all active:scale-95 ${(b.hours === null ? !form.disappearing : form.disappearing) ? 'bg-primary text-primary-foreground' : 'border-white/10 text-muted-foreground'}`}
+                    className={`rounded-xl border px-4 py-2 text-sm font-bold transition-all active:scale-95 ${(b.hours === null ? !form.disappearing : form.disappearing) ? 'bg-primary text-primary-foreground' : 'border-[hsl(var(--md-outline-variant))] text-[hsl(var(--md-on-surface-variant))]'}`}
                   >
                     {b.l}
                   </button>
                 ))}
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 text-xs text-[hsl(var(--md-on-surface-variant))]">
                 {form.disappearing
                   ? `Vanishes from popups, notifications and history ${form.expiresAt ? describeWhen(form.expiresAt) : ''}.`
                   : 'Stays in history after expiring (unless "Keep in history" is off).'}
@@ -541,21 +538,21 @@ export function NewsEditorDialog({
             </div>
             <div className="grid grid-cols-2 gap-3 text-sm font-medium">
               {(['pinned', 'dismissible', 'showInHistory', 'notify'] as const).map((k) => (
-                <label key={k} className="flex items-center justify-between rounded-2xl border border-white/10 px-4 py-3">
+                <label key={k} className="flex items-center justify-between rounded-xl border border-[hsl(var(--md-outline-variant))] px-4 py-3">
                   <span>{k === 'notify' ? 'Post notification' : k === 'dismissible' ? 'Allow dismiss' : k === 'showInHistory' ? 'Keep in history' : 'Pin to top'}</span>
                   <Switch checked={!!form[k]} onCheckedChange={(v) => set(k, v as Form[typeof k])} />
                 </label>
               ))}
-              <div className="col-span-2 rounded-2xl border border-white/10 px-4 py-3 text-sm text-muted-foreground">
+              <div className="col-span-2 rounded-xl border border-[hsl(var(--md-outline-variant))] px-4 py-3 text-sm text-[hsl(var(--md-on-surface-variant))]">
                 Blocking dialog is automatic for critical priority (requiresAction).
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-2">
                 <Label>Publish at (empty = now, your local time)</Label>
-                <Input type="datetime-local" value={toLocal(form.publishAt ?? null)} onChange={(e) => set('publishAt', fromLocal(e.target.value))} className="rounded-2xl" />
+                <Input type="datetime-local" value={toLocal(form.publishAt ?? null)} onChange={(e) => set('publishAt', fromLocal(e.target.value))} className="rounded-xl" />
                 {form.publishAt && (
-                  <p className="text-xs text-muted-foreground" title={form.publishAt}>
+                  <p className="text-xs text-[hsl(var(--md-on-surface-variant))]" title={form.publishAt}>
                     = {new Date(form.publishAt).toLocaleString()} local · stored as UTC
                   </p>
                 )}
@@ -566,15 +563,15 @@ export function NewsEditorDialog({
                     { l: 'Tomorrow 9:00', fn: () => set('publishAt', atMidnightPlus(1)) },
                     { l: '+7d', fn: () => set('publishAt', atMidnightPlus(7)) },
                   ].map((b) => (
-                    <Button key={b.l} variant="ghost" size="sm" className="rounded-full px-3" onClick={b.fn}>{b.l}</Button>
+                    <Button key={b.l} variant="ghost" size="sm" className="rounded-xl px-3" onClick={b.fn}>{b.l}</Button>
                   ))}
                 </div>
               </div>
               <div className="grid gap-2">
                 <Label>Expires at (empty = never, your local time)</Label>
-                <Input type="datetime-local" value={toLocal(form.expiresAt ?? null)} onChange={(e) => set('expiresAt', fromLocal(e.target.value))} className="rounded-2xl" />
+                <Input type="datetime-local" value={toLocal(form.expiresAt ?? null)} onChange={(e) => set('expiresAt', fromLocal(e.target.value))} className="rounded-xl" />
                 {form.expiresAt && (
-                  <p className="text-xs text-muted-foreground" title={form.expiresAt}>
+                  <p className="text-xs text-[hsl(var(--md-on-surface-variant))]" title={form.expiresAt}>
                     = {new Date(form.expiresAt).toLocaleString()} local · stored as UTC
                   </p>
                 )}
@@ -584,12 +581,12 @@ export function NewsEditorDialog({
                     { l: '+7d', fn: () => set('expiresAt', atMidnightPlus(7)) },
                     { l: '+30d', fn: () => set('expiresAt', atMidnightPlus(30)) },
                   ].map((b) => (
-                    <Button key={b.l} variant="ghost" size="sm" className="rounded-full px-3" onClick={b.fn}>{b.l}</Button>
+                    <Button key={b.l} variant="ghost" size="sm" className="rounded-xl px-3" onClick={b.fn}>{b.l}</Button>
                   ))}
                 </div>
               </div>
             </div>
-            <div className={`rounded-2xl border px-4 py-3 text-sm font-bold ${verdict.live ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-amber-500/30 bg-amber-500/10 text-amber-300'}`}>
+            <div className={`rounded-xl px-4 py-3 text-sm font-bold ${verdict.live ? 'bg-[hsl(var(--md-secondary-container))] text-[hsl(var(--md-on-secondary-container))]' : 'bg-[hsl(var(--md-tertiary-container))] text-[hsl(var(--md-on-tertiary-container))]'}`}>
               {verdict.live
                 ? `● Live now — appears on /news within ~1 min${form.publishAt ? ` (since ${describeWhen(form.publishAt)})` : ''}`
                 : `○ Not live: ${verdict.reason}`}
@@ -597,10 +594,10 @@ export function NewsEditorDialog({
           </TabsContent>
 
           <TabsContent value="preview" className="grid gap-4 pt-4">
-            <Label className="text-xs uppercase tracking-widest text-muted-foreground">Popup (what the app shows)</Label>
+            <Label className="text-xs uppercase tracking-widest text-[hsl(var(--md-on-surface-variant))]">Popup (what the app shows)</Label>
             <NewsPreviewCard item={form} />
-            <Label className="text-xs uppercase tracking-widest text-muted-foreground">Website article (what /news shows)</Label>
-            <div className="rounded-[24px] border border-white/10 p-5">
+            <Label className="text-xs uppercase tracking-widest text-[hsl(var(--md-on-surface-variant))]">Website article (what /news shows)</Label>
+            <div className="rounded-3xl border border-[hsl(var(--md-outline-variant))] p-5">
               <div className="mb-2 text-lg font-extrabold">{form.title || 'Title preview'}</div>
               <NewsBody body={form.body || 'Body preview…'} />
             </div>
@@ -608,21 +605,21 @@ export function NewsEditorDialog({
         </Tabs>
 
         {confirmDiscard ? (
-          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm font-semibold text-amber-200">
+          <div className="flex flex-wrap items-center gap-2 rounded-xl bg-[hsl(var(--md-tertiary-container))] px-4 py-3 text-sm font-semibold text-[hsl(var(--md-on-tertiary-container))]">
             Discard unsaved changes?
             <span className="ml-auto flex gap-2">
-              <Button variant="outline" size="sm" className="rounded-full" onClick={() => setConfirmDiscard(false)}>Keep editing</Button>
-              <Button variant="destructive" size="sm" className="rounded-full" onClick={onClose}>Discard</Button>
+              <Button variant="outline" size="sm" className="rounded-xl" onClick={() => setConfirmDiscard(false)}>Keep editing</Button>
+              <Button variant="destructive" size="sm" className="rounded-xl" onClick={onClose}>Discard</Button>
             </span>
           </div>
         ) : null}
 
-        <div className="sticky bottom-0 -mx-1 flex flex-wrap justify-end gap-2 border-t border-white/10 bg-background/95 py-3 backdrop-blur">
-          <Button variant="outline" className="rounded-full" onClick={tryClose}>Cancel</Button>
+        <div className="sticky bottom-0 -mx-1 flex flex-wrap justify-end gap-2 border-t border-[hsl(var(--md-outline-variant)/0.6)] bg-[hsl(var(--md-surface)/0.95)] py-3 backdrop-blur">
+          <Button variant="outline" className="rounded-xl" onClick={tryClose}>Cancel</Button>
           {(!initial || !initial.id || initial.status !== 'published') && (
             <Button
               variant="secondary"
-              className="rounded-full font-bold"
+              className="rounded-xl font-bold"
               disabled={saving}
               onClick={() => saveWith({ status: 'draft' })}
             >
@@ -632,7 +629,7 @@ export function NewsEditorDialog({
           {initial?.id && initial.status === 'published' && (
             <Button
               variant="secondary"
-              className="rounded-full font-bold"
+              className="rounded-xl font-bold"
               disabled={saving}
               onClick={() => saveWith({ status: 'draft' })}
             >
@@ -640,7 +637,7 @@ export function NewsEditorDialog({
             </Button>
           )}
           <Button
-            className="rounded-full font-bold"
+            className="rounded-xl font-bold"
             disabled={saving}
             onClick={() => saveWith(isNew ? { status: 'published', publishAt: null } : {})}
           >
