@@ -1,46 +1,106 @@
-# Toolz Website
+<p align="center">
+  <img src="https://i.ibb.co/jvt7B2Cy/toolz-glass-icon-dark-bg.png" width="200" alt="Toolz Logo" />
+</p>
 
-> One home. All your tools.
+<h1 align="center">Toolz — Official Website</h1>
 
-The official landing page for **Toolz**, a modern Android utility suite designed to replace a folder full of single-purpose apps with a single, polished utility library.
+<p align="center">
+  <strong>The landing page for Toolz · Built with Vite + React + TypeScript</strong>
+</p>
 
-This website is built with high-expression Material 3 principles, focusing on speed, precision, and motion.
+<p align="center">
+  <a href="https://vitejs.dev"><img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" /></a>
+  <a href="https://react.dev"><img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" /></a>
+  <a href="https://www.typescriptlang.org"><img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" /></a>
+  <a href="https://tailwindcss.com"><img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" /></a>
+  <a href="https://www.framer.com/motion"><img src="https://img.shields.io/badge/Framer_Motion-EF0081?style=for-the-badge&logo=framer&logoColor=white" alt="Framer Motion" /></a>
+  <a href="https://vercel.com"><img src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Vercel" /></a>
+  <a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPL--3.0-blue?style=for-the-badge" alt="License: GPL-3.0" /></a>
+</p>
 
-## 🛠️ Stack
+<p align="center">
+  <a href="https://toolz-app.vercel.app"><strong>🌐 Live Site</strong></a> &nbsp;·&nbsp;
+  <a href="https://github.com/freroxx/toolz"><strong>📱 Main App Repo</strong></a> &nbsp;·&nbsp;
+  <a href="https://github.com/freroxx/toolz-website"><strong>💻 Website Repo</strong></a>
+</p>
 
-- **Framework**: [Vite](https://vitejs.dev/) + [React](https://reactjs.org/)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **Motion**: [Framer Motion](https://www.framer.com/motion/)
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **Deployment**: [Vercel](https://vercel.com/)
+---
 
-## ✨ Key Features
+## ✨ Features
 
-- **Live Download Counter**: Real-time aggregation of total downloads across all GitHub releases.
-- **Dynamic Download Dialog**: Architecture-aware (ABI) detection to guide users to the correct APK.
-- **Expressive M3 Design**: Strict adherence to Material 3 design tokens, including dynamic containers, surface elevations, and adaptive layouts.
-- **Module Showcase**: Interactive presentation of the 45+ precision instruments included in the Toolz app.
+| Feature | Description |
+|---|---|
+| 📊 **Live Download Counter** | Real-time aggregation of downloads across all GitHub releases |
+| 📲 **Dynamic Download Dialog** | Architecture-aware (ABI) detection for intelligent APK selection |
+| 🎨 **Expressive M3 Design** | Material 3 design tokens, dynamic containers, surface elevations & adaptive layouts |
+| 🧩 **Module Showcase** | Interactive presentation of 45+ precision instruments |
+| 📰 **News Section** | Changelog and curated news feed |
+| 🔍 **Spec Page** | Device specification lookup via GSMArena integration |
 
-## 🚀 Development
+---
+
+## 🛠️ Tech Stack
+
+- **Framework** — [Vite](https://vitejs.dev) + [React](https://react.dev) + [TypeScript](https://www.typescriptlang.org)
+- **Styling** — [Tailwind CSS](https://tailwindcss.com)
+- **Motion** — [Framer Motion](https://www.framer.com/motion)
+- **Icons** — [Lucide React](https://lucide.dev)
+- **Deployment** — [Vercel](https://vercel.com)
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org) v18+
+- npm
+
+### Installation & Development
 
 ```bash
+# Clone the repository
+git clone https://github.com/freroxx/toolz-website.git
+cd toolz-website
+
 # Install dependencies
 npm install
 
-# Start development server
+# Start the development server
 npm run dev
-
-# Build for production
-npm run build
 ```
 
-## 📱 About Toolz
+### Build & Preview
 
-Toolz is a privacy-centric, zero-bloat Android toolkit featuring:
+```bash
+# Production build
+npm run build
 
-- **Security**: SQLCipher-encrypted password vault and notification history.
-- **Media**: FFmpeg-powered converters and Media3 playback.
-- **Sensors**: Calibrated compass, altimeter, and hardware diagnostics.
-- **Productivity**: Pomodoro cycles, focus flow, and encrypted notes.
+# Preview the production build locally
+npm run preview
+```
 
-[Explore the Source](https://github.com/freroxx/toolz)
+> [!NOTE]
+> The development server runs at `http://localhost:5173` by default.
+
+---
+
+## 🔗 Links
+
+| | |
+|---|---|
+| 🌐 **Live Site** | [toolz-app.vercel.app](https://toolz-app.vercel.app) |
+| 📱 **Main App Repo** | [github.com/freroxx/toolz](https://github.com/freroxx/toolz) |
+| 💻 **Website Repo** | [github.com/freroxx/toolz-website](https://github.com/freroxx/toolz-website) |
+
+---
+
+## 📄 License
+
+Distributed under the **GNU General Public License v3.0**. See [`LICENSE`](LICENSE) for details.
+
+---
+
+<p align="center">
+  Made with ❤️ for the Toolz community
+</p>
