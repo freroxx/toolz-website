@@ -1,0 +1,89 @@
+name: "Website Bug Report"
+description: "Report a broken element, layout defect, or bug on toolz-app.vercel.app"
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping keep the Toolz website running smoothly!
+        For security issues, please review our [Security Policy](../../SECURITY.md).
+
+  - type: dropdown
+    id: affected-page
+    attributes:
+      label: "Affected Page or Component"
+      description: "Where does the issue occur?"
+      options:
+        - "Landing Page / Hero"
+        - "Dynamic APK Download Dialog (ABI detection)"
+        - "Tool Catalog / Module Showcase"
+        - "Live Download Counter"
+        - "Spec Page (GSMArena lookup)"
+        - "News / Changelog Section"
+        - "Navigation Bar / Mobile Drawer"
+        - "Footer / External Links"
+        - "Other"
+    validations:
+      required: true
+
+  - type: input
+    id: browser-env
+    attributes:
+      label: "Browser & Operating System"
+      description: "Specify browser and OS version."
+      placeholder: "e.g. Chrome 130 on Windows 11 / Safari 18 on iOS 18"
+    validations:
+      required: true
+
+  - type: input
+    id: screen-size
+    attributes:
+      label: "Screen Resolution / Viewport"
+      description: "What display size or viewport width are you testing with?"
+      placeholder: "e.g. Mobile 390px / Desktop 1920x1080"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: "Steps to Reproduce"
+      description: "Step by step description of how to recreate the issue."
+      placeholder: |
+        1. Navigate to 'toolz-app.vercel.app'
+        2. Click 'Download' button in the hero
+        3. Dialog opens but architecture picker remains blank...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: "Expected Behavior"
+      placeholder: "The dialog should correctly list downloadable APK variants."
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: "Actual Behavior"
+    validations:
+      required: true
+
+  - type: textarea
+    id: visual-evidence
+    attributes:
+      label: "Screenshots or Console Output"
+      description: "Attach screenshots, recordings, or paste browser developer console errors."
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: "Checklist"
+      options:
+        - label: "I have verified this issue occurs on the live deployment or on a clean build of main."
+          required: true
+        - label: "I have searched existing issues and verified this is not a duplicate."
+          required: true

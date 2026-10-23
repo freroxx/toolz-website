@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "🔒 Security Vulnerability Report"
+    url: "https://github.com/freroxx/toolz-website/blob/main/SECURITY.md"
+    about: "Report website security issues privately via email."
+  - name: "📱 Toolz Android App Repository"
+    url: "https://github.com/freroxx/toolz"
+    about: "For issues regarding the Android app itself, please visit the main Toolz repository."
+  - name: "💬 Community Discord"
+    url: "https://discord.gg/aAswRUerwh"
+    about: "Chat with the team and community on Discord."

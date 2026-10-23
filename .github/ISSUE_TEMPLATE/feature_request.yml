@@ -1,0 +1,51 @@
+name: "Website Feature / Design Proposal"
+description: "Suggest a new page, interactive section, visual polish, or performance improvement"
+title: "[Proposal]: "
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: proposal-type
+    attributes:
+      label: "Proposal Category"
+      options:
+        - "Visual design / Material 3 Expressive polish"
+        - "New interactive showcase section"
+        - "Performance / Core Web Vitals optimization"
+        - "Accessibility improvement"
+        - "Mobile UX enhancement"
+        - "Other"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem-statement
+    attributes:
+      label: "What could be improved?"
+      description: "Explain the motivation or opportunity for improvement."
+      placeholder: "The module showcase currently shows 45 tools, but could include a search filter..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: "Proposed Solution"
+      description: "Describe how you envision the user experience, layout, and implementation."
+    validations:
+      required: true
+
+  - type: textarea
+    id: references-mockups
+    attributes:
+      label: "References / Mockups (Optional)"
+      description: "Link to visual references or attach mockups."
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: "Checklist"
+      options:
+        - label: "I have checked existing issues and discussions to ensure this is not a duplicate."
+          required: true
+        - label: "This proposal adheres to Material 3 Expressive design principles."
+          required: true
