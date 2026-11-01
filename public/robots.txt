@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
 Allow: /api/news-rss
+Allow: /api/info
 Disallow: /admin/
 Disallow: /api/
 Disallow: /reset
