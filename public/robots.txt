@@ -1,5 +1,8 @@
 User-agent: *
 Allow: /
+Allow: /api/news-rss
 Disallow: /admin/
+Disallow: /api/
+Disallow: /reset
 
 Sitemap: https://toolz-app.vercel.app/sitemap.xml

@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { LazyMotion, domMax } from "framer-motion";
 import { Analytics } from "@vercel/analytics/react";
 import LoadingIndicator from "./components/landing/LoadingIndicator";
+import RouteSeo from "./components/RouteSeo";
 import Index from "./pages/Index";
 
 // Route-level splitting: the landing page stays lean; heavy routes
@@ -34,6 +35,7 @@ const App = () => (
         useTransform, useSpring, useMotionValue, useInView. */}
     <LazyMotion features={domMax} strict>
       <BrowserRouter>
+        <RouteSeo />
         <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route path="/" element={<Index />} />

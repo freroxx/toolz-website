@@ -2,23 +2,124 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#120922" />
+
     <title>Toolz — One home. All your tools.</title>
-    <meta name="description" content="Toolz is a free, open-source Android utility suite: 50+ tools in one APK. Offline-first, encrypted vaults, no ads, no tracking." />
+    <meta
+      name="description"
+      content="Toolz is a free, open-source Android utility suite: 50+ tools in one APK. Offline-first, encrypted vaults, no ads, no tracking."
+    />
     <meta name="author" content="frerox" />
-    <meta property="og:title" content="Toolz — One home. All your tools." />
-    <meta property="og:description" content="Free, open-source Android utility suite: 50+ tools in one APK. Offline-first, no ads, no tracking." />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="/logo.png" />
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="Toolz — One home. All your tools." />
-    <meta name="twitter:description" content="Free, open-source Android utility suite: 50+ tools in one APK. Offline-first, no ads, no tracking." />
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+    <meta name="theme-color" content="#120922" />
+    <meta name="color-scheme" content="dark" />
+
+    <link rel="canonical" href="https://toolz-app.vercel.app/" />
+    <link rel="icon" type="image/png" sizes="1080x1080" href="/logo.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
     <link rel="alternate" type="application/rss+xml" title="Toolz news" href="/api/news-rss" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Toolz" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:url" content="https://toolz-app.vercel.app/" />
+    <meta property="og:title" content="Toolz — One home. All your tools." />
+    <meta
+      property="og:description"
+      content="Free, open-source Android utility suite: 50+ tools in one APK. Offline-first, no ads, no tracking."
+    />
+    <meta property="og:image" content="https://toolz-app.vercel.app/logo.png" />
+    <meta property="og:image:width" content="1080" />
+    <meta property="og:image:height" content="1080" />
+    <meta property="og:image:alt" content="Toolz logo: a purple T-shaped mark" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Toolz — One home. All your tools." />
+    <meta
+      name="twitter:description"
+      content="Free, open-source Android utility suite: 50+ tools in one APK. Offline-first, no ads, no tracking."
+    />
+    <meta name="twitter:image" content="https://toolz-app.vercel.app/logo.png" />
+    <meta name="twitter:image:alt" content="Toolz logo: a purple T-shaped mark" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://fdn2.gsmarena.com" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://toolz-app.vercel.app/#organization",
+            "name": "Toolz",
+            "url": "https://toolz-app.vercel.app/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://toolz-app.vercel.app/logo.png",
+              "width": 1080,
+              "height": 1080
+            },
+            "sameAs": [
+              "https://github.com/freroxx/toolz",
+              "https://discord.gg/aAswRUerwh"
+            ]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://toolz-app.vercel.app/#website",
+            "url": "https://toolz-app.vercel.app/",
+            "name": "Toolz",
+            "description": "Free, open-source Android utility suite with 50+ offline-first tools.",
+            "inLanguage": "en",
+            "publisher": { "@id": "https://toolz-app.vercel.app/#organization" }
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://toolz-app.vercel.app/#app",
+            "name": "Toolz",
+            "applicationCategory": "UtilitiesApplication",
+            "applicationSubCategory": "Android utility suite",
+            "operatingSystem": "Android 12+",
+            "softwareVersion": "latest",
+            "description": "50+ privacy-first Android tools in a single APK: file utilities, device info, converters, vaults and more. Offline-first, free and open source.",
+            "url": "https://toolz-app.vercel.app/",
+            "downloadUrl": "https://github.com/freroxx/toolz/releases/latest",
+            "codeRepository": "https://github.com/freroxx/toolz",
+            "license": "https://www.gnu.org/licenses/gpl-3.0.html",
+            "image": "https://toolz-app.vercel.app/logo.png",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "publisher": { "@id": "https://toolz-app.vercel.app/#organization" }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <div style="max-width: 42rem; margin: 0 auto; padding: 4rem 1.5rem; color: #efe7f8; background: #120922; font-family: system-ui, sans-serif; line-height: 1.6">
+        <h1>Toolz — one home for all your Android tools</h1>
+        <p>
+          Toolz is a free, open-source Android utility suite with 50+ offline-first tools,
+          encrypted vaults, and no ads or tracking. JavaScript is required for the interactive
+          site; you can still browse the
+          <a style="color: #c9a5ee" href="https://github.com/freroxx/toolz">source on GitHub</a>
+          or read the <a style="color: #c9a5ee" href="/api/info">specs API documentation</a>.
+        </p>
+      </div>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
