@@ -1,287 +1,679 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 /**
- * Technical Documentation — Toolz specs backend.
- * M3 Expressive reference docs: what each endpoint does, with real examples.
+ * Technical documentation for the Toolz specs backend.
+ * Served as a standalone HTML reference at /api/info, with the same
+ * information available as JSON at /api/info?json=1.
  */
 
 const VERSION = '4.1.0';
+const SITE = 'https://toolz-app.vercel.app';
 
 function renderInfoHtml(): string {
-  return '<!DOCTYPE html>\n' +
-'<html lang="en">\n' +
-'<head>\n' +
-'  <meta charset="UTF-8">\n' +
-'  <title>Toolz specs API — docs</title>\n' +
-'  <meta name="viewport" content="width=device-width, initial-scale=1">\n' +
-'  <meta name="description" content="Reference docs for the Toolz specs backend: endpoints, parameters, response fields, caching and model-code resolution.">\n' +
-'  <link rel="preconnect" href="https://fonts.googleapis.com">\n' +
-'  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' +
-'  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Text:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">\n' +
-'  <style>\n' +
-'    :root {\n' +
-'      --bg: #141218;\n' +
-'      --card: #1e1c22;\n' +
-'      --card-2: #26242d;\n' +
-'      --inset: #17161b;\n' +
-'      --border: rgba(255,255,255,0.08);\n' +
-'      --text: #e9e3ec;\n' +
-'      --muted: #b3a9c0;\n' +
-'      --faint: #7e7589;\n' +
-'      --primary: #ff6d00;\n' +
-'      --on-primary: #ffffff;\n' +
-'      --secondary: #00bfa5;\n' +
-'    }\n' +
-'    * { box-sizing: border-box; margin: 0; padding: 0; }\n' +
-'    html { scroll-behavior: smooth; }\n' +
-'    body {\n' +
-'      font-family: "Google Sans Text", "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;\n' +
-'      background: var(--bg); color: var(--text); line-height: 1.65;\n' +
-'      -webkit-text-size-adjust: 100%;\n' +
-'    }\n' +
-'    body::before {\n' +
-'      content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;\n' +
-'      background: radial-gradient(560px 320px at 85% -60px, rgba(255,109,0,0.10), transparent 70%);\n' +
-'    }\n' +
-'    ::selection { background: rgba(255,109,0,0.35); }\n' +
-'    .wrap { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 20px 16px 72px; }\n' +
-'    @media (min-width: 720px) { .wrap { padding: 40px 24px 96px; } }\n' +
-'\n' +
-'    /* Top bar */\n' +
-'    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 36px; }\n' +
-'    @media (min-width: 720px) { .topbar { margin-bottom: 52px; } }\n' +
-'    .btn { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; border-radius: 999px;\n' +
-'      font-size: 13.5px; font-weight: 700; padding: 11px 20px; transition: transform .15s, background .2s, border-color .2s; }\n' +
-'    .btn:active { transform: scale(0.97); }\n' +
-'    .btn-outline { border: 1px solid var(--border); background: var(--card); color: var(--text); }\n' +
-'    .btn-outline:hover { border-color: rgba(255,109,0,0.55); }\n' +
-'    .btn-solid { background: var(--primary); color: var(--on-primary); border: 1px solid transparent;\n' +
-'      box-shadow: 0 8px 24px -10px rgba(255,109,0,0.7); }\n' +
-'    .btn-solid:hover { filter: brightness(1.08); }\n' +
-'    .ver { display: inline-flex; align-items: center; gap: 9px; font-size: 11px; font-weight: 700;\n' +
-'      letter-spacing: 0.14em; color: var(--muted); border: 1px solid var(--border);\n' +
-'      background: var(--card); border-radius: 999px; padding: 11px 17px; white-space: nowrap; }\n' +
-'    .ver i { width: 8px; height: 8px; border-radius: 50%; background: var(--secondary);\n' +
-'      box-shadow: 0 0 0 4px rgba(0,191,165,0.15); }\n' +
-'\n' +
-'    /* Hero */\n' +
-'    .hero { text-align: center; margin-bottom: 30px; }\n' +
-'    @media (min-width: 720px) { .hero { margin-bottom: 40px; } }\n' +
-'    .hero h1 { font-family: "Google Sans", sans-serif; font-size: clamp(2rem, 6vw, 3.2rem);\n' +
-'      letter-spacing: -0.02em; line-height: 1.08; margin-bottom: 14px; }\n' +
-'    .hero p { color: var(--muted); font-size: 15.5px; max-width: 640px; margin: 0 auto 22px; }\n' +
-'    @media (min-width: 720px) { .hero p { font-size: 16.5px; } }\n' +
-'    .hero p a { color: #ffb37a; }\n' +
-'    .hero .actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 22px; }\n' +
-'    .toc { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }\n' +
-'    .toc a { font-size: 12.5px; font-weight: 700; color: var(--muted); text-decoration: none;\n' +
-'      border: 1px solid var(--border); background: var(--card); border-radius: 999px; padding: 8px 16px; }\n' +
-'    .toc a:hover { color: var(--text); border-color: rgba(255,109,0,0.5); }\n' +
-'\n' +
-'    /* Sections */\n' +
-'    section { margin-bottom: 26px; scroll-margin-top: 20px; }\n' +
-'    @media (min-width: 720px) { section { margin-bottom: 36px; } }\n' +
-'    .label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.2em;\n' +
-'      color: var(--primary); margin-bottom: 12px; }\n' +
-'    .card { background: var(--card); border: 1px solid var(--border); border-radius: 28px; padding: 22px; }\n' +
-'    @media (min-width: 720px) { .card { padding: 30px 32px; } }\n' +
-'    .card h3 { font-size: 15.5px; margin-bottom: 6px; }\n' +
-'    .card p, .card li { font-size: 14px; color: var(--muted); }\n' +
-'    .card p { margin-bottom: 10px; max-width: 70ch; }\n' +
-'    .card p:last-child { margin-bottom: 0; }\n' +
-'    .card ol, .card ul.plain { padding-left: 22px; display: grid; gap: 8px; margin: 10px 0 4px; max-width: 70ch; }\n' +
-'    .card b { color: var(--text); }\n' +
-'    .card p a, .card li a { color: #ffb37a; }\n' +
-'\n' +
-'    /* Steps */\n' +
-'    .steps { display: grid; gap: 10px; }\n' +
-'    @media (min-width: 760px) { .steps { grid-template-columns: repeat(5, 1fr); } }\n' +
-'    .step { background: var(--card-2); border: 1px solid var(--border); border-radius: 20px; padding: 16px; }\n' +
-'    .step .n { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px;\n' +
-'      border-radius: 12px; background: rgba(255,109,0,0.14); color: var(--primary);\n' +
-'      font-size: 13px; font-weight: 700; margin-bottom: 10px; }\n' +
-'    .step h4 { font-size: 13.5px; margin-bottom: 4px; }\n' +
-'    .step p { font-size: 12.5px; }\n' +
-'\n' +
-'    /* Endpoint cards */\n' +
-'    .eps { display: grid; gap: 10px; }\n' +
-'    @media (min-width: 820px) { .eps { grid-template-columns: 1fr 1fr; } }\n' +
-'    .ep { background: var(--card-2); border: 1px solid var(--border); border-radius: 20px;\n' +
-'      padding: 20px; display: flex; flex-direction: column; gap: 10px; }\n' +
-'    .ep.full { grid-column: 1 / -1; }\n' +
-'    .ep .head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }\n' +
-'    .method { font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; border-radius: 999px; padding: 4px 11px; }\n' +
-'    .method.get { background: rgba(0,191,165,0.12); color: #4de3c8; border: 1px solid rgba(0,191,165,0.32); }\n' +
-'    .method.post { background: rgba(255,109,0,0.12); color: #ffa04d; border: 1px solid rgba(255,109,0,0.32); }\n' +
-'    .path { font-family: "Roboto Mono", ui-monospace, monospace; font-size: 13px; word-break: break-all; }\n' +
-'    .ep p { font-size: 13px; }\n' +
-'    .try { margin-top: auto; }\n' +
-'    .try a { font-size: 13px; font-weight: 700; color: var(--primary); text-decoration: none; }\n' +
-'    .try a:hover { text-decoration: underline; }\n' +
-'\n' +
-'    /* Code + tables */\n' +
-'    code { font-family: "Roboto Mono", ui-monospace, monospace; font-size: 0.87em;\n' +
-'      background: rgba(255,255,255,0.07); border-radius: 6px; padding: 1px 6px; word-break: break-word; }\n' +
-'    pre { background: var(--inset); border: 1px solid var(--border); border-radius: 16px;\n' +
-'      padding: 16px 18px; overflow-x: auto; margin: 12px 0 4px; }\n' +
-'    pre code { background: none; padding: 0; font-size: 12.5px; line-height: 1.65; color: #d9d3e2; word-break: normal; }\n' +
-'    table { width: 100%; border-collapse: collapse; margin: 10px 0 4px; font-size: 13.5px; }\n' +
-'    th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.1em;\n' +
-'      color: var(--faint); padding: 8px 10px; border-bottom: 1px solid var(--border); }\n' +
-'    td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--muted); vertical-align: top; }\n' +
-'    tr:last-child td { border-bottom: none; }\n' +
-'    td.key { white-space: nowrap; }\n' +
-'    @media (max-width: 560px) { td.key { white-space: normal; } }\n' +
-'\n' +
-'    footer { border: 1px solid var(--border); background: var(--card); border-radius: 28px;\n' +
-'      padding: 22px; display: flex; flex-direction: column; gap: 12px; }\n' +
-'    @media (min-width: 720px) { footer { flex-direction: row; align-items: center; justify-content: space-between; padding: 24px 30px; } }\n' +
-'    footer p { font-size: 12.5px; color: var(--faint); }\n' +
-'    footer nav { display: flex; gap: 8px; flex-wrap: wrap; }\n' +
-'  </style>\n' +
-'</head>\n' +
-'<body>\n' +
-'  <div class="wrap">\n' +
-'    <div class="topbar">\n' +
-'      <a class="btn btn-outline" href="/spec">&#8592; Device Catalog</a>\n' +
-'      <span class="ver"><i></i>API DOCS &middot; v' + VERSION + '</span>\n' +
-'    </div>\n' +
-'\n' +
-'    <header class="hero">\n' +
-'      <h1>Toolz specs API</h1>\n' +
-'      <p>Turns a phone name or hardware model code (like Android\u2019s <code>Build.MODEL</code>) into a full spec sheet. Data comes from GSMArena and is cached in Redis, so repeats are instant. The <a href="/spec">Device Catalog</a> is the browsing UI on top of it. <a href="/api/info?json=1">Same docs as JSON</a>.</p>\n' +
-'      <div class="actions">\n' +
-'        <a class="btn btn-solid" href="/spec">Open the catalog</a>\n' +
-'        <a class="btn btn-outline" href="/api/spec?json=1&q=Pixel">Try a live query</a>\n' +
-'      </div>\n' +
-'      <nav class="toc">\n' +
-'        <a href="#example">Example</a><a href="#catalog">Catalog search</a><a href="#endpoints">Endpoints</a><a href="#resolution">Resolution</a><a href="#storage">Storage</a><a href="#notes">Notes</a>\n' +
-'      </nav>\n' +
-'    </header>\n' +
-'\n' +
-'    <section id="example">\n' +
-'      <span class="label">Worked example</span>\n' +
-'      <div class="card">\n' +
-'        <h3>Resolving one phone: <code>GET /api/specs?model=SM-S928B</code></h3>\n' +
-'        <div class="steps">\n' +
-'          <div class="step"><span class="n">1</span><h4>Cache lookup</h4><p>Checks Redis for <code>url_map:sm-s928b</code>. A hit returns the stored payload with <code>"cached": true</code>.</p></div>\n' +
-'          <div class="step"><span class="n">2</span><h4>Code to name</h4><p><code>SM-S928B</code> matches the builtin Samsung pattern: S-series, generation 24, Ultra variant.</p></div>\n' +
-'          <div class="step"><span class="n">3</span><h4>Catalog match</h4><p><code>Samsung Galaxy S24 Ultra</code> is scored against the GSMArena quicksearch catalog to find its page URL.</p></div>\n' +
-'          <div class="step"><span class="n">4</span><h4>Scrape</h4><p>The device page is fetched and parsed into sections (Network, Display, Platform, Battery, &#8230;), with a proxy fallback.</p></div>\n' +
-'          <div class="step"><span class="n">5</span><h4>Store</h4><p>Saved under <code>specs:url:&lt;id&gt;</code> plus aliases for the code and the full name, so either query hits cache next time.</p></div>\n' +
-'        </div>\n' +
-'        <h3 style="margin-top:20px">Response shape (trimmed)</h3>\n' +
-'        <pre><code>{\n' +
-'  "search_query": "SM-S928B",\n' +
-'  "search_name": "Samsung Galaxy S24 Ultra",\n' +
-'  "matched_device": "Samsung Galaxy S24 Ultra",\n' +
-'  "source_url": "https://www.gsmarena.com/samsung_galaxy_s24_ultra-12771.php",\n' +
-'  "image": "https://fdn2.gsmarena.com/vv/bigpic/....jpg",\n' +
-'  "specifications": {\n' +
-'    "Network": { "Technology": "GSM / CDMA / HSPA / EVDO / LTE / 5G", "...": "..." },\n' +
-'    "Display": { "Type": "Dynamic AMOLED 2X, 120Hz", "Size": "6.8 inches, ...", "...": "..." }\n' +
-'  },\n' +
-'  "timing_ms": 2314,\n' +
-'  "cached": false\n' +
-'}</code></pre>\n' +
-'      </div>\n' +
-'    </section>\n' +
-'\n' +
-'    <section id="catalog">\n' +
-'      <span class="label">Catalog search</span>\n' +
-'      <div class="card">\n' +
-'        <h3>What the catalog page calls: <code>GET /api/spec?json=1&amp;q=pixel%209</code></h3>\n' +
-'        <ol>\n' +
-'          <li>Loads every cached payload and keeps entries whose device name or original query contains <code>pixel 9</code>.</li>\n' +
-'          <li>If nothing matches, the query is resolved once through <code>/api/specs</code> and included with <code>"autoEnriched": true</code> \u2014 that is how searching a new phone adds it to the catalog.</li>\n' +
-'          <li>If the cache is empty and no query was given, a few default flagships are resolved so the page is never blank.</li>\n' +
-'        </ol>\n' +
-'        <pre><code>{\n' +
-'  "totalInRedis": 42,\n' +
-'  "count": 3,\n' +
-'  "query": "pixel 9",\n' +
-'  "autoEnriched": false,\n' +
-'  "devices": [ { "...": "same shape as above" } ]\n' +
-'}</code></pre>\n' +
-'      </div>\n' +
-'    </section>\n' +
-'\n' +
-'    <section id="endpoints">\n' +
-'      <span class="label">Endpoints</span>\n' +
-'      <div class="eps">\n' +
-'        <div class="ep">\n' +
-'          <div class="head"><span class="method get">GET</span><span class="path">/api/specs?model=&#8230;</span></div>\n' +
-'          <p>Resolve one device. <code>model</code> is required (name or code, e.g. <code>Pixel 9 Pro XL</code>, <code>HUSKY</code>). <code>refresh=1</code> skips the cache. Errors: <code>400</code> missing param, <code>404</code> not in catalog, <code>502</code> parse failed. Always includes <code>timing_ms</code>.</p>\n' +
-'          <div class="try"><a href="/api/specs?model=Samsung%20Galaxy%20S24%20Ultra">Try it &#8594;</a></div>\n' +
-'        </div>\n' +
-'        <div class="ep">\n' +
-'          <div class="head"><span class="method get">GET</span><span class="path">/api/spec?json=1&amp;q=&#8230;</span></div>\n' +
-'          <p>Catalog feed. <code>q</code> filters cached names (min 2 chars, triggers auto-enrich on miss). Without <code>json=1</code> it serves the legacy server-rendered HTML catalog.</p>\n' +
-'          <div class="try"><a href="/api/spec?json=1&q=Pixel">Try it &#8594;</a></div>\n' +
-'        </div>\n' +
-'        <div class="ep">\n' +
-'          <div class="head"><span class="method get">GET</span><span class="path">/api/info</span></div>\n' +
-'          <p>This page. <code>?json=1</code> returns the same reference as JSON.</p>\n' +
-'          <div class="try"><a href="/api/info?json=1">Try it &#8594;</a></div>\n' +
-'        </div>\n' +
-'        <div class="ep">\n' +
-'          <div class="head"><span class="method post">POST</span><span class="path">/api/sync-devices</span></div>\n' +
-'          <p><b>Admin.</b> Rebuilds the 25,000+ entry model dictionary. Password-protected; <code>?action=invalidate-catalog</code> clears the catalog snapshot, <code>?action=invalidate-specs</code> clears cached specs.</p>\n' +
-'        </div>\n' +
-'        <div class="ep full">\n' +
-'          <div class="head"><span class="method post">POST</span><span class="path">/reset</span></div>\n' +
-'          <p><b>Admin.</b> Clears cache: everything, only payloads, only URL mappings, only the catalog snapshot, or one model. Password + CSRF protected; 3 wrong passwords locks the IP for 15 minutes.</p>\n' +
-'        </div>\n' +
-'      </div>\n' +
-'    </section>\n' +
-'\n' +
-'    <section id="resolution">\n' +
-'      <span class="label">Name resolution</span>\n' +
-'      <div class="card">\n' +
-'        <p>The app sends whatever Android reports. Layers run in order, first hit wins:</p>\n' +
-'        <ol>\n' +
-'          <li><b>Builtin table</b> \u2014 common codes: <code>S928 &#8594; S24 Ultra</code>, <code>HUSKY &#8594; Pixel 8 Pro</code>, <code>CPH2581 &#8594; OnePlus 12</code>.</li>\n' +
-'          <li><b>Samsung parser</b> \u2014 decodes SM/GT numbers: <code>SM-S928B &#8594; S24 Ultra</code>, <code>SM-A366B &#8594; A36</code>, <code>SM-F956B &#8594; Z Fold6</code>.</li>\n' +
-'          <li><b>Device dictionary</b> \u2014 the synced <code>device:&lt;code&gt;</code> map covers the long tail.</li>\n' +
-'          <li><b>Catalog scoring</b> \u2014 brand-aware token match against quicksearch; one-letter tokens ignored, exact matches return immediately.</li>\n' +
-'        </ol>\n' +
-'      </div>\n' +
-'    </section>\n' +
-'\n' +
-'    <section id="storage">\n' +
-'      <span class="label">Storage</span>\n' +
-'      <div class="card">\n' +
-'        <table>\n' +
-'          <tr><th>Key</th><th>Content</th></tr>\n' +
-'          <tr><td class="key"><code>specs:url:&lt;id&gt;</code></td><td>Full JSON payload for one device. Permanent, no expiry.</td></tr>\n' +
-'          <tr><td class="key"><code>url_map:&lt;query&gt;</code></td><td>Lowercased query &#8594; GSMArena URL. A device usually has two aliases: code + full name.</td></tr>\n' +
-'          <tr><td class="key"><code>device:&lt;code&gt;</code></td><td>Model code &#8594; market name, e.g. <code>device:cph2581 &#8594; OnePlus 12</code>.</td></tr>\n' +
-'          <tr><td class="key"><code>cache:gsm_quicksearch_catalog</code></td><td>Catalog snapshot, so matching does not re-download it per request.</td></tr>\n' +
-'          <tr><td class="key"><code>gsm:quicksearch_url</code></td><td>Which snapshot URL is active.</td></tr>\n' +
-'          <tr><td class="key"><code>lock:specs:&lt;query&gt;</code></td><td>Short lock (~22s): simultaneous requests for the same uncached phone wait instead of scraping twice.</td></tr>\n' +
-'        </table>\n' +
-'      </div>\n' +
-'    </section>\n' +
-'\n' +
-'    <section id="notes">\n' +
-'      <span class="label">Notes</span>\n' +
-'      <div class="card">\n' +
-'        <ul class="plain">\n' +
-'          <li><b>Cache never expires.</b> Cached specs are served as-is until purged via <code>/reset</code> or bypassed with <code>?refresh=1</code>.</li>\n' +
-'          <li><b>Slow first loads time out.</b> Functions abort after 25s (10s for this page). A <code>502</code>/<code>404</code> with <code>timing_ms</code> usually means GSMArena was slow \u2014 retrying often works.</li>\n' +
-'          <li><b>GET endpoints are public cross-origin</b> (<code>Access-Control-Allow-Origin: *</code>). Admin endpoints need the sync password.</li>\n' +
-'          <li><b>Data belongs to GSMArena</b> and is shown for reference with a source link on every device.</li>\n' +
-'        </ul>\n' +
-'      </div>\n' +
-'    </section>\n' +
-'\n' +
-'    <footer>\n' +
-'      <p>\u00a9 2026 Toolz Project \u00b7 Specs engine v' + VERSION + ' \u00b7 Data &amp; images \u00a9 GSMArena</p>\n' +
-'      <nav><a class="btn btn-outline" href="/spec">Catalog</a><a class="btn btn-outline" href="/">Home</a></nav>\n' +
-'    </footer>\n' +
-'  </div>\n' +
-'</body>\n' +
-'</html>';
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Toolz specs API — reference</title>
+  <meta name="description" content="Reference for the Toolz specs backend: endpoint contracts, response shapes, phone model resolution, Redis storage and caching behaviour.">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+  <meta name="theme-color" content="#120922">
+  <meta name="color-scheme" content="dark">
+  <link rel="canonical" href="${SITE}/api/info">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="apple-touch-icon" href="/favicon.png">
+
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Toolz">
+  <meta property="og:title" content="Toolz specs API — reference">
+  <meta property="og:description" content="Endpoint contracts, response shapes, model-code resolution and caching behaviour for the Toolz specs engine.">
+  <meta property="og:url" content="${SITE}/api/info">
+  <meta property="og:image" content="${SITE}/logo.png">
+  <meta property="og:image:width" content="1080">
+  <meta property="og:image:height" content="1080">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Toolz specs API — reference">
+  <meta name="twitter:description" content="Endpoint contracts, response shapes, model-code resolution and caching behaviour for the Toolz specs engine.">
+  <meta name="twitter:image" content="${SITE}/logo.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Google+Sans+Text:wght@400;500;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Toolz specs API reference",
+    "description": "Endpoint contracts, response shapes, phone model resolution and caching behaviour for the Toolz specs engine.",
+    "url": "${SITE}/api/info",
+    "inLanguage": "en",
+    "version": "${VERSION}",
+    "author": { "@type": "Organization", "name": "Toolz", "url": "${SITE}/" },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Toolz",
+      "url": "${SITE}/",
+      "logo": { "@type": "ImageObject", "url": "${SITE}/logo.png" }
+    }
+  }
+  </script>
+
+  <style>
+    :root {
+      --bg: #120922;
+      --surface: #180d2a;
+      --surface-2: #1d1230;
+      --inset: #0b0516;
+      --line: rgba(201, 165, 238, 0.13);
+      --line-strong: rgba(201, 165, 238, 0.26);
+      --text: #efe7f8;
+      --muted: #c6b6d8;
+      --faint: #9c8cb4;
+      --primary: #8b55c9;
+      --primary-soft: #b98ae6;
+      --lavender: #c9a5ee;
+      --lilac: #e0b6f2;
+      --mono: "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      --sans: "Google Sans Text", "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      --display: "Google Sans", "Google Sans Text", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.05;
+      background-image:
+        linear-gradient(var(--line-strong) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line-strong) 1px, transparent 1px);
+      background-size: 80px 80px;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0 0 auto;
+      height: 420px;
+      z-index: 0;
+      pointer-events: none;
+      background: radial-gradient(680px 320px at 22% -90px, rgba(139, 85, 201, 0.28), transparent 70%);
+    }
+
+    ::selection { background: rgba(139, 85, 201, 0.45); color: #fff; }
+
+    a { color: var(--lavender); text-decoration: none; }
+    a:hover { color: var(--lilac); }
+
+    .shell {
+      position: relative;
+      z-index: 1;
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 18px 72px;
+    }
+
+    @media (min-width: 720px) { .shell { padding: 0 28px 96px; } }
+
+    /* Top bar */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; color: var(--text); }
+    .brand:hover { color: var(--text); }
+    .brand img {
+      width: 36px; height: 36px; object-fit: cover;
+      border: 1px solid var(--line-strong);
+      background: rgba(139, 85, 201, 0.12);
+      transform: scale(1.02);
+    }
+    .brand-name { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
+    .brand-sub {
+      font-family: var(--mono); font-size: 8px; letter-spacing: 0.22em;
+      text-transform: uppercase; color: var(--faint);
+    }
+
+    .top-actions { display: flex; align-items: center; gap: 8px; }
+
+    .chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 12px; border: 1px solid var(--line);
+      font-family: var(--mono); font-size: 9px; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--muted); white-space: nowrap;
+    }
+    .chip i {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--lavender);
+      box-shadow: 0 0 0 3px rgba(201, 165, 238, 0.14);
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 10px 16px; border: 1px solid transparent;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; white-space: nowrap;
+      transition: background 0.18s, border-color 0.18s, color 0.18s, transform 0.15s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-outline { border-color: var(--line-strong); color: var(--text); background: transparent; }
+    .btn-outline:hover { border-color: rgba(201, 165, 238, 0.55); color: var(--lilac); }
+    .btn-solid { background: var(--primary); color: #fff; }
+    .btn-solid:hover { background: #9a64d6; color: #fff; }
+    .btn-small { padding: 8px 12px; font-size: 10px; }
+
+    /* Layout */
+    .layout {
+      display: grid;
+      grid-template-columns: 210px minmax(0, 1fr);
+      gap: 56px;
+      align-items: start;
+    }
+
+    @media (max-width: 920px) {
+      .layout { grid-template-columns: minmax(0, 1fr); gap: 0; }
+      .rail { display: none; }
+    }
+
+    .rail { position: sticky; top: 24px; padding-top: 40px; }
+
+    .rail-label {
+      font-family: var(--mono); font-size: 8px; letter-spacing: 0.22em;
+      text-transform: uppercase; color: var(--faint); margin-bottom: 14px;
+    }
+
+    .toc { list-style: none; display: grid; gap: 2px; }
+    .toc a {
+      display: flex; align-items: baseline; gap: 10px;
+      padding: 7px 0; color: var(--muted);
+      font-size: 12px; border-bottom: 1px solid transparent;
+    }
+    .toc a:hover { color: var(--lilac); border-bottom-color: var(--line); }
+    .toc .n {
+      font-family: var(--mono); font-size: 8px; color: var(--primary-soft);
+      min-width: 16px;
+    }
+
+    .rail-note {
+      margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line);
+      font-family: var(--mono); font-size: 8px; line-height: 1.9;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint);
+    }
+
+    /* Hero */
+    .hero { padding: 48px 0 40px; }
+    @media (min-width: 720px) { .hero { padding: 64px 0 52px; } }
+
+    .eyebrow {
+      display: flex; align-items: center; gap: 12px;
+      font-family: var(--mono); font-size: 9px; font-weight: 500;
+      letter-spacing: 0.24em; text-transform: uppercase; color: var(--primary-soft);
+      margin-bottom: 18px;
+    }
+    .eyebrow::before { content: ""; width: 32px; height: 1px; background: var(--primary-soft); }
+
+    h1 {
+      font-family: var(--display);
+      font-size: clamp(2.4rem, 6.5vw, 4.2rem);
+      font-weight: 600;
+      line-height: 1;
+      letter-spacing: -0.035em;
+      max-width: 820px;
+    }
+    h1 span { color: rgba(239, 231, 248, 0.5); }
+
+    .lede {
+      margin-top: 22px;
+      max-width: 680px;
+      font-size: 15px;
+      line-height: 1.75;
+      color: var(--muted);
+    }
+    .lede code { font-size: 0.88em; }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+
+    .facts {
+      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1px; margin-top: 34px;
+      border: 1px solid var(--line); background: var(--line);
+      max-width: 680px;
+    }
+    @media (min-width: 640px) { .facts { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    .fact { background: var(--surface); padding: 14px 16px; }
+    .fact dt {
+      font-family: var(--mono); font-size: 8px; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--faint); margin-bottom: 4px;
+    }
+    .fact dd { font-family: var(--mono); font-size: 12px; color: var(--text); }
+
+    /* Sections */
+    section { padding: 34px 0; border-top: 1px solid var(--line); scroll-margin-top: 20px; }
+    @media (min-width: 720px) { section { padding: 44px 0; } }
+
+    .section-head { margin-bottom: 20px; }
+    .kicker {
+      display: block; font-family: var(--mono); font-size: 9px; font-weight: 500;
+      letter-spacing: 0.2em; text-transform: uppercase; color: var(--primary-soft);
+      margin-bottom: 8px;
+    }
+    h2 {
+      font-family: var(--display); font-size: clamp(1.35rem, 3vw, 1.75rem);
+      font-weight: 600; letter-spacing: -0.02em; line-height: 1.2;
+    }
+    .section-head p { margin-top: 8px; max-width: 70ch; font-size: 13.5px; color: var(--muted); }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      padding: 22px;
+    }
+    @media (min-width: 720px) { .card { padding: 28px 30px; } }
+
+    .card h3 {
+      font-size: 14px; font-weight: 600; margin-bottom: 8px; letter-spacing: -0.01em;
+    }
+    .card p, .card li { font-size: 13.5px; color: var(--muted); }
+    .card p { max-width: 72ch; }
+    .card p + p { margin-top: 10px; }
+    .card b { color: var(--text); font-weight: 600; }
+    .card ul.plain { list-style: none; display: grid; gap: 10px; margin-top: 10px; }
+    .card ul.plain li {
+      padding-left: 14px; border-left: 2px solid rgba(139, 85, 201, 0.5);
+    }
+    .card ol { padding-left: 20px; display: grid; gap: 9px; margin-top: 10px; max-width: 72ch; }
+    .card ol li::marker { color: var(--primary-soft); font-family: var(--mono); font-size: 0.85em; }
+
+    /* Steps */
+    .steps { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); margin-top: 18px; }
+    @media (min-width: 820px) { .steps { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+    .step { background: var(--surface-2); padding: 16px; }
+    .step .n {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 24px; height: 24px; margin-bottom: 10px;
+      border: 1px solid var(--line-strong);
+      font-family: var(--mono); font-size: 10px; color: var(--primary-soft);
+    }
+    .step h4 { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+    .step p { font-size: 11.5px; line-height: 1.6; }
+
+    /* Endpoints */
+    .eps { display: grid; gap: 12px; }
+    @media (min-width: 860px) { .eps { grid-template-columns: 1fr 1fr; } }
+    .ep {
+      display: flex; flex-direction: column; gap: 10px;
+      background: var(--surface); border: 1px solid var(--line); padding: 18px;
+    }
+    .ep.full { grid-column: 1 / -1; }
+    .ep-head { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+    .method {
+      font-family: var(--mono); font-size: 8px; font-weight: 500;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 3px 8px; border: 1px solid var(--line-strong); color: var(--lavender);
+    }
+    .method.post { color: var(--lilac); border-color: rgba(224, 182, 242, 0.35); }
+    .path { font-family: var(--mono); font-size: 12px; color: var(--text); word-break: break-all; }
+    .ep p { font-size: 12.5px; }
+    .try { margin-top: auto; padding-top: 4px; }
+    .try a {
+      font-family: var(--mono); font-size: 9px; font-weight: 500;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--primary-soft);
+    }
+    .try a:hover { color: var(--lilac); }
+
+    /* Code */
+    code {
+      font-family: var(--mono);
+      font-size: 0.86em;
+      background: rgba(201, 165, 238, 0.09);
+      border: 1px solid rgba(201, 165, 238, 0.1);
+      padding: 1px 5px;
+      color: #e9dcf8;
+      word-break: break-word;
+    }
+
+    .codebox { margin-top: 18px; border: 1px solid var(--line); background: var(--inset); }
+    .codebar {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 8px 14px; border-bottom: 1px solid var(--line);
+      font-family: var(--mono); font-size: 8px; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--faint);
+    }
+    pre { overflow-x: auto; padding: 16px 18px; }
+    pre code {
+      background: none; border: 0; padding: 0;
+      font-size: 12px; line-height: 1.7; color: #dccdf0;
+      word-break: normal; white-space: pre;
+    }
+
+    /* Tables */
+    .table-wrap { margin-top: 16px; overflow-x: auto; border: 1px solid var(--line); }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 460px; }
+    th {
+      text-align: left; padding: 9px 12px;
+      font-family: var(--mono); font-size: 8px; font-weight: 500;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint);
+      border-bottom: 1px solid var(--line); background: var(--surface-2);
+    }
+    td {
+      padding: 11px 12px; color: var(--muted); vertical-align: top;
+      border-bottom: 1px solid rgba(201, 165, 238, 0.08);
+    }
+    tr:last-child td { border-bottom: 0; }
+    tr:hover td { background: rgba(139, 85, 201, 0.05); }
+    td.key { white-space: nowrap; }
+
+    /* Footer */
+    footer {
+      display: flex; flex-direction: column; gap: 12px;
+      margin-top: 12px; padding-top: 22px; border-top: 1px solid var(--line);
+    }
+    @media (min-width: 720px) {
+      footer { flex-direction: row; align-items: center; justify-content: space-between; }
+    }
+    footer p {
+      font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--faint);
+    }
+    footer nav { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      * { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <a class="btn btn-outline btn-small" href="#main" style="position:absolute;left:-9999px;top:0;z-index:10" onfocus="this.style.left='12px';this.style.top='12px'" onblur="this.style.left='-9999px'">Skip to content</a>
+
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="/spec" aria-label="Toolz Spec Index">
+        <img src="/logo.png" alt="">
+        <span>
+          <span class="brand-name">Toolz</span><br>
+          <span class="brand-sub">Spec index</span>
+        </span>
+      </a>
+      <div class="top-actions">
+        <span class="chip"><i></i>API reference · v${VERSION}</span>
+        <a class="btn btn-outline btn-small" href="/spec">Catalog</a>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="rail">
+        <div class="rail-label">On this page</div>
+        <nav aria-label="Documentation sections">
+          <ol class="toc">
+            <li><a href="#example"><span class="n">01</span>Worked example</a></li>
+            <li><a href="#catalog"><span class="n">02</span>Catalog search</a></li>
+            <li><a href="#endpoints"><span class="n">03</span>Endpoints</a></li>
+            <li><a href="#resolution"><span class="n">04</span>Model resolution</a></li>
+            <li><a href="#storage"><span class="n">05</span>Storage</a></li>
+            <li><a href="#notes"><span class="n">06</span>Notes &amp; limits</a></li>
+          </ol>
+        </nav>
+        <div class="rail-note">
+          Engine v${VERSION}<br>
+          Vercel + Upstash<br>
+          JSON available
+        </div>
+      </aside>
+
+      <main id="main">
+        <section class="hero" style="border-top:0">
+          <div class="eyebrow">Public reference</div>
+          <h1>The Toolz specs engine. <span>One query, a full datasheet.</span></h1>
+          <p class="lede">
+            Send a phone name or hardware model code — like Android's <code>Build.MODEL</code> —
+            and get a structured spec sheet back. Data is read from GSMArena, normalised, and
+            cached in Redis so repeat lookups are effectively instant. The
+            <a href="/spec">Device Catalog</a> is the browsing UI built on top of it.
+          </p>
+
+          <div class="actions">
+            <a class="btn btn-solid" href="/spec">Open the catalog</a>
+            <a class="btn btn-outline" href="/api/spec?json=1&amp;q=Pixel">Try a live query</a>
+            <a class="btn btn-outline" href="/api/info?json=1">Read as JSON</a>
+          </div>
+
+          <dl class="facts">
+            <div class="fact"><dt>Base URL</dt><dd>toolz-app.vercel.app</dd></div>
+            <div class="fact"><dt>Auth</dt><dd>GET is public</dd></div>
+            <div class="fact"><dt>Cache</dt><dd>Redis, no TTL</dd></div>
+            <div class="fact"><dt>Source</dt><dd>GSMArena</dd></div>
+          </dl>
+        </section>
+
+        <section id="example">
+          <div class="section-head">
+            <span class="kicker">01 / Worked example</span>
+            <h2>Resolving one phone</h2>
+            <p>What happens when a client asks for a single Samsung model code.</p>
+          </div>
+          <div class="card">
+            <h3>GET <code>/api/specs?model=SM-S928B</code></h3>
+            <div class="steps">
+              <div class="step">
+                <span class="n">1</span>
+                <h4>Cache lookup</h4>
+                <p>Checks Redis for <code>url_map:sm-s928b</code>. A hit returns the stored payload with <code>"cached": true</code>.</p>
+              </div>
+              <div class="step">
+                <span class="n">2</span>
+                <h4>Code to name</h4>
+                <p><code>SM-S928B</code> matches the built-in Samsung pattern: S-series, generation 24, Ultra variant.</p>
+              </div>
+              <div class="step">
+                <span class="n">3</span>
+                <h4>Catalog match</h4>
+                <p>The resolved name is scored against the GSMArena quicksearch catalog to find the device page.</p>
+              </div>
+              <div class="step">
+                <span class="n">4</span>
+                <h4>Extract</h4>
+                <p>The page is fetched and parsed into sections — Network, Display, Platform, Battery and so on — with a proxy fallback.</p>
+              </div>
+              <div class="step">
+                <span class="n">5</span>
+                <h4>Store</h4>
+                <p>Saved under <code>specs:url:&lt;id&gt;</code> plus aliases for the code and full name.</p>
+              </div>
+            </div>
+
+            <div class="codebox">
+              <div class="codebar"><span>200 OK · application/json</span><span>trimmed response</span></div>
+              <pre><code>{
+  "search_query": "SM-S928B",
+  "search_name": "Samsung Galaxy S24 Ultra",
+  "matched_device": "Samsung Galaxy S24 Ultra",
+  "source_url": "https://www.gsmarena.com/samsung_galaxy_s24_ultra-12771.php",
+  "image": "https://fdn2.gsmarena.com/vv/bigpic/....jpg",
+  "specifications": {
+    "Network": { "Technology": "GSM / CDMA / HSPA / EVDO / LTE / 5G" },
+    "Display": { "Type": "Dynamic AMOLED 2X, 120Hz", "Size": "6.8 inches" }
+  },
+  "timing_ms": 2314,
+  "cached": false
+}</code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section id="catalog">
+          <div class="section-head">
+            <span class="kicker">02 / Catalog search</span>
+            <h2>What the catalog page calls</h2>
+            <p>The same endpoint powers search, brand filters and the initial grid on <a href="/spec">/spec</a>.</p>
+          </div>
+          <div class="card">
+            <h3>GET <code>/api/spec?json=1&amp;q=pixel%209</code></h3>
+            <ol>
+              <li>Loads cached payloads and keeps entries whose device name or original query contains <code>pixel 9</code>.</li>
+              <li>If nothing matches, the query is resolved once through <code>/api/specs</code> and included with <code>"autoEnriched": true</code>. That is how a new search adds itself to the catalog.</li>
+              <li>If the cache is empty and no query was given, a few default flagships are resolved so the grid is never blank.</li>
+            </ol>
+
+            <div class="codebox">
+              <div class="codebar"><span>200 OK · application/json</span><span>catalog envelope</span></div>
+              <pre><code>{
+  "totalInRedis": 42,
+  "count": 3,
+  "query": "pixel 9",
+  "autoEnriched": false,
+  "devices": [ { "...": "same shape as above" } ]
+}</code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section id="endpoints">
+          <div class="section-head">
+            <span class="kicker">03 / Endpoints</span>
+            <h2>Contracts</h2>
+            <p>Five endpoints cover lookups, the catalog feed, this document, and cache maintenance.</p>
+          </div>
+
+          <div class="eps">
+            <div class="ep">
+              <div class="ep-head"><span class="method">GET</span><span class="path">/api/specs?model=…</span></div>
+              <p>
+                Resolve one device. <code>model</code> is required — a market name or code such as
+                <code>Pixel 9 Pro XL</code> or <code>HUSKY</code>. Add <code>refresh=1</code> to skip
+                the cache. Errors: <code>400</code> missing param, <code>404</code> not in catalog,
+                <code>502</code> parse failed. Responses include <code>timing_ms</code>.
+              </p>
+              <div class="try"><a href="/api/specs?model=Samsung%20Galaxy%20S24%20Ultra">Try it →</a></div>
+            </div>
+
+            <div class="ep">
+              <div class="ep-head"><span class="method">GET</span><span class="path">/api/spec?json=1&amp;q=…</span></div>
+              <p>
+                Catalog feed. <code>q</code> filters cached names (minimum 2 characters, triggers
+                auto-enrichment on a miss). Without <code>json=1</code> it serves the legacy
+                server-rendered HTML catalog.
+              </p>
+              <div class="try"><a href="/api/spec?json=1&amp;q=Pixel">Try it →</a></div>
+            </div>
+
+            <div class="ep">
+              <div class="ep-head"><span class="method">GET</span><span class="path">/api/info</span></div>
+              <p>
+                This page. <code>?json=1</code> returns the same reference as a machine-readable
+                JSON document.
+              </p>
+              <div class="try"><a href="/api/info?json=1">Try it →</a></div>
+            </div>
+
+            <div class="ep">
+              <div class="ep-head"><span class="method post">POST</span><span class="path">/api/sync-devices</span></div>
+              <p>
+                <b>Admin.</b> Rebuilds the 25,000+ entry model dictionary. Password-protected.
+                <code>?action=invalidate-catalog</code> clears the catalog snapshot;
+                <code>?action=invalidate-specs</code> clears cached specs.
+              </p>
+            </div>
+
+            <div class="ep full">
+              <div class="ep-head"><span class="method post">POST</span><span class="path">/reset</span></div>
+              <p>
+                <b>Admin.</b> Clears cache — everything, only payloads, only URL mappings, only the
+                catalog snapshot, or a single model. Password and CSRF protected; three wrong
+                passwords lock the IP for 15 minutes.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="resolution">
+          <div class="section-head">
+            <span class="kicker">04 / Model resolution</span>
+            <h2>From model code to market name</h2>
+            <p>Clients send whatever Android reports. Layers run in order and the first hit wins.</p>
+          </div>
+          <div class="card">
+            <ol>
+              <li><b>Built-in table</b> — common codes: <code>S928 → S24 Ultra</code>, <code>HUSKY → Pixel 8 Pro</code>, <code>CPH2581 → OnePlus 12</code>.</li>
+              <li><b>Samsung parser</b> — decodes SM/GT numbers: <code>SM-S928B → S24 Ultra</code>, <code>SM-A366B → A36</code>, <code>SM-F956B → Z Fold6</code>.</li>
+              <li><b>Device dictionary</b> — the synced <code>device:&lt;code&gt;</code> map covers the long tail.</li>
+              <li><b>Catalog scoring</b> — brand-aware token match against quicksearch; one-letter tokens are ignored and exact matches return immediately.</li>
+            </ol>
+          </div>
+        </section>
+
+        <section id="storage">
+          <div class="section-head">
+            <span class="kicker">05 / Storage</span>
+            <h2>Redis schema</h2>
+            <p>Every key is written once and reused on subsequent requests.</p>
+          </div>
+          <div class="card">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Key</th><th>Content</th></tr></thead>
+                <tbody>
+                  <tr><td class="key"><code>specs:url:&lt;id&gt;</code></td><td>Full JSON payload for one device. Permanent, no expiry.</td></tr>
+                  <tr><td class="key"><code>url_map:&lt;query&gt;</code></td><td>Lowercased query → GSMArena URL. A device usually has two aliases: code and full name.</td></tr>
+                  <tr><td class="key"><code>device:&lt;code&gt;</code></td><td>Model code → market name, e.g. <code>device:cph2581 → OnePlus 12</code>.</td></tr>
+                  <tr><td class="key"><code>cache:gsm_quicksearch_catalog</code></td><td>Catalog snapshot, so matching does not re-download it per request.</td></tr>
+                  <tr><td class="key"><code>gsm:quicksearch_url</code></td><td>Which snapshot URL is active.</td></tr>
+                  <tr><td class="key"><code>lock:specs:&lt;query&gt;</code></td><td>Short lock (~22s): concurrent requests for the same uncached phone wait instead of scraping twice.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="notes">
+          <div class="section-head">
+            <span class="kicker">06 / Notes &amp; limits</span>
+            <h2>Operational behaviour</h2>
+          </div>
+          <div class="card">
+            <ul class="plain">
+              <li><b>Cache never expires.</b> Cached specs are served as-is until purged via <code>/reset</code> or bypassed with <code>?refresh=1</code>.</li>
+              <li><b>Slow first loads time out.</b> Functions abort after 25s (10s for this page). A <code>502</code>/<code>404</code> with <code>timing_ms</code> usually means GSMArena was slow — retrying often works.</li>
+              <li><b>GET endpoints are public and cross-origin</b> (<code>Access-Control-Allow-Origin: *</code>). Admin endpoints require the sync password.</li>
+              <li><b>Data belongs to GSMArena</b> and is shown for reference with a source link on every device.</li>
+            </ul>
+          </div>
+        </section>
+
+        <footer>
+          <p>© 2026 Toolz Project · Engine v${VERSION} · Data &amp; images © GSMArena</p>
+          <nav aria-label="Footer">
+            <a class="btn btn-outline btn-small" href="/spec">Catalog</a>
+            <a class="btn btn-outline btn-small" href="/">Home</a>
+            <a class="btn btn-outline btn-small" href="/api/info?json=1">JSON</a>
+          </nav>
+        </footer>
+      </main>
+    </div>
+  </div>
+</body>
+</html>`;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -297,6 +689,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({
       engine: 'Toolz Hardware Resolution',
       version: VERSION,
+      documentation: `${SITE}/api/info`,
       infrastructure: 'Vercel serverless + Upstash Redis',
       source: 'GSMArena (spec text + images, shown with source link)',
       catalogUi: '/spec',
@@ -347,5 +740,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400');
+  res.setHeader('X-Robots-Tag', 'index, follow');
   return res.status(200).send(renderInfoHtml());
 }
