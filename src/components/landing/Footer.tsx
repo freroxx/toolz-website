@@ -8,7 +8,7 @@ const columns = [
   {
     title: "Downloads",
     accent: "text-primary",
-    hover: "#FF6D00",
+    hover: "#8B55C9",
     links: [
       { label: "Latest release", href: `${REPO}/releases/latest`, external: true },
       { label: "All releases", href: `${REPO}/releases`, external: true },
@@ -18,7 +18,7 @@ const columns = [
   {
     title: "Community",
     accent: "text-secondary",
-    hover: "#00BFA5",
+    hover: "#C9A5EE",
     links: [
       { label: "Discord server", href: "https://discord.gg/aAswRUerwh", external: true },
       { label: "Discussions", href: `${REPO}/discussions`, external: true },
@@ -73,8 +73,8 @@ const Footer = () => {
                   whileHover={{
                     scale: 1.2,
                     y: -6,
-                    backgroundColor: "rgba(255, 109, 0, 0.15)",
-                    color: "#FF6D00"
+                    backgroundColor: "rgba(139, 85, 201, 0.18)",
+                    color: "#C9A5EE"
                   }}
                   whileTap={{ scale: 0.9 }}
                   className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center transition-all shadow-lg hover:shadow-primary/30"

@@ -7,39 +7,39 @@
 /* ─── M3 Expressive Color System (Dark) ─── */
 @layer base {
   :root {
-    /* Primary – Deep Orange */
-    --md-primary: 26 100% 50%;          /* #FF6D00 */
+    /* Primary – logo violet (#8B55C9) */
+    --md-primary: 268 52% 56%;
     --md-on-primary: 0 0% 100%;
-    --md-primary-container: 26 100% 22%; /* #703000 */
-    --md-on-primary-container: 26 100% 88%;
+    --md-primary-container: 269 55% 23%;  /* deep purple #3A1B5C */
+    --md-on-primary-container: 270 79% 91%;
 
-    /* Secondary – Teal */
-    --md-secondary: 174 100% 37%;       /* #00BFA5 */
-    --md-on-secondary: 0 0% 100%;
-    --md-secondary-container: 174 100% 12%; /* #003D35 */
-    --md-on-secondary-container: 174 100% 85%;
+    /* Secondary – logo lavender (#C9A5EE) */
+    --md-secondary: 270 68% 79%;
+    --md-on-secondary: 270 60% 10%;
+    --md-secondary-container: 270 44% 29%; /* muted purple #4A2A6B */
+    --md-on-secondary-container: 271 83% 93%;
 
-    /* Tertiary – Amber accent */
-    --md-tertiary: 45 100% 55%;
-    --md-on-tertiary: 0 0% 0%;
-    --md-tertiary-container: 45 100% 18%;
-    --md-on-tertiary-container: 45 100% 90%;
+    /* Tertiary – logo pink-lilac (#E0B6F2) */
+    --md-tertiary: 282 70% 83%;
+    --md-on-tertiary: 282 60% 10%;
+    --md-tertiary-container: 282 41% 31%;  /* plum #5C2F70 */
+    --md-on-tertiary-container: 284 87% 94%;
 
-    /* Surface tones */
-    --md-surface: 264 7% 8%;            /* #141218 */
-    --md-surface-dim: 264 7% 6%;
-    --md-surface-bright: 264 7% 20%;
-    --md-surface-container-lowest: 264 8% 5%;
-    --md-surface-container-low: 264 7% 10%;
-    --md-surface-container: 264 7% 12%;
-    --md-surface-container-high: 264 7% 17%;
-    --md-surface-container-highest: 264 7% 22%;
-    --md-on-surface: 264 17% 90%;
-    --md-on-surface-variant: 264 10% 80%;
+    /* Surface tones – sampled from the logo's near-black purple */
+    --md-surface: 262 58% 8%;             /* #120922 */
+    --md-surface-dim: 262 67% 5%;
+    --md-surface-bright: 265 37% 23%;
+    --md-surface-container-lowest: 262 67% 5%;
+    --md-surface-container-low: 263 53% 11%;
+    --md-surface-container: 262 45% 13%;
+    --md-surface-container-high: 263 37% 18%;
+    --md-surface-container-highest: 265 30% 21%;
+    --md-on-surface: 268 55% 94%;
+    --md-on-surface-variant: 268 30% 78%;
 
     /* Outlines */
-    --md-outline: 264 6% 58%;
-    --md-outline-variant: 264 6% 30%;
+    --md-outline: 268 17% 56%;
+    --md-outline-variant: 273 25% 26%;
 
     /* Error */
     --md-error: 0 69% 67%;
@@ -49,9 +49,9 @@
     /* Shadow / scrim */
     --md-shadow: 0 0% 0%;
     --md-scrim: 0 0% 0%;
-    --md-inverse-surface: 264 17% 90%;
-    --md-inverse-on-surface: 264 7% 20%;
-    --md-inverse-primary: 26 100% 50%;
+    --md-inverse-surface: 268 55% 94%;
+    --md-inverse-on-surface: 262 45% 13%;
+    --md-inverse-primary: 268 52% 56%;
 
     /* Shape scale */
     --md-shape-none: 0px;
@@ -81,26 +81,26 @@
     --md-duration-long2: 500ms;
 
     /* Shadcn compat bridge */
-    --background: 264 7% 8%;
-    --foreground: 264 17% 90%;
-    --primary: 26 100% 50%;
+    --background: 262 58% 8%;
+    --foreground: 268 55% 94%;
+    --primary: 268 52% 56%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 174 100% 37%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 264 7% 17%;
-    --muted-foreground: 264 10% 60%;
-    --accent: 264 7% 17%;
-    --accent-foreground: 264 17% 90%;
-    --border: 264 6% 22%;
-    --input: 264 6% 22%;
-    --ring: 26 100% 50%;
+    --secondary: 270 68% 79%;
+    --secondary-foreground: 262 45% 13%;
+    --muted: 263 37% 18%;
+    --muted-foreground: 268 27% 71%;
+    --accent: 263 37% 18%;
+    --accent-foreground: 268 55% 94%;
+    --border: 273 25% 26%;
+    --input: 273 25% 26%;
+    --ring: 268 52% 56%;
     --radius: 12px;
-    --card: 264 7% 12%;
-    --card-foreground: 264 17% 90%;
-    --popover: 264 7% 12%;
-    --popover-foreground: 264 17% 90%;
+    --card: 262 45% 13%;
+    --card-foreground: 268 55% 94%;
+    --popover: 262 45% 13%;
+    --popover-foreground: 268 55% 94%;
     --destructive: 0 69% 67%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 0 100% 15%;
   }
 
   html {
