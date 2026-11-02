@@ -30,12 +30,8 @@ const NewsSection = () => {
   if (!loading && preview.length === 0) return null;
 
   return (
-    <section
-      id="news"
-      className="py-24 relative overflow-hidden"
-      style={{ background: "hsl(var(--md-surface))" }}
-    >
-      <div className="container mx-auto px-4 relative z-10">
+    <section id="news" className="scroll-mt-20 py-16 md:py-24">
+      <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
