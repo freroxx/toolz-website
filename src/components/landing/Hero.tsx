@@ -1,13 +1,15 @@
-import { Download, Github, Shield, Lock, LayoutGrid } from "lucide-react";
+import { ArrowRight, Download, Github, ShieldCheck, Smartphone, WifiOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useCallback } from "react";
 import { useLatestRelease } from "@/hooks/use-latest-release";
 import { FEATURED_SCREENSHOTS } from "@/lib/screenshots";
+import { categories, totalTools } from "@/lib/tools-catalog";
 
-const pillBadges = [
-  { icon: LayoutGrid, label: "50+ tools, one APK" },
-  { icon: Shield, label: "On-device first" },
-  { icon: Lock, label: "Encrypted vaults" },
+const stats = [
+  { value: `${totalTools}`, label: "tools" },
+  { value: `${categories.length}`, label: "groups" },
+  { value: "0", label: "accounts" },
+  { value: "GPLv3", label: "licensed" },
 ];
 
 const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
@@ -19,212 +21,230 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
     () => setImgIndex((p) => (p + 1) % FEATURED_SCREENSHOTS.length),
     []
   );
+
   useEffect(() => {
     if (paused) return;
-    const t = setInterval(nextImg, 3200);
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) return;
+    const t = setInterval(nextImg, 3600);
     return () => clearInterval(t);
   }, [paused, nextImg]);
 
   return (
-    <section
-      className="relative min-h-screen flex items-center overflow-hidden pt-24 pb-20"
-      style={{ background: "hsl(var(--md-surface))" }}
-    >
-      {/* Single tonal backdrop: one expressive container shape, static. */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div
-          className="absolute -top-48 right-[-10%] w-[640px] h-[640px] opacity-[0.12]"
-          style={{
-            background: "hsl(var(--md-primary-container))",
-            borderRadius: "38% 62% 55% 45% / 48% 42% 58% 52%",
-          }}
-        />
-        <div
-          className="absolute bottom-[-20%] left-[-8%] w-[520px] h-[520px] opacity-[0.1]"
-          style={{
-            background: "hsl(var(--md-secondary-container))",
-            borderRadius: "62% 38% 42% 58% / 55% 58% 42% 45%",
-          }}
-        />
-      </div>
-
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
-
-          {/* ── Left: Text ── */}
-          <div className="flex-1 text-center lg:text-left">
-            {/* Logo */}
+    <section className="relative overflow-hidden pt-28 pb-16 md:pt-36 md:pb-24">
+      <div className="container mx-auto px-4">
+        <div className="grid items-center gap-12 lg:grid-cols-[1.04fr_0.96fr] lg:gap-16">
+          {/* ── Copy ── */}
+          <div>
             <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1, type: "spring", stiffness: 200, damping: 20 }}
-              className="inline-flex items-center gap-3 mb-8"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="m3-chip inline-flex items-center gap-2 border-transparent"
+              style={{
+                background: "hsl(var(--md-secondary-container))",
+                color: "hsl(var(--md-on-secondary-container))",
+              }}
             >
-              <div className="w-12 h-12 rounded-[22%] overflow-hidden shadow-2xl shadow-primary/20 border border-primary/20 bg-surface-container-highest flex items-center justify-center p-0">
-                <img
-                  src="/logo.png"
-                  alt="Toolz"
-                  className="w-full h-full object-cover scale-[1.6]"
-                />
-              </div>
+              <span
+                className="h-2 w-2 rounded-full"
+                style={{ background: "hsl(var(--md-secondary))" }}
+              />
+              v{versionName} · Android 12+
             </motion.div>
 
-            {/* Display heading */}
             <motion.h1
-              initial={{ opacity: 0, y: 40 }}
+              initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 150, damping: 22 }}
-              className="m3-display-large mb-8"
-              style={{ color: "hsl(var(--md-on-surface))" }}
+              transition={{ delay: 0.06, type: "spring", stiffness: 170, damping: 24 }}
+              className="m3-display-large mt-6 text-on-surface"
+              style={{ fontSize: "clamp(3rem, 7vw, 5.5rem)", lineHeight: 0.98 }}
             >
-              One home.
+              {totalTools} tools.
               <br />
-              All your <span className="m3-gradient-text">tools.</span>
+              <span className="text-primary">Zero clutter.</span>
             </motion.h1>
 
-            {/* Body */}
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, type: "spring", stiffness: 150, damping: 25 }}
-              className="m3-body-large mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed text-balance"
-              style={{ color: "hsl(var(--md-on-surface-variant))" }}
+              transition={{ delay: 0.14, duration: 0.45 }}
+              className="m3-body-large mt-6 max-w-xl text-on-surface-variant"
             >
-              Ditch the folder of single-purpose apps. Toolz is a free, open-source
-              utility suite for Android 12 and up — timers, media, vaults and
-              sensors in one place, with no account and no ads.
+              Timers, converters, vaults, sensors, downloads and more — one
+              open-source Android app. No account, no ads, no telemetry.
             </motion.p>
 
-            {/* Badge pills */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, type: "spring", stiffness: 150, damping: 25 }}
-              className="flex flex-wrap gap-3 justify-center lg:justify-start mb-12"
-            >
-              {pillBadges.map(({ icon: Icon, label }, i) => (
-                <motion.div
-                  key={label}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 + (i * 0.1) }}
-                  className="m3-chip gap-2 bg-surface-container-high border-outline-variant/30"
-                >
-                  <Icon size={14} className="text-secondary" />
-                  <span className="font-medium">{label}</span>
-                </motion.div>
-              ))}
-            </motion.div>
-
-            {/* CTAs */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, type: "spring", stiffness: 150, damping: 25 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+              transition={{ delay: 0.22, duration: 0.45 }}
+              className="mt-8 flex flex-col gap-3 sm:flex-row"
             >
               <button
                 onClick={onDownloadClick}
-                className="m3-btn-filled py-5 px-10 text-lg gap-3 shadow-2xl shadow-primary/20 active:scale-95 transition-transform"
+                className="m3-btn-filled gap-3 px-8 py-4 text-base"
               >
-                <Download size={24} />
-                Get Toolz
-                <div className="flex flex-col items-start leading-none border-l border-on-primary/20 pl-3 ml-1">
-                   <span className="text-[10px] opacity-70 uppercase tracking-widest font-bold">Latest</span>
-                   <span className="text-xs">v{versionName}</span>
-                </div>
+                <Download size={20} />
+                Download v{versionName}
               </button>
-
+              <a href="#features" className="m3-btn-tonal gap-2 px-7 py-4 text-base">
+                Browse the catalog
+                <ArrowRight size={18} />
+              </a>
               <a
                 href="https://github.com/freroxx/toolz"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="m3-btn-outlined py-5 px-10 text-lg gap-3 active:scale-95 transition-transform"
+                aria-label="Toolz source on GitHub"
+                className="m3-btn-outlined hidden gap-2 px-6 py-4 text-base sm:inline-flex"
               >
-                <Github size={24} />
+                <Github size={19} />
                 Source
               </a>
             </motion.div>
+
+            <motion.dl
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.45 }}
+              className="mt-10 grid max-w-xl grid-cols-4 divide-x rounded-[24px] py-4"
+              style={{
+                background: "hsl(var(--md-surface-container))",
+                borderColor: "hsl(var(--md-outline-variant) / 0.4)",
+              }}
+            >
+              {stats.map(({ value, label }) => (
+                <div key={label} className="px-2 text-center sm:px-4">
+                  <dt className="m3-headline-small tabular-nums text-on-surface">
+                    {value}
+                  </dt>
+                  <dd className="m3-label-small mt-0.5 text-on-surface-variant">
+                    {label}
+                  </dd>
+                </div>
+              ))}
+            </motion.dl>
           </div>
 
-          {/* ── Right: Phone mockup ── */}
+          {/* ── Product stage ── */}
           <motion.div
-            initial={{ opacity: 0, x: 100, scale: 0.9 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            transition={{ delay: 0.4, type: "spring", stiffness: 80, damping: 20, mass: 1.2 }}
-            className="flex-shrink-0 relative group mt-8 lg:mt-0"
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.12, type: "spring", stiffness: 110, damping: 20 }}
+            className="relative mx-auto w-full max-w-[460px] lg:mx-0"
           >
             <div
-              className="relative w-[260px] sm:w-[340px] mx-auto"
-              onMouseEnter={() => setPaused(true)}
-              onMouseLeave={() => setPaused(false)}
-              onClick={nextImg}
-              style={{ cursor: "pointer" }}
+              className="relative overflow-hidden rounded-[40px] p-5 sm:p-7"
+              style={{ background: "hsl(var(--md-primary-container))" }}
             >
-              {/* Phone frame */}
-              <div className="m3-phone-frame p-2.5 shadow-2xl">
-                {/* Screen */}
-                <div className="m3-phone-screen">
-                  <AnimatePresence mode="wait">
-                    <motion.img
-                      key={FEATURED_SCREENSHOTS[imgIndex]}
-                      src={FEATURED_SCREENSHOTS[imgIndex]}
-                      alt={`Toolz app screenshot ${imgIndex + 1} of ${FEATURED_SCREENSHOTS.length}`}
-                      className="absolute inset-0 w-full h-full object-cover"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.4 }}
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span
+                    className="grid h-10 w-10 place-items-center rounded-[14px]"
+                    style={{ background: "hsl(var(--md-primary) / 0.16)" }}
+                  >
+                    <Smartphone
+                      size={19}
+                      style={{ color: "hsl(var(--md-on-primary-container))" }}
                     />
-                  </AnimatePresence>
+                  </span>
+                  <div>
+                    <p
+                      className="m3-title-small leading-tight"
+                      style={{ color: "hsl(var(--md-on-primary-container))" }}
+                    >
+                      Toolz for Android
+                    </p>
+                    <p
+                      className="m3-label-small opacity-70"
+                      style={{ color: "hsl(var(--md-on-primary-container))" }}
+                    >
+                      One APK · updates in-app
+                    </p>
+                  </div>
+                </div>
+                <span
+                  className="m3-label-small rounded-full px-3 py-1"
+                  style={{
+                    background: "hsl(var(--md-primary) / 0.18)",
+                    color: "hsl(var(--md-on-primary-container))",
+                  }}
+                >
+                  FREE
+                </span>
+              </div>
 
-                  {/* Tap hint overlay */}
-                  <AnimatePresence>
-                    {paused && (
-                      <motion.div
+              <div
+                className="mt-6 cursor-pointer select-none"
+                onMouseEnter={() => setPaused(true)}
+                onMouseLeave={() => setPaused(false)}
+                onClick={nextImg}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    nextImg();
+                  }
+                }}
+                aria-label="Show the next app screenshot"
+              >
+                <div className="m3-phone-frame mx-auto w-full max-w-[248px] p-2">
+                  <div className="m3-phone-screen">
+                    <AnimatePresence mode="wait">
+                      <motion.img
+                        key={FEATURED_SCREENSHOTS[imgIndex]}
+                        src={FEATURED_SCREENSHOTS[imgIndex]}
+                        alt={`Toolz app screenshot ${imgIndex + 1} of ${FEATURED_SCREENSHOTS.length}`}
+                        className="absolute inset-0 h-full w-full object-cover"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 flex items-center justify-center z-40"
-                        style={{ background: "hsl(var(--md-shadow) / 0.4)", backdropFilter: "blur(6px)" }}
-                      >
-                        <motion.div
-                          initial={{ scale: 0.8, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          className="px-6 py-3 rounded-2xl m3-title-small shadow-2xl"
-                          style={{
-                            background: "hsl(var(--md-surface-container-highest))",
-                            color: "hsl(var(--md-on-surface))",
-                            border: "1px solid hsl(var(--md-outline-variant) / 0.5)"
-                          }}
-                        >
-                          Tap to flip
-                        </motion.div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                        transition={{ duration: 0.35 }}
+                      />
+                    </AnimatePresence>
+                  </div>
                 </div>
 
-                {/* Home bar */}
-                <div
-                  className="absolute bottom-3 left-1/2 -translate-x-1/2 w-24 sm:w-32 h-1 rounded-full z-30"
-                  style={{ background: "hsl(var(--md-on-surface-variant) / 0.3)", backdropFilter: "blur(4px)" }}
-                />
+                <div className="mt-4 flex items-center justify-center gap-1.5" aria-hidden="true">
+                  {FEATURED_SCREENSHOTS.map((_, i) => (
+                    <span
+                      key={i}
+                      className="h-1.5 rounded-full transition-all duration-300"
+                      style={{
+                        width: i === imgIndex ? 18 : 6,
+                        background:
+                          i === imgIndex
+                            ? "hsl(var(--md-on-primary-container))"
+                            : "hsl(var(--md-on-primary-container) / 0.28)",
+                      }}
+                    />
+                  ))}
+                </div>
               </div>
 
-              {/* Screenshot position dots */}
-              <div className="flex justify-center gap-1.5 mt-4" aria-hidden="true">
-                {FEATURED_SCREENSHOTS.map((_, i) => (
-                  <span
-                    key={i}
-                    className="h-1.5 rounded-full transition-all duration-300"
-                    style={{
-                      width: i === imgIndex ? 20 : 6,
-                      background: i === imgIndex
-                        ? "hsl(var(--md-primary))"
-                        : "hsl(var(--md-outline-variant))",
-                    }}
-                  />
+              <div className="mt-5 grid grid-cols-2 gap-2.5">
+                {[
+                  { icon: WifiOff, label: "On-device core" },
+                  { icon: ShieldCheck, label: "Encrypted vaults" },
+                ].map(({ icon: Icon, label }) => (
+                  <div
+                    key={label}
+                    className="flex items-center gap-2 rounded-2xl px-3 py-2.5"
+                    style={{ background: "hsl(var(--md-primary) / 0.14)" }}
+                  >
+                    <Icon
+                      size={16}
+                      style={{ color: "hsl(var(--md-on-primary-container))" }}
+                    />
+                    <span
+                      className="m3-label-medium"
+                      style={{ color: "hsl(var(--md-on-primary-container))" }}
+                    >
+                      {label}
+                    </span>
+                  </div>
                 ))}
               </div>
             </div>
