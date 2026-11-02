@@ -17,6 +17,33 @@
     <meta name="theme-color" content="#120922" />
     <meta name="color-scheme" content="dark" />
 
+    <!-- Apply the saved skin mode before first paint to avoid a dark/light flash. -->
+    <script>
+      (function () {
+        try {
+          var skin = localStorage.getItem("toolz-site-skin") || "site-default";
+          var mode = localStorage.getItem("toolz-site-skin-mode") || "DARK";
+          if (mode === "SYSTEM") {
+            mode = window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "DARK"
+              : "LIGHT";
+          }
+          var resolved = mode === "LIGHT" ? "light" : "dark";
+          var root = document.documentElement;
+          root.setAttribute("data-theme", resolved);
+          root.style.colorScheme = resolved;
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (!meta) return;
+          if (skin === "site-default") {
+            meta.setAttribute("content", resolved === "light" ? "#FAF6FE" : "#120922");
+          } else {
+            var saved = localStorage.getItem("toolz-site-skin-theme-color");
+            if (saved) meta.setAttribute("content", saved);
+          }
+        } catch (e) {}
+      })();
+    </script>
+
     <link rel="canonical" href="https://toolz-app.vercel.app/" />
     <link rel="icon" type="image/png" sizes="1080x1080" href="/logo.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />

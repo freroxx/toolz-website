@@ -3,6 +3,8 @@ import { Menu, X, Download, Github } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "react-router-dom";
 import { useLatestRelease } from "@/hooks/use-latest-release";
+import ThemeButton from "@/components/theme/ThemeButton";
+import ThemeDialog from "@/components/theme/ThemeDialog";
 
 const navLinks = [
   { label: "Tools", href: "/#features" },
@@ -14,6 +16,7 @@ const navLinks = [
 const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [themeOpen, setThemeOpen] = useState(false);
   const [activeHref, setActiveHref] = useState("");
   const navRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
@@ -122,6 +125,7 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
 
             {/* Desktop CTA */}
             <div className="hidden md:flex items-center gap-3">
+              <ThemeButton onClick={() => setThemeOpen(true)} className="h-9 w-9" />
               <a
                 href="https://github.com/freroxx/toolz"
                 target="_blank"
@@ -143,24 +147,27 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
             </div>
 
             {/* Mobile trigger */}
-            <button
-              className="md:hidden w-10 h-10 flex items-center justify-center rounded-full m3-state-layer"
-              style={{ color: "hsl(var(--md-on-surface-variant))" }}
-              onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label={mobileOpen ? "Close menu" : "Open menu"}
-            >
-              <AnimatePresence mode="wait">
-                {mobileOpen ? (
-                  <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}>
-                    <X size={20} />
-                  </motion.div>
-                ) : (
-                  <motion.div key="open" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.15 }}>
-                    <Menu size={20} />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </button>
+            <div className="flex items-center gap-2 md:hidden">
+              <ThemeButton onClick={() => setThemeOpen(true)} />
+              <button
+                className="w-10 h-10 flex items-center justify-center rounded-full m3-state-layer"
+                style={{ color: "hsl(var(--md-on-surface-variant))" }}
+                onClick={() => setMobileOpen(!mobileOpen)}
+                aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              >
+                <AnimatePresence mode="wait">
+                  {mobileOpen ? (
+                    <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}>
+                      <X size={20} />
+                    </motion.div>
+                  ) : (
+                    <motion.div key="open" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.15 }}>
+                      <Menu size={20} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </button>
+            </div>
           </div>
         </div>
       </nav>
@@ -208,13 +215,22 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                     </span>
                   </div>
                 </div>
-                <button
-                  onClick={() => setMobileOpen(false)}
-                  className="w-10 h-10 flex items-center justify-center rounded-full m3-state-layer"
-                  style={{ color: "hsl(var(--md-on-surface-variant))" }}
-                >
-                  <X size={20} />
-                </button>
+                <div className="flex items-center gap-1">
+                  <ThemeButton
+                    onClick={() => {
+                      setMobileOpen(false);
+                      setThemeOpen(true);
+                    }}
+                  />
+                  <button
+                    onClick={() => setMobileOpen(false)}
+                    className="w-10 h-10 flex items-center justify-center rounded-full m3-state-layer"
+                    style={{ color: "hsl(var(--md-on-surface-variant))" }}
+                    aria-label="Close menu"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
               </div>
 
               {/* Drawer links */}
@@ -272,6 +288,8 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
           </>
         )}
       </AnimatePresence>
+
+      <ThemeDialog open={themeOpen} onOpenChange={setThemeOpen} />
     </>
   );
 };

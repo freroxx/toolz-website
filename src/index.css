@@ -103,10 +103,76 @@
     --destructive-foreground: 0 100% 15%;
   }
 
+  /* ─── M3 Expressive Color System (Light) ─── */
+  html[data-theme="light"] {
+    color-scheme: light;
+
+    --md-primary: 270 49% 48%;             /* #7B3FB8 */
+    --md-on-primary: 0 0% 100%;
+    --md-primary-container: 275 100% 93%;  /* #F0DBFF */
+    --md-on-primary-container: 273 100% 16%;
+
+    --md-secondary: 270 26% 42%;           /* #6A4E86 */
+    --md-on-secondary: 0 0% 100%;
+    --md-secondary-container: 275 72% 93%; /* #EFE0FA */
+    --md-on-secondary-container: 274 43% 14%;
+
+    --md-tertiary: 286 36% 45%;            /* #8A4A9E */
+    --md-on-tertiary: 0 0% 100%;
+    --md-tertiary-container: 289 100% 93%; /* #F8D9FF */
+    --md-on-tertiary-container: 280 78% 16%;
+
+    --md-surface: 270 80% 98%;             /* #FAF6FE */
+    --md-surface-dim: 266 22% 87%;
+    --md-surface-bright: 270 80% 98%;
+    --md-surface-container-lowest: 0 0% 100%;
+    --md-surface-container-low: 268 62% 96%;
+    --md-surface-container: 266 50% 94%;
+    --md-surface-container-high: 267 43% 92%;
+    --md-surface-container-highest: 266 40% 90%;
+    --md-on-surface: 265 29% 12%;          /* #1C1526 */
+    --md-on-surface-variant: 265 14% 31%;  /* #4C4359 */
+
+    --md-outline: 269 9% 49%;
+    --md-outline-variant: 268 32% 84%;
+
+    --md-error: 3 71% 41%;
+    --md-on-error: 0 0% 100%;
+    --md-error-container: 4 71% 92%;
+
+    --md-shadow: 270 30% 20%;
+    --md-scrim: 265 20% 12%;
+    --md-inverse-surface: 265 17% 20%;
+    --md-inverse-on-surface: 272 62% 96%;
+    --md-inverse-primary: 268 100% 86%;
+
+    /* Shadcn compat bridge */
+    --background: 270 80% 98%;
+    --foreground: 265 29% 12%;
+    --primary: 270 49% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 270 26% 42%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 267 43% 92%;
+    --muted-foreground: 265 14% 31%;
+    --accent: 266 50% 94%;
+    --accent-foreground: 265 29% 12%;
+    --border: 268 32% 84%;
+    --input: 268 32% 84%;
+    --ring: 270 49% 48%;
+    --card: 268 62% 96%;
+    --card-foreground: 265 29% 12%;
+    --popover: 266 50% 94%;
+    --popover-foreground: 265 29% 12%;
+    --destructive: 3 71% 41%;
+    --destructive-foreground: 0 0% 100%;
+  }
+
   html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    color-scheme: dark;
   }
 
   * {

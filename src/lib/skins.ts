@@ -43,6 +43,7 @@ export interface SiteSkin {
 export const SITE_DEFAULT_SKIN_ID = "site-default";
 export const STORAGE_KEY = "toolz-site-skin";
 export const MODE_STORAGE_KEY = "toolz-site-skin-mode";
+export const THEME_COLOR_STORAGE_KEY = "toolz-site-skin-theme-color";
 
 const DEFAULT_PRIMARY = "#8B55C9";
 const DEFAULT_SECONDARY = "#C9A5EE";
@@ -557,6 +558,11 @@ export function applySkinTheme(skin: SiteSkin, mode: ResolvedMode): void {
   document
     .querySelectorAll('meta[name="theme-color"]')
     .forEach((meta) => meta.setAttribute("content", themeColor));
+  try {
+    window.localStorage.setItem(THEME_COLOR_STORAGE_KEY, themeColor);
+  } catch {
+    /* private mode — no need to remember the chrome colour */
+  }
 }
 
 export function readStoredSkinId(): string | null {

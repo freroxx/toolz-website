@@ -5,6 +5,7 @@ import { LazyMotion, domMax } from "framer-motion";
 import { Analytics } from "@vercel/analytics/react";
 import LoadingIndicator from "./components/landing/LoadingIndicator";
 import RouteSeo from "./components/RouteSeo";
+import { SkinProvider } from "./components/theme/SkinProvider";
 import Index from "./pages/Index";
 
 // Route-level splitting: the landing page stays lean; heavy routes
@@ -30,27 +31,29 @@ const RouteFallback = () => (
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    {/* domMax instead of the full framer-motion bundle (~70% smaller runtime).
-        Covers everything used: AnimatePresence, layoutId, useScroll,
-        useTransform, useSpring, useMotionValue, useInView. */}
-    <LazyMotion features={domMax} strict>
-      <BrowserRouter>
-        <RouteSeo />
-        <Suspense fallback={<RouteFallback />}>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/downloads" element={<Downloads />} />
-            <Route path="/spec" element={<Spec />} />
-            <Route path="/news" element={<News />} />
-            <Route path="/admin/news" element={<AdminNews />} />
-            <Route path="/admin/skins" element={<AdminSkins />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-      <Analytics />
-    </LazyMotion>
+    <SkinProvider>
+      {/* domMax instead of the full framer-motion bundle (~70% smaller runtime).
+          Covers everything used: AnimatePresence, layoutId, useScroll,
+          useTransform, useSpring, useMotionValue, useInView. */}
+      <LazyMotion features={domMax} strict>
+        <BrowserRouter>
+          <RouteSeo />
+          <Suspense fallback={<RouteFallback />}>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/downloads" element={<Downloads />} />
+              <Route path="/spec" element={<Spec />} />
+              <Route path="/news" element={<News />} />
+              <Route path="/admin/news" element={<AdminNews />} />
+              <Route path="/admin/skins" element={<AdminSkins />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+        <Analytics />
+      </LazyMotion>
+    </SkinProvider>
   </QueryClientProvider>
 );
 
