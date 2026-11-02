@@ -8,6 +8,7 @@ import ThemeDialog from "@/components/theme/ThemeDialog";
 
 const navLinks = [
   { label: "Tools", href: "/#features" },
+  { label: "Downloadz", href: "/#downloadz" },
   { label: "Specs", href: "/spec" },
   { label: "News", href: "/news" },
   { label: "Community", href: "/#discord" },
@@ -95,7 +96,7 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
             </Link>
 
             {/* Desktop Nav with M3 indicator pill */}
-            <div ref={navRef} className="hidden md:flex items-center gap-1 relative">
+            <div ref={navRef} className="hidden lg:flex items-center gap-1 relative">
               {navLinks.map((link) => {
                 const isActive = (location.pathname === link.href) || (location.pathname === "/" && activeHref === link.href.replace("/", ""));
                 return (
@@ -124,7 +125,7 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
             </div>
 
             {/* Desktop CTA */}
-            <div className="hidden md:flex items-center gap-3">
+            <div className="hidden lg:flex items-center gap-3">
               <ThemeButton onClick={() => setThemeOpen(true)} className="h-9 w-9" />
               <a
                 href="https://github.com/freroxx/toolz"
@@ -147,7 +148,7 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
             </div>
 
             {/* Mobile trigger */}
-            <div className="flex items-center gap-2 md:hidden">
+            <div className="flex items-center gap-2 lg:hidden">
               <ThemeButton onClick={() => setThemeOpen(true)} />
               <button
                 className="w-10 h-10 flex items-center justify-center rounded-full m3-state-layer"
@@ -182,7 +183,7 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
-              className="fixed inset-0 z-40 md:hidden"
+              className="fixed inset-0 z-40 lg:hidden"
               style={{ background: "hsl(var(--md-scrim) / 0.5)" }}
               onClick={() => setMobileOpen(false)}
             />
@@ -193,7 +194,7 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", stiffness: 300, damping: 35 }}
-              className="fixed top-0 right-0 bottom-0 z-50 md:hidden w-80 flex flex-col"
+              className="fixed top-0 right-0 bottom-0 z-50 lg:hidden w-80 flex flex-col"
               style={{
                 background: "hsl(var(--md-surface-container))",
                 boxShadow: "-4px 0 24px hsl(var(--md-shadow) / 0.4)",

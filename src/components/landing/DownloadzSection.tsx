@@ -173,11 +173,9 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
                   placeholder="https://www.tiktok.com/@…/video/…"
                   aria-invalid={Boolean(error)}
                   aria-describedby={error ? "downloadz-error" : "downloadz-help"}
-                  className="m3-body-medium min-w-0 flex-1 rounded-full px-5 py-3.5 text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:ring-2"
+                  className="m3-body-medium min-w-0 flex-1 rounded-full border-2 border-transparent px-5 py-3.5 text-on-surface outline-none placeholder:text-on-surface-variant/60 focus:border-tertiary"
                   style={{
                     background: "hsl(var(--md-surface))",
-                    // Ring inherits the panel accent so it stays visible on the container.
-                    boxShadow: "0 0 0 1px hsl(var(--md-outline-variant))",
                   }}
                 />
                 <button
