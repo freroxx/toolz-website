@@ -73,7 +73,7 @@ const Footer = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
-                  className="grid h-10 w-10 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary"
+                  className="grid h-10 w-10 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary-ink"
                 >
                   <Icon size={19} />
                 </a>
@@ -84,7 +84,7 @@ const Footer = () => {
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 sm:gap-12 lg:gap-20">
             {columns.map((col) => (
               <div key={col.title}>
-                <p className="m3-label-medium uppercase tracking-[0.14em] text-on-surface-variant/70">
+                <p className="m3-label-medium uppercase tracking-[0.14em] text-on-surface-variant/90">
                   {col.title}
                 </p>
                 <ul className="mt-4 flex flex-col gap-3">
@@ -95,7 +95,7 @@ const Footer = () => {
                           href={link.href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="m3-body-small inline-flex items-center gap-1 text-on-surface-variant transition-colors hover:text-primary"
+                          className="m3-body-small inline-flex items-center gap-1 text-on-surface-variant transition-colors hover:text-primary-ink"
                         >
                           {link.label}
                           <ArrowUpRight size={13} className="opacity-50" />
@@ -103,7 +103,7 @@ const Footer = () => {
                       ) : (
                         <Link
                           to={link.href}
-                          className="m3-body-small text-on-surface-variant transition-colors hover:text-primary"
+                          className="m3-body-small text-on-surface-variant transition-colors hover:text-primary-ink"
                         >
                           {link.label}
                         </Link>
@@ -120,10 +120,10 @@ const Footer = () => {
           className="mt-12 flex flex-col justify-between gap-3 border-t pt-6 sm:flex-row sm:items-center"
           style={{ borderColor: "hsl(var(--md-outline-variant) / 0.5)" }}
         >
-          <p className="m3-label-small text-on-surface-variant/70">
+          <p className="m3-label-small text-on-surface-variant/90">
             © 2026 Toolz Project
           </p>
-          <div className="m3-label-small flex items-center gap-3 text-on-surface-variant/70">
+          <div className="m3-label-small flex items-center gap-3 text-on-surface-variant/90">
             <span>Android 12 and up</span>
             <span className="h-1 w-1 rounded-full bg-current opacity-50" />
             <span>GPL-3.0</span>

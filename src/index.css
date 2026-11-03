@@ -9,6 +9,8 @@
   :root {
     /* Primary – logo violet (#8B55C9) */
     --md-primary: 268 52% 56%;
+    /* Text-safe tint of primary for dark surfaces (M3 tone ~80) */
+    --md-primary-ink: 268 60% 80%;
     --md-on-primary: 0 0% 100%;
     --md-primary-container: 269 55% 23%;  /* deep purple #3A1B5C */
     --md-on-primary-container: 270 79% 91%;
@@ -108,6 +110,7 @@
     color-scheme: light;
 
     --md-primary: 270 49% 48%;             /* #7B3FB8 */
+    --md-primary-ink: 270 50% 42%;
     --md-on-primary: 0 0% 100%;
     --md-primary-container: 275 100% 93%;  /* #F0DBFF */
     --md-on-primary-container: 273 100% 16%;
@@ -284,7 +287,7 @@
     padding: 10px 24px;
     border-radius: var(--md-shape-full);
     background: transparent;
-    color: hsl(var(--md-primary));
+    color: hsl(var(--md-primary-ink));
     font-family: 'Google Sans Text', sans-serif;
     font-size: 14px;
     font-weight: 500;

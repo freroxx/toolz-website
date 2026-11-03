@@ -179,7 +179,7 @@ const BrandChip = ({
           "rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
           active
             ? "bg-on-secondary-container/15 text-on-secondary-container"
-            : "bg-surface-container-highest text-on-surface-variant/70"
+            : "bg-surface-container-highest text-on-surface-variant/90"
         )}
       >
         {count}
@@ -232,7 +232,7 @@ const SpecDetailsDialog = ({
             <h2 className="mt-5 font-display text-2xl font-bold leading-tight tracking-tight text-on-surface">
               {device.matched_device}
             </h2>
-            <p className="mt-2 text-[13px] leading-relaxed text-on-surface-variant/80">
+            <p className="mt-2 text-[13px] leading-relaxed text-on-surface-variant/90">
               {getChipSummary(device)}
             </p>
 
@@ -250,7 +250,7 @@ const SpecDetailsDialog = ({
                     {row.icon}
                   </span>
                   <div className="min-w-0">
-                    <div className="text-[10px] font-medium uppercase tracking-[0.1em] text-on-surface-variant/70">
+                    <div className="text-[10px] font-medium uppercase tracking-[0.1em] text-on-surface-variant/90">
                       {row.label}
                     </div>
                     <div className="truncate text-[13px] font-medium text-on-surface">{row.value}</div>
@@ -277,7 +277,7 @@ const SpecDetailsDialog = ({
                 href={device.source_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-outline-variant/50 px-5 py-3 text-[13px] font-semibold text-primary transition-colors hover:bg-primary/10"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-outline-variant/50 px-5 py-3 text-[13px] font-semibold text-primary-ink transition-colors hover:bg-primary/10"
               >
                 View on GSMArena <ExternalLink size={14} />
               </a>
@@ -305,7 +305,7 @@ const SpecDetailsDialog = ({
                   <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
                     {Object.entries(data).map(([key, value]) => (
                       <div key={key} className="min-w-0">
-                        <dt className="text-[10px] font-medium uppercase tracking-[0.1em] text-on-surface-variant/60">
+                        <dt className="text-[10px] font-medium uppercase tracking-[0.1em] text-on-surface-variant/90">
                           {key}
                         </dt>
                         <dd className="mt-1 text-[13px] font-medium leading-relaxed text-on-surface">
@@ -356,7 +356,7 @@ const SpecCard = ({
       >
         <div className="flex items-start justify-between gap-3 px-5 pt-5">
           <div className="min-w-0">
-            <span className="inline-flex items-center rounded-full bg-surface-container-highest/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+            <span className="inline-flex items-center rounded-full bg-surface-container-highest/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary-ink">
               {getBrand(device.matched_device)}
             </span>
             <h3
@@ -428,7 +428,7 @@ const SpecCard = ({
                       "text-[10px] font-medium uppercase tracking-[0.08em]",
                       compareSelected
                         ? "text-on-primary-container/60"
-                        : "text-on-surface-variant/60"
+                        : "text-on-surface-variant/90"
                     )}
                   >
                     {row.label}
@@ -453,7 +453,7 @@ const SpecCard = ({
             "mt-auto flex items-center justify-between gap-2 px-5 py-4 text-[13px] font-semibold transition-colors",
             compareSelected
               ? "text-on-primary-container hover:bg-on-primary-container/10"
-              : "text-primary hover:bg-primary/10"
+              : "text-primary-ink hover:bg-primary/10"
           )}
         >
           View full specs
@@ -543,7 +543,7 @@ const CompareDialog = ({
               Compare{" "}
               <span className="font-normal text-on-surface-variant">{devices.length}/3</span>
             </h2>
-            <p className="text-[11px] text-on-surface-variant/70">Scroll sideways on mobile</p>
+            <p className="text-[11px] text-on-surface-variant/90">Scroll sideways on mobile</p>
           </div>
         </div>
 
@@ -563,7 +563,7 @@ const CompareDialog = ({
           </button>
           <button
             onClick={onClear}
-            className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[12px] font-semibold text-on-surface-variant/70 transition-colors hover:bg-error/10 hover:text-error"
+            className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[12px] font-semibold text-on-surface-variant/90 transition-colors hover:bg-error/10 hover:text-error"
           >
             <Trash2 size={14} /> Clear
           </button>
@@ -582,7 +582,7 @@ const CompareDialog = ({
                   <button
                     onClick={() => onRemove(d.matched_device)}
                     aria-label={`Remove ${d.matched_device}`}
-                    className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-surface-container-high text-on-surface-variant/60 transition-colors hover:bg-error/15 hover:text-error"
+                    className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-surface-container-high text-on-surface-variant/90 transition-colors hover:bg-error/15 hover:text-error"
                   >
                     <X size={14} />
                   </button>
@@ -598,7 +598,7 @@ const CompareDialog = ({
                     />
                   </div>
                   <div className="w-full">
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-primary">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-primary-ink">
                       {getBrand(d.matched_device)}
                     </div>
                     <div className="line-clamp-2 text-[12px] font-semibold leading-snug text-on-surface">
@@ -609,7 +609,7 @@ const CompareDialog = ({
                     href={d.source_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium text-primary hover:bg-primary/10"
+                    className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium text-primary-ink hover:bg-primary/10"
                   >
                     GSMArena <ExternalLink size={11} />
                   </a>
@@ -619,7 +619,7 @@ const CompareDialog = ({
 
             {visibleGroups.length === 0 ? (
               <div className="mt-8 rounded-[24px] bg-surface-container p-8 text-center">
-                <p className="text-sm text-on-surface-variant/80">
+                <p className="text-sm text-on-surface-variant/90">
                   No differences — these devices match on every listed spec.
                 </p>
               </div>
@@ -645,7 +645,7 @@ const CompareDialog = ({
                         )}
                       >
                         <div className="mb-2 flex items-center gap-2 px-1">
-                          <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-on-surface-variant/70">
+                          <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-on-surface-variant/90">
                             {r.key}
                           </span>
                           {r.differs && (
@@ -823,10 +823,10 @@ const SpecPage = () => {
               <img src="/logo.png" alt="" className="h-full w-full scale-[1.7] object-cover" />
             </span>
             <span className="leading-tight">
-              <span className="block font-display text-[16px] font-bold tracking-tight text-on-surface transition-colors group-hover:text-primary">
+              <span className="block font-display text-[16px] font-bold tracking-tight text-on-surface transition-colors group-hover:text-primary-ink">
                 Toolz
               </span>
-              <span className="block text-[11px] font-medium text-on-surface-variant/70">
+              <span className="block text-[11px] font-medium text-on-surface-variant/90">
                 Phone specifications
               </span>
             </span>
@@ -863,10 +863,10 @@ const SpecPage = () => {
           <h1 className="mt-5 max-w-3xl text-balance font-display text-[2.9rem] font-extrabold leading-[0.94] tracking-[-0.04em] text-on-surface sm:text-6xl lg:text-7xl">
             Find any phone.
             <br />
-            <span className="text-primary">Read every spec.</span>
+            <span className="text-primary-ink">Read every spec.</span>
           </h1>
 
-          <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-on-surface-variant/85 sm:text-base">
+          <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-on-surface-variant/90 sm:text-base">
             Search real device hardware, open a complete datasheet, or line up three phones to see
             exactly what changes between them.
           </p>
@@ -887,7 +887,7 @@ const SpecPage = () => {
               href="/api/info"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full px-4 py-3.5 text-[14px] font-semibold text-primary transition-colors hover:bg-primary/10"
+              className="inline-flex items-center gap-1.5 rounded-full px-4 py-3.5 text-[14px] font-semibold text-primary-ink transition-colors hover:bg-primary/10"
             >
               Read the API docs <ArrowUpRight size={16} />
             </a>
@@ -926,13 +926,13 @@ const SpecPage = () => {
                   {stat.icon}
                 </span>
                 <div className="min-w-0">
-                  <div className="text-[11px] font-medium uppercase tracking-[0.1em] opacity-70">
+                  <div className="text-[11px] font-medium uppercase tracking-[0.1em] opacity-90">
                     {stat.label}
                   </div>
                   <div className="font-display text-3xl font-extrabold leading-tight tabular-nums">
                     {stat.value}
                   </div>
-                  <div className="truncate text-[11px] opacity-70">{stat.sub}</div>
+                  <div className="truncate text-[11px] opacity-90">{stat.sub}</div>
                 </div>
               </div>
             ))}
@@ -946,7 +946,7 @@ const SpecPage = () => {
               <div className="relative min-w-0 flex-1">
                 <Search
                   size={18}
-                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/60"
+                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/90"
                 />
                 <input
                   ref={searchRef}
@@ -958,7 +958,7 @@ const SpecPage = () => {
                   autoComplete="off"
                   spellCheck={false}
                   aria-label="Search phone models"
-                  className="h-12 w-full rounded-full bg-surface-container-high pl-12 pr-24 text-[14px] text-on-surface outline-none transition-all placeholder:text-on-surface-variant/50 focus:bg-surface-container-highest focus:ring-2 focus:ring-primary/50 [&::-webkit-search-cancel-button]:hidden"
+                  className="h-12 w-full rounded-full bg-surface-container-high pl-12 pr-24 text-[14px] text-on-surface outline-none transition-all placeholder:text-on-surface-variant/70 focus:bg-surface-container-highest focus:ring-2 focus:ring-primary/50 [&::-webkit-search-cancel-button]:hidden"
                 />
                 <div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
                   {isFetching && (
@@ -976,7 +976,7 @@ const SpecPage = () => {
                       <X size={15} />
                     </button>
                   ) : (
-                    <kbd className="hidden rounded-full bg-surface-container-highest px-2.5 py-1 text-[11px] font-medium text-on-surface-variant/70 sm:block">
+                    <kbd className="hidden rounded-full bg-surface-container-highest px-2.5 py-1 text-[11px] font-medium text-on-surface-variant/90 sm:block">
                       /
                     </kbd>
                   )}
@@ -1011,7 +1011,7 @@ const SpecPage = () => {
           </div>
 
           {/* Result meta */}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-2 pb-4 pt-5 text-[12px] text-on-surface-variant/75">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-2 pb-4 pt-5 text-[12px] text-on-surface-variant/90">
             <span className="rounded-full bg-surface-container-high px-3 py-1 font-medium">
               {isLoading
                 ? "Loading…"
@@ -1089,7 +1089,7 @@ const SpecPage = () => {
                 <h2 className="mt-5 font-display text-2xl font-bold text-on-surface">
                   No entries found
                 </h2>
-                <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-on-surface-variant/75">
+                <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-on-surface-variant/90">
                   Try a different model name
                   {filter !== "All" ? ` or clear the “${filter}” filter` : ""}.
                 </p>
@@ -1128,17 +1128,17 @@ const SpecPage = () => {
                   <div className="font-display text-[15px] font-bold text-on-surface">
                     Toolz Spec Index
                   </div>
-                  <div className="text-[11px] text-on-surface-variant/70">Live hardware data</div>
+                  <div className="text-[11px] text-on-surface-variant/90">Live hardware data</div>
                 </div>
               </div>
-              <p className="mt-4 max-w-sm text-[13px] leading-relaxed text-on-surface-variant/75">
+              <p className="mt-4 max-w-sm text-[13px] leading-relaxed text-on-surface-variant/90">
                 Full hardware sheets for each device, served from cache and refreshed from GSMArena
                 when a query is new. Images and spec text belong to GSMArena.
               </p>
             </div>
 
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-on-surface-variant/60">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-on-surface-variant/90">
                 Index
               </div>
               <ul className="mt-3 space-y-2 text-[13px]">
@@ -1150,7 +1150,7 @@ const SpecPage = () => {
                   <li key={link.label}>
                     <a
                       href={link.href}
-                      className="rounded-full text-on-surface-variant/80 transition-colors hover:text-primary"
+                      className="rounded-full text-on-surface-variant/90 transition-colors hover:text-primary-ink"
                     >
                       {link.label}
                     </a>
@@ -1160,7 +1160,7 @@ const SpecPage = () => {
             </div>
 
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-on-surface-variant/60">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-on-surface-variant/90">
                 Data
               </div>
               <ul className="mt-3 space-y-2 text-[13px]">
@@ -1174,7 +1174,7 @@ const SpecPage = () => {
                       href={link.href}
                       target={link.href.startsWith("http") ? "_blank" : undefined}
                       rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
-                      className="inline-flex items-center gap-1 text-on-surface-variant/80 transition-colors hover:text-primary"
+                      className="inline-flex items-center gap-1 text-on-surface-variant/90 transition-colors hover:text-primary-ink"
                     >
                       {link.label}
                       {link.href.startsWith("http") && <ExternalLink size={11} />}
@@ -1185,7 +1185,7 @@ const SpecPage = () => {
             </div>
           </div>
 
-          <div className="mt-6 flex flex-col items-start justify-between gap-2 border-t border-outline-variant/20 pt-4 text-[11px] text-on-surface-variant/55 sm:flex-row sm:items-center">
+          <div className="mt-6 flex flex-col items-start justify-between gap-2 border-t border-outline-variant/20 pt-4 text-[11px] text-on-surface-variant/90 sm:flex-row sm:items-center">
             <span>© 2026 Toolz Project</span>
             <span>Spec images & data © GSMArena · Shown for reference</span>
           </div>
@@ -1240,7 +1240,7 @@ const SpecPage = () => {
                 {Array.from({ length: 3 - compareIds.length }).map((_, i) => (
                   <div
                     key={`empty-${i}`}
-                    className="ml-2 flex h-11 w-11 items-center justify-center rounded-full border border-dashed border-outline-variant/50 text-on-surface-variant/40"
+                    className="ml-2 flex h-11 w-11 items-center justify-center rounded-full border border-dashed border-outline-variant/50 text-on-surface-variant/70"
                   >
                     <Plus size={15} />
                   </div>
@@ -1251,7 +1251,7 @@ const SpecPage = () => {
                 <div className="text-[12px] font-semibold text-on-surface">
                   {compareIds.length}/3 selected
                 </div>
-                <div className="truncate text-[11px] text-on-surface-variant/70 sm:max-w-[190px]">
+                <div className="truncate text-[11px] text-on-surface-variant/90 sm:max-w-[190px]">
                   {compareIds.length < 2 ? "Pick at least 2 to compare" : "Ready to compare"}
                 </div>
               </div>
@@ -1260,7 +1260,7 @@ const SpecPage = () => {
                 <button
                   onClick={() => setCompareIds([])}
                   aria-label="Clear compare"
-                  className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant/70 transition-colors hover:bg-error/10 hover:text-error"
+                  className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant/90 transition-colors hover:bg-error/10 hover:text-error"
                 >
                   <Trash2 size={16} />
                 </button>

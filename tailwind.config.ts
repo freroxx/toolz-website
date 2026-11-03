@@ -31,6 +31,7 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          ink: "hsl(var(--md-primary-ink))",
           container: "hsl(var(--md-primary-container))",
           "on-container": "hsl(var(--md-on-primary-container))",
         },
@@ -78,6 +79,10 @@ export default {
         },
         "on-surface": "hsl(var(--md-on-surface))",
         "on-surface-variant": "hsl(var(--md-on-surface-variant))",
+        "on-primary": "hsl(var(--md-on-primary))",
+        "on-secondary": "hsl(var(--md-on-secondary))",
+        "on-tertiary": "hsl(var(--md-on-tertiary))",
+        "on-error": "hsl(var(--md-on-error))",
         outline: {
           DEFAULT: "hsl(var(--md-outline))",
           variant: "hsl(var(--md-outline-variant))",

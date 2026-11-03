@@ -210,7 +210,7 @@ const News = () => {
           </div>
         ) : unavailable ? (
           <div className="rounded-3xl p-12 text-center" style={{ background: "hsl(var(--md-surface-container-high))" }}>
-            <Megaphone size={28} className="mx-auto mb-4" style={{ color: "hsl(var(--md-primary))" }} />
+            <Megaphone size={28} className="mx-auto mb-4" style={{ color: "hsl(var(--md-primary-ink))" }} />
             <div className="m3-title-large font-bold mb-2" style={{ color: "hsl(var(--md-on-surface))" }}>
               News feed unavailable
             </div>
@@ -223,7 +223,7 @@ const News = () => {
           </div>
         ) : visible.length === 0 ? (
           <div className="rounded-3xl p-12 text-center" style={{ background: "hsl(var(--md-surface-container-high))" }}>
-            <Megaphone size={28} className="mx-auto mb-4" style={{ color: "hsl(var(--md-primary))" }} />
+            <Megaphone size={28} className="mx-auto mb-4" style={{ color: "hsl(var(--md-primary-ink))" }} />
             <div className="m3-title-large font-bold mb-2" style={{ color: "hsl(var(--md-on-surface))" }}>
               {query.trim()
                 ? `No matches for “${query.trim()}”`
@@ -268,7 +268,7 @@ const News = () => {
                     {n.priority}
                   </span>
                   {n.pinned && (
-                    <span className="m3-label-small font-bold" style={{ color: "hsl(var(--md-primary))" }}>
+                    <span className="m3-label-small font-bold" style={{ color: "hsl(var(--md-primary-ink))" }}>
                       Pinned
                     </span>
                   )}

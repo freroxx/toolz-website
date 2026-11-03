@@ -81,7 +81,7 @@ const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
 
               <p
                 className="m3-label-medium mt-5"
-                style={{ color: "hsl(var(--md-on-primary-container) / 0.65)" }}
+                style={{ color: "hsl(var(--md-on-primary-container) / 0.85)" }}
               >
                 No account. No ads. Updates install from inside the app.
               </p>
@@ -110,14 +110,17 @@ const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 {isLoading ? "…" : <DownloadCounter value={totalDownloads || 0} duration={2.5} />}
               </div>
 
-              <p className="m3-label-medium mt-1 uppercase tracking-[0.14em] opacity-75">
+              <p className="m3-label-medium mt-1 uppercase tracking-[0.14em]">
                 Downloads on GitHub
               </p>
 
               <button
                 onClick={() => navigate("/downloads")}
                 className="m3-label-large mt-6 inline-flex items-center gap-2 rounded-full px-4 py-2.5 transition-transform active:scale-95"
-                style={{ background: "hsl(var(--md-on-primary) / 0.14)" }}
+                style={{
+                  background: "hsl(var(--md-on-primary))",
+                  color: "hsl(var(--md-primary))",
+                }}
               >
                 Per-release stats
                 <ArrowRight size={15} />

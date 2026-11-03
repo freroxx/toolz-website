@@ -155,7 +155,7 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
                                   Your device
                                 </span>
                               )}
-                              <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-primary/12 flex items-center justify-center text-primary group-active:bg-primary group-active:text-on-primary transition-colors shrink-0">
+                              <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-primary/12 flex items-center justify-center text-primary-ink group-active:bg-primary group-active:text-on-primary transition-colors shrink-0">
                                 <Download size={16} className="sm:w-5 sm:h-5" />
                               </div>
                               <div className="flex flex-col min-w-0">
@@ -182,7 +182,7 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
                         <AlertTriangle size={18} className="text-tertiary shrink-0" />
                         <span className="text-sm text-on-surface-variant">
                           Couldn't load the latest files.{" "}
-                          <span className="text-primary font-bold inline-flex items-center gap-1">
+                          <span className="text-primary-ink font-bold inline-flex items-center gap-1">
                             Open GitHub Releases
                             <ExternalLink size={13} />
                           </span>
@@ -219,7 +219,7 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
                   href={release.htmlUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-[9px] sm:text-[10px] font-extrabold text-on-surface-variant/40 hover:text-primary uppercase tracking-[0.2em] sm:tracking-[0.25em] transition-colors"
+                  className="inline-flex items-center gap-1.5 text-[9px] sm:text-[10px] font-extrabold text-on-surface-variant/40 hover:text-primary-ink uppercase tracking-[0.2em] sm:tracking-[0.25em] transition-colors"
                 >
                   v{release.versionName} · View release on GitHub
                   <ExternalLink size={10} className="sm:w-[11px] sm:h-[11px]" />

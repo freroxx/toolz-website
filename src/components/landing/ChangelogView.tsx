@@ -79,7 +79,7 @@ const renderUrlsOnly = (text: string, keyPrefix: string): React.ReactNode => {
         href={part}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors inline-flex items-center gap-1"
+        className="text-primary-ink underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors inline-flex items-center gap-1"
       >
         {part.replace(/^https?:\/\/(www\.)?/, "").split("/").slice(0, 2).join("/")}
         <ExternalLink size={11} className="opacity-70 shrink-0" />
@@ -113,7 +113,7 @@ const renderTokens = (tokens: InlineNode[], keyPrefix: string): React.ReactNode 
             href={token.content}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary font-bold inline-flex items-center gap-1 underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors"
+            className="text-primary-ink font-bold inline-flex items-center gap-1 underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors"
           >
             {token.content.replace(/^https?:\/\/(www\.)?/, "").split("/").slice(0, 2).join("/")}
             <ExternalLink size={12} className="opacity-70 shrink-0" />
@@ -230,7 +230,7 @@ const ChangelogView = ({ raw }: { raw: string }) => {
                   className="bg-surface-container p-4 sm:p-5 border border-outline-variant/15"
                   style={{ borderRadius: "22px 10px 22px 10px" }}
                 >
-                  <div className="text-xs sm:text-sm font-extrabold text-primary mb-2 sm:mb-2.5">
+                  <div className="text-xs sm:text-sm font-extrabold text-primary-ink mb-2 sm:mb-2.5">
                     {item.label}
                   </div>
                   <ul className="space-y-1.5 sm:space-y-2">

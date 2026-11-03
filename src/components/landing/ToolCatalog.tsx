@@ -9,7 +9,7 @@ const colorMap = {
   primary: {
     selected: "hsl(var(--md-primary-container))",
     selectedText: "hsl(var(--md-on-primary-container))",
-    icon: "hsl(var(--md-primary))",
+    icon: "hsl(var(--md-primary-ink))",
     soft: "hsl(var(--md-primary) / 0.14)",
   },
   secondary: {
@@ -304,14 +304,14 @@ const ToolCatalog = () => {
                   </ul>
 
                   <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                    <p className="m3-label-small tabular-nums text-on-surface-variant/70">
+                    <p className="m3-label-small tabular-nums text-on-surface-variant/90">
                       Group {activeIndex + 1} of {categories.length} ·{" "}
                       {active.tools.length} tool
                       {active.tools.length === 1 ? "" : "s"}
                     </p>
                     <a
                       href="/spec"
-                      className="m3-label-large inline-flex items-center gap-1 text-primary hover:underline"
+                      className="m3-label-large inline-flex items-center gap-1 text-primary-ink hover:underline"
                     >
                       Check your device specs
                       <ChevronRight size={14} />

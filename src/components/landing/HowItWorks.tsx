@@ -158,7 +158,7 @@ const HowItWorks = () => {
               className="grid h-12 w-12 place-items-center rounded-[16px]"
               style={{
                 background: "hsl(var(--md-surface-container-highest))",
-                color: "hsl(var(--md-primary))",
+                color: "hsl(var(--md-primary-ink))",
               }}
             >
               <Sparkles size={22} />
@@ -187,7 +187,7 @@ const HowItWorks = () => {
                 className="rounded-[22px] p-5"
                 style={{ background: "hsl(var(--md-surface-container))" }}
               >
-                <span className="m3-label-large tabular-nums text-primary">
+                <span className="m3-label-large tabular-nums text-primary-ink">
                   {step.num}
                 </span>
                 <p className="m3-title-small mt-2 text-on-surface">{step.label}</p>

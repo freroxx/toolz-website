@@ -62,7 +62,7 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
             >
               {totalTools} tools.
               <br />
-              <span className="text-primary">Zero clutter.</span>
+              <span className="text-primary-ink">Zero clutter.</span>
             </motion.h1>
 
             <motion.p

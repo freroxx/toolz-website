@@ -89,7 +89,7 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 >
                   Toolz
                 </span>
-                <span className="m3-label-small" style={{ color: "hsl(var(--md-primary))" }}>
+                <span className="m3-label-small" style={{ color: "hsl(var(--md-primary-ink))" }}>
                   v{versionName} BETA
                 </span>
               </div>
@@ -211,7 +211,7 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                     <span className="m3-title-medium font-bold" style={{ color: "hsl(var(--md-on-surface))" }}>
                       Toolz
                     </span>
-                    <span className="m3-label-small" style={{ color: "hsl(var(--md-primary))" }}>
+                    <span className="m3-label-small" style={{ color: "hsl(var(--md-primary-ink))" }}>
                       v{versionName} BETA
                     </span>
                   </div>

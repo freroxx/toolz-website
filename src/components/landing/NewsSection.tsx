@@ -93,7 +93,7 @@ const NewsSection = () => {
                         {n.priority}
                       </span>
                       {n.pinned && (
-                        <span className="m3-label-small" style={{ color: "hsl(var(--md-primary))" }}>
+                        <span className="m3-label-small" style={{ color: "hsl(var(--md-primary-ink))" }}>
                           Pinned
                         </span>
                       )}

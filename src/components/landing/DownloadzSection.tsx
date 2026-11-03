@@ -64,7 +64,7 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
                 <>
                   Paste a link.
                   <br />
-                  <span className="text-primary">Keep the video.</span>
+                  <span className="text-primary-ink">Keep the video.</span>
                 </>
               }
               description="A companion web tool for public TikTok and Instagram posts. It runs outside the app, needs no account, and hands you the file directly."
@@ -73,7 +73,7 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
             <div className="flex flex-wrap gap-2">
               {platforms.map(({ icon: Icon, label }) => (
                 <span key={label} className="m3-chip gap-2">
-                  <Icon size={15} className="text-primary" />
+                  <Icon size={15} className="text-primary-ink" />
                   {label}
                 </span>
               ))}
@@ -86,7 +86,7 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
               <Info
                 size={18}
                 className="mt-0.5 shrink-0"
-                style={{ color: "hsl(var(--md-primary))" }}
+                style={{ color: "hsl(var(--md-primary-ink))" }}
               />
               <p className="m3-body-small text-on-surface-variant">
                 YouTube links are rejected on the web — YouTube blocks web
@@ -95,7 +95,7 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
                 <button
                   type="button"
                   onClick={onDownloadClick}
-                  className="font-semibold text-primary hover:underline"
+                  className="font-semibold text-primary-ink hover:underline"
                 >
                   Get the app
                 </button>

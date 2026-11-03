@@ -45,14 +45,14 @@ const RankingSection = ({ releases }: { releases: GithubRelease[] }) => {
         className="m3-card-outlined p-6 flex flex-col gap-4"
       >
         <h3 className="m3-title-medium flex items-center gap-2 text-on-surface">
-          <Smartphone size={18} className="text-primary" />
+          <Smartphone size={18} className="text-primary-ink" />
           Top Architectures
         </h3>
         <div className="space-y-3">
           {topArchitectures.map(([abi, count], i) => (
             <div key={abi} className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
+                <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary-ink">
                   {i + 1}
                 </span>
                 <span className="m3-body-medium text-on-surface-variant font-mono">{abi}</span>
@@ -109,7 +109,7 @@ const ReleaseCard = ({ release }: { release: GithubRelease }) => {
     >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary-ink">
             <Package size={24} />
           </div>
           <div>
@@ -121,11 +121,11 @@ const ReleaseCard = ({ release }: { release: GithubRelease }) => {
           </div>
         </div>
         <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-2xl self-start">
-          <Download size={16} className="text-primary" />
-          <span className="m3-title-medium font-bold text-primary">
+          <Download size={16} className="text-primary-ink" />
+          <span className="m3-title-medium font-bold text-primary-ink">
             {releaseTotal.toLocaleString()}
           </span>
-          <span className="m3-label-small text-primary/70 uppercase font-bold tracking-tight">Total</span>
+          <span className="m3-label-small text-primary-ink/70 uppercase font-bold tracking-tight">Total</span>
         </div>
       </div>
 
@@ -142,10 +142,10 @@ const ReleaseCard = ({ release }: { release: GithubRelease }) => {
               </span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <span className="m3-body-medium font-mono text-primary/80">{asset.download_count.toLocaleString()}</span>
+              <span className="m3-body-medium font-mono text-primary-ink/80">{asset.download_count.toLocaleString()}</span>
               <a
                 href={asset.browser_download_url}
-                className="w-8 h-8 rounded-full bg-primary/5 flex items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+                className="w-8 h-8 rounded-full bg-primary/5 flex items-center justify-center text-primary-ink opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <Download size={14} />
               </a>
@@ -158,7 +158,7 @@ const ReleaseCard = ({ release }: { release: GithubRelease }) => {
         href={release.html_url}
         target="_blank"
         rel="noopener noreferrer"
-        className="m3-label-large text-primary hover:underline self-end flex items-center gap-1 mt-2"
+        className="m3-label-large text-primary-ink hover:underline self-end flex items-center gap-1 mt-2"
       >
         View release on GitHub
         <ExternalLink size={14} />
@@ -203,7 +203,7 @@ const DownloadsPage = () => {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 m3-label-large text-on-surface-variant hover:text-primary transition-colors mb-12 group"
+          className="flex items-center gap-2 m3-label-large text-on-surface-variant hover:text-primary-ink transition-colors mb-12 group"
         >
           <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
           Back to Home
@@ -215,7 +215,7 @@ const DownloadsPage = () => {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="m3-chip gap-2 bg-primary/10 text-primary border-primary/20"
+              className="m3-chip gap-2 bg-primary/10 text-primary-ink border-primary/20"
             >
               <BarChart size={16} />
               From GitHub
@@ -241,7 +241,7 @@ const DownloadsPage = () => {
                 onClick={handleRefresh}
                 disabled={isLoading || isFetching || isRefreshing}
                 className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center bg-primary/10 text-primary transition-all hover:bg-primary/20 active:scale-90",
+                  "w-10 h-10 rounded-full flex items-center justify-center bg-primary/10 text-primary-ink transition-all hover:bg-primary/20 active:scale-90",
                   (isFetching || isRefreshing) && "animate-spin"
                 )}
               >
@@ -249,13 +249,13 @@ const DownloadsPage = () => {
               </button>
             </div>
 
-            <div className="m3-display-large font-black tracking-tighter text-primary text-6xl md:text-8xl">
+            <div className="m3-display-large font-black tracking-tighter text-primary-ink text-6xl md:text-8xl">
               {isLoading ? "..." : <DownloadCounter value={totalDownloads} duration={2.5} />}
             </div>
             <div className="m3-title-large font-bold text-on-surface-variant tracking-widest uppercase opacity-60">
               Total downloads
             </div>
-            <div className="mt-6 flex items-center gap-2 text-primary m3-label-medium font-bold uppercase tracking-widest bg-primary/10 px-4 py-1.5 rounded-full">
+            <div className="mt-6 flex items-center gap-2 text-primary-ink m3-label-medium font-bold uppercase tracking-widest bg-primary/10 px-4 py-1.5 rounded-full">
               <Sparkles size={14} />
               Live from GitHub
             </div>

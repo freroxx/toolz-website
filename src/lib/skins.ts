@@ -404,6 +404,10 @@ export function buildThemeVars(skin: SiteSkin, mode: ResolvedMode): Record<strin
 
   const primary = main(p);
   const primaryHex = `hsl(${primary})`;
+  // Text-safe variant: light tint on dark surfaces, deeper tone on light ones.
+  const primaryInk = dark
+    ? triplet(p.h, clamp(pSat, 20, 72), Math.max(80, Math.min(p.l, 92)))
+    : triplet(p.h, p.s, Math.min(p.l, 24));
   const secondary = main(s, 50, 52);
   const secondaryHex = `hsl(${secondary})`;
   const tertiary = dark ? triplet(tHue, tSat, 80) : triplet(tHue, tSat, 40);
@@ -472,6 +476,7 @@ export function buildThemeVars(skin: SiteSkin, mode: ResolvedMode): Record<strin
 
   return {
     "--md-primary": primary,
+    "--md-primary-ink": primaryInk,
     "--md-on-primary": onPrimary,
     "--md-primary-container": primaryContainer,
     "--md-on-primary-container": onPrimaryContainer,

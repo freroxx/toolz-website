@@ -50,7 +50,7 @@ const SkinTile = ({
       <span className="block truncate text-[13px] font-semibold leading-tight">{skin.name}</span>
       <span
         className="mt-0.5 block truncate text-[11px] leading-tight"
-        style={{ opacity: 0.7 }}
+        style={{ opacity: 0.9 }}
       >
         {skin.author || "Community"} · {modeLabel(skin.themeMode)}
       </span>
@@ -133,7 +133,7 @@ const ThemeDialog = ({
               <div className="min-w-0">
                 <p
                   className="m3-label-medium font-semibold uppercase tracking-[0.16em]"
-                  style={{ color: "hsl(var(--md-primary))" }}
+                  style={{ color: "hsl(var(--md-primary-ink))" }}
                 >
                   {view === "about" ? "About skins" : "Appearance"}
                 </p>
@@ -256,11 +256,11 @@ const ThemeDialog = ({
                   >
                     <SkinIcon skin={activeSkin} size={48} />
                     <div className="min-w-0 flex-1">
-                      <p className="m3-label-small uppercase tracking-[0.14em]" style={{ opacity: 0.7 }}>
+                      <p className="m3-label-small uppercase tracking-[0.14em]" style={{ opacity: 0.9 }}>
                         Active skin
                       </p>
                       <p className="m3-title-large truncate text-[18px]">{activeSkin.name}</p>
-                      <p className="m3-body-small line-clamp-2" style={{ opacity: 0.78 }}>
+                      <p className="m3-body-small line-clamp-2" style={{ opacity: 0.9 }}>
                         {activeSkin.description || `${modeLabel(activeSkin.themeMode)} · ${activeSkin.author || "Community"}`}
                       </p>
                     </div>
@@ -339,7 +339,7 @@ const ThemeDialog = ({
                 onClick={() => setView("about")}
                 className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 m3-label-small"
                 style={{
-                  color: "hsl(var(--md-primary))",
+                  color: "hsl(var(--md-primary-ink))",
                   background: "hsl(var(--md-primary) / 0.1)",
                 }}
               >

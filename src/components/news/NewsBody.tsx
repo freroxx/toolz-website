@@ -39,7 +39,7 @@ function Inline({ text }: { text: string }) {
       );
     }
     return (
-      <a key={key} href={url} target="_blank" rel="noopener noreferrer" className="underline break-all" style={{ color: "hsl(var(--md-primary))" }}>
+      <a key={key} href={url} target="_blank" rel="noopener noreferrer" className="underline break-all" style={{ color: "hsl(var(--md-primary-ink))" }}>
         {label}
       </a>
     );
@@ -129,7 +129,7 @@ export function NewsBody({ body, compact = false }: { body: string; compact?: bo
         <ul key={`b${k++}`} className="grid gap-1.5 pl-1">
           {items.map((it, j) => (
             <li key={j} className="flex gap-2">
-              <span style={{ color: "hsl(var(--md-primary))" }}>•</span>
+              <span style={{ color: "hsl(var(--md-primary-ink))" }}>•</span>
               <span><Inline text={it} /></span>
             </li>
           ))}
@@ -148,7 +148,7 @@ export function NewsBody({ body, compact = false }: { body: string; compact?: bo
         <ol key={`b${k++}`} className="grid gap-1.5 pl-1" style={{ listStyle: "none" }}>
           {items.map((it, j) => (
             <li key={j} className="flex gap-2">
-              <span className="font-bold" style={{ color: "hsl(var(--md-primary))" }}>{j + 1}.</span>
+              <span className="font-bold" style={{ color: "hsl(var(--md-primary-ink))" }}>{j + 1}.</span>
               <span><Inline text={it} /></span>
             </li>
           ))}

@@ -154,7 +154,7 @@ const Gallery = () => {
             <button
               onClick={() => scrollByCards(-1)}
               aria-label="Previous screenshots"
-              className="grid h-11 w-11 place-items-center rounded-full text-on-surface-variant transition-all hover:bg-surface-container-high hover:text-primary active:scale-90"
+              className="grid h-11 w-11 place-items-center rounded-full text-on-surface-variant transition-all hover:bg-surface-container-high hover:text-primary-ink active:scale-90"
             >
               <ChevronLeft size={20} />
             </button>
