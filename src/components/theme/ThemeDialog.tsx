@@ -270,7 +270,7 @@ const ThemeDialog = ({
                     <p className="m3-label-medium font-semibold uppercase tracking-[0.14em]" style={{ color: "hsl(var(--md-on-surface-variant))" }}>
                       Included
                     </p>
-                    <span className="m3-label-small tabular-nums" style={{ color: "hsl(var(--md-on-surface-variant) / 0.7)" }}>
+                    <span className="m3-label-small tabular-nums" style={{ color: "hsl(var(--md-on-surface-variant) / 0.9)" }}>
                       {included.length}
                     </span>
                   </div>
@@ -289,7 +289,7 @@ const ThemeDialog = ({
                     <p className="m3-label-medium font-semibold uppercase tracking-[0.14em]" style={{ color: "hsl(var(--md-on-surface-variant))" }}>
                       Community
                     </p>
-                    <span className="m3-label-small tabular-nums" style={{ color: "hsl(var(--md-on-surface-variant) / 0.7)" }}>
+                    <span className="m3-label-small tabular-nums" style={{ color: "hsl(var(--md-on-surface-variant) / 0.9)" }}>
                       {loading ? "…" : community.length}
                     </span>
                   </div>

@@ -157,7 +157,7 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                       Toolz for Android
                     </p>
                     <p
-                      className="m3-label-small opacity-70"
+                      className="m3-label-small opacity-90"
                       style={{ color: "hsl(var(--md-on-primary-container))" }}
                     >
                       One APK · updates in-app

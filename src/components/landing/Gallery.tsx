@@ -138,7 +138,7 @@ const Gallery = () => {
               allScreenshots.length,
               Math.round(position * (allScreenshots.length - 1)) + 1
             )}
-            <span className="opacity-40"> / {allScreenshots.length}</span>
+            <span className="opacity-90"> / {allScreenshots.length}</span>
           </span>
           <div className="flex items-center gap-3">
             <div

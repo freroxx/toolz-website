@@ -73,7 +73,7 @@ const Discord = () => {
               />
               <div>
                 <p
-                  className="m3-label-small opacity-70"
+                  className="m3-label-small opacity-90"
                   style={{ color: "hsl(var(--md-on-secondary-container))" }}
                 >
                   Support

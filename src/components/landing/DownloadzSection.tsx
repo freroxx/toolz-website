@@ -132,7 +132,7 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
                     Open Downloadz
                   </p>
                   <p
-                    className="m3-label-small opacity-70"
+                    className="m3-label-small opacity-90"
                     style={{ color: "hsl(var(--md-on-tertiary-container))" }}
                   >
                     Web app · no install
@@ -202,7 +202,7 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
               ) : (
                 <p
                   id="downloadz-help"
-                  className="m3-label-small mt-2.5 opacity-70"
+                  className="m3-label-small mt-2.5 opacity-90"
                   style={{ color: "hsl(var(--md-on-tertiary-container))" }}
                 >
                   Opens toolz-downloadz.vercel.app in a new tab with the link filled in.
