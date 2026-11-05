@@ -195,8 +195,11 @@ function luminance(hex: string): number {
 }
 
 /** Readable on-colour for text/icons drawn over `hex`. */
-export function readableOn(hex: string): string {
-  return luminance(hex) > 0.55 ? "#160B24" : "#FFFFFF";
+export function readableOn(hex: string, isMono = false): string {
+  if (luminance(hex) > 0.55) {
+    return isMono ? "#101014" : "#160B24";
+  }
+  return "#FFFFFF";
 }
 
 /* ───────────────────────── Normalisation ───────────────────────── */
@@ -247,14 +250,21 @@ function deriveIcon(primary: string | null, secondary: string | null): SkinIconP
 }
 
 function iconFor(raw: RawSkin): SkinIconPalette {
+  const stroke = toHex(raw.iconStroke);
+  const bg = toHex(raw.iconBg);
+  const fg = toHex(raw.iconFg);
+  const pri = toHex(raw.primary);
+  const sec = toHex(raw.secondary);
+
   const preset = ICON_PRESETS[String(raw.iconPresetId ?? "")];
-  const base = preset ?? deriveIcon(toHex(raw.primary), toHex(raw.secondary));
-  return {
-    rim: toHex(raw.iconStroke) ?? base.rim,
-    bodyStart: toHex(raw.iconBg) ?? base.bodyStart,
-    bodyEnd: base.bodyEnd,
-    disc: toHex(raw.iconFg) ?? base.disc,
-  };
+  const base = preset ?? deriveIcon(pri, sec);
+
+  const bodyStart = bg ?? base.bodyStart;
+  const bodyEnd = base.bodyEnd;
+  const rim = stroke ?? (sec ?? base.rim);
+  const disc = fg ?? (bg ? readableOn(bg) : base.disc);
+
+  return { rim, bodyStart, bodyEnd, disc };
 }
 
 export function normaliseSkin(raw: RawSkin | SkinItem | null | undefined, source: SkinSource): SiteSkin | null {
@@ -432,38 +442,37 @@ export function buildThemeVars(skin: SiteSkin, mode: ResolvedMode): Record<strin
 
   // Text-safe variant: light tint on dark surfaces, deeper tone on light ones.
   // For monochrome / near-white primaries in dark mode (e.g. Carbon), ensure
-  // distinct luminance and contrast against on-surface white (tone 94) so accents pop!
+  // crisp luminance and high contrast against dark surfaces so accents pop!
   const isMonochrome = pSat < 18;
-  const isNearWhite = p.l > 80;
 
   const primaryInk = dark
-    ? (isMonochrome && isNearWhite
-        ? triplet(p.h || 240, 16, 76)
-        : triplet(p.h, clamp(pSat, 20, 72), Math.max(80, Math.min(p.l, 92))))
-    : (isMonochrome && p.l < 30
-        ? triplet(p.h || 240, 16, 36)
-        : triplet(p.h, p.s, Math.min(p.l, 24)));
+    ? (isMonochrome
+        ? triplet(p.h || 240, 4, 98)
+        : triplet(p.h, clamp(pSat, 20, 85), Math.max(82, Math.min(p.l, 92))))
+    : (isMonochrome
+        ? triplet(p.h || 240, 8, 18)
+        : triplet(p.h, p.s, Math.min(p.l, 28)));
   const secondary = main(s, 50, 52);
   const secondaryHex = `hsl(${secondary})`;
   const tertiary = dark ? triplet(tHue, tSat, 80) : triplet(tHue, tSat, 40);
 
-  const onPrimary = hexToHslTriplet(readableOn(primaryHex));
-  const onSecondary = hexToHslTriplet(readableOn(secondaryHex));
-  const onTertiary = hexToHslTriplet(readableOn(`hsl(${tertiary})`));
+  const onPrimary = hexToHslTriplet(readableOn(primaryHex, isMonochrome));
+  const onSecondary = hexToHslTriplet(readableOn(secondaryHex, isMonochrome));
+  const onTertiary = hexToHslTriplet(readableOn(`hsl(${tertiary})`, isMonochrome));
 
   const primaryContainer = dark
-    ? triplet(p.h, clamp(pSat * 0.55, 8, 46), 24)
-    : triplet(p.h, clamp(pSat * 0.55, 8, 62), 89);
+    ? (isMonochrome ? triplet(p.h || 240, 4, 20) : triplet(p.h, clamp(pSat * 0.55, 8, 46), 24))
+    : (isMonochrome ? triplet(p.h || 240, 4, 90) : triplet(p.h, clamp(pSat * 0.55, 8, 62), 89));
   const onPrimaryContainer = dark
-    ? triplet(p.h, clamp(pSat * 0.8, 16, 82), 92)
-    : triplet(p.h, clamp(pSat * 0.8, 16, 82), 17);
+    ? (isMonochrome ? triplet(p.h || 240, 4, 96) : triplet(p.h, clamp(pSat * 0.8, 16, 82), 92))
+    : (isMonochrome ? triplet(p.h || 240, 4, 14) : triplet(p.h, clamp(pSat * 0.8, 16, 82), 17));
 
   const secondaryContainer = dark
-    ? triplet(s.h, clamp(sSat * 0.55, 6, 44), 26)
-    : triplet(s.h, clamp(sSat * 0.55, 6, 58), 90);
+    ? (isMonochrome ? triplet(s.h, clamp(sSat * 0.4, 4, 24), 24) : triplet(s.h, clamp(sSat * 0.55, 6, 44), 26))
+    : (isMonochrome ? triplet(s.h, clamp(sSat * 0.4, 4, 28), 90) : triplet(s.h, clamp(sSat * 0.55, 6, 58), 90));
   const onSecondaryContainer = dark
-    ? triplet(s.h, clamp(sSat * 0.75, 12, 76), 92)
-    : triplet(s.h, clamp(sSat * 0.75, 12, 76), 16);
+    ? (isMonochrome ? triplet(s.h, 4, 94) : triplet(s.h, clamp(sSat * 0.75, 12, 76), 92))
+    : (isMonochrome ? triplet(s.h, 4, 14) : triplet(s.h, clamp(sSat * 0.75, 12, 76), 16));
 
   const tertiaryContainer = dark
     ? triplet(tHue, clamp(tSat * 0.55, 8, 44), 28)
@@ -472,11 +481,11 @@ export function buildThemeVars(skin: SiteSkin, mode: ResolvedMode): Record<strin
     ? triplet(tHue, clamp(tSat * 0.75, 12, 76), 93)
     : triplet(tHue, clamp(tSat * 0.75, 12, 76), 16);
 
-  const surfaceHue = p.h;
-  const surfaceSat = clamp(pSat * 0.45, 3, 34);
+  const surfaceHue = isMonochrome ? 240 : p.h;
+  const surfaceSat = isMonochrome ? 4 : clamp(pSat * 0.45, 3, 34);
 
   const surface = dark
-    ? triplet(surfaceHue, surfaceSat * 0.75, 7)
+    ? triplet(surfaceHue, surfaceSat * 0.75, 6)
     : triplet(surfaceHue, surfaceSat * 0.18, 98);
   const surfaceDim = dark
     ? triplet(surfaceHue, surfaceSat * 0.8, 4)
@@ -488,22 +497,30 @@ export function buildThemeVars(skin: SiteSkin, mode: ResolvedMode): Record<strin
     ? triplet(surfaceHue, surfaceSat * 0.8, 4)
     : triplet(surfaceHue, surfaceSat * 0.12, 100);
   const containerLow = dark
-    ? triplet(surfaceHue, surfaceSat * 0.7, 10)
+    ? triplet(surfaceHue, surfaceSat * 0.7, 9)
     : triplet(surfaceHue, surfaceSat * 0.3, 96);
   const container = dark
     ? triplet(surfaceHue, surfaceSat * 0.6, 12)
     : triplet(surfaceHue, surfaceSat * 0.34, 94);
   const containerHigh = dark
-    ? triplet(surfaceHue, surfaceSat * 0.5, 17)
+    ? triplet(surfaceHue, surfaceSat * 0.5, 16)
     : triplet(surfaceHue, surfaceSat * 0.4, 92);
   const containerHighest = dark
     ? triplet(surfaceHue, surfaceSat * 0.45, 20)
     : triplet(surfaceHue, surfaceSat * 0.44, 90);
 
-  const onSurface = dark ? triplet(surfaceHue, 24, 94) : triplet(surfaceHue, 26, 12);
-  const onSurfaceVariant = dark ? triplet(surfaceHue, 14, 77) : triplet(surfaceHue, 13, 32);
-  const outline = dark ? triplet(surfaceHue, 10, 55) : triplet(surfaceHue, 9, 49);
-  const outlineVariant = dark ? triplet(surfaceHue, 16, 26) : triplet(surfaceHue, 24, 84);
+  const onSurface = dark
+    ? (isMonochrome ? triplet(surfaceHue, 4, 95) : triplet(surfaceHue, 24, 94))
+    : (isMonochrome ? triplet(surfaceHue, 6, 12) : triplet(surfaceHue, 26, 12));
+  const onSurfaceVariant = dark
+    ? (isMonochrome ? triplet(surfaceHue, 4, 72) : triplet(surfaceHue, 14, 77))
+    : (isMonochrome ? triplet(surfaceHue, 4, 38) : triplet(surfaceHue, 13, 32));
+  const outline = dark
+    ? (isMonochrome ? triplet(surfaceHue, 4, 45) : triplet(surfaceHue, 10, 55))
+    : (isMonochrome ? triplet(surfaceHue, 4, 50) : triplet(surfaceHue, 9, 49));
+  const outlineVariant = dark
+    ? (isMonochrome ? triplet(surfaceHue, 4, 20) : triplet(surfaceHue, 16, 26))
+    : (isMonochrome ? triplet(surfaceHue, 4, 86) : triplet(surfaceHue, 24, 84));
 
   const error = dark ? "0 69% 67%" : "3 71% 41%";
   const onError = dark ? "0 100% 15%" : "0 0% 100%";
@@ -615,15 +632,14 @@ export function applySkinTheme(skin: SiteSkin, mode: ResolvedMode): void {
     .forEach((meta) => meta.setAttribute("content", themeColor));
 
   try {
-    const favicon = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
-    if (favicon) {
-      if (skin.id === SITE_DEFAULT_SKIN_ID) {
-        favicon.href = "/logo.png";
-      } else {
-        const svg = generateSkinSvg(skin);
-        favicon.href = `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
-      }
-    }
+    const svg = generateSkinSvg(skin);
+    const dataUri = `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+    const icons = document.querySelectorAll<HTMLLinkElement>('link[rel*="icon"]');
+    icons.forEach((icon) => {
+      icon.type = "image/svg+xml";
+      icon.href = dataUri;
+      icon.removeAttribute("sizes");
+    });
   } catch {
     /* ignore favicon errors */
   }

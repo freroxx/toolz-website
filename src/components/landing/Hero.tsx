@@ -163,7 +163,7 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
               {stats.map(({ value, label }) => (
                 <div
                   key={label}
-                  className="rounded-[18px] border p-3.5 text-center transition-colors hover:border-outline"
+                  className="rounded-[16px] border p-3.5 text-center transition-colors hover:border-outline"
                   style={{
                     background: "hsl(var(--md-surface-container-low))",
                     borderColor: "hsl(var(--md-outline-variant) / 0.5)",
@@ -200,8 +200,8 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 onMouseEnter={() => setPaused(true)}
                 onMouseLeave={() => setPaused(false)}
               >
-                {/* Dynamic Island / Camera hole */}
-                <div className="absolute top-4 left-1/2 z-30 h-4 w-20 -translate-x-1/2 rounded-full bg-black/80" />
+                {/* Android camera punch hole */}
+                <div className="absolute top-3.5 left-1/2 z-30 h-3 w-3 -translate-x-1/2 rounded-full bg-black shadow-inner ring-1 ring-white/10" />
 
                 <div
                   className="m3-phone-screen relative cursor-pointer overflow-hidden"
