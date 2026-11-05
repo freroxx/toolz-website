@@ -250,21 +250,18 @@ function deriveIcon(primary: string | null, secondary: string | null): SkinIconP
 }
 
 function iconFor(raw: RawSkin): SkinIconPalette {
-  const stroke = toHex(raw.iconStroke);
   const bg = toHex(raw.iconBg);
   const fg = toHex(raw.iconFg);
-  const pri = toHex(raw.primary);
-  const sec = toHex(raw.secondary);
-
+  const stroke = toHex(raw.iconStroke);
   const preset = ICON_PRESETS[String(raw.iconPresetId ?? "")];
-  const base = preset ?? deriveIcon(pri, sec);
-
+  const base = preset ?? deriveIcon(toHex(raw.primary), toHex(raw.secondary));
   const bodyStart = bg ?? base.bodyStart;
-  const bodyEnd = base.bodyEnd;
-  const rim = stroke ?? (sec ?? base.rim);
-  const disc = fg ?? (bg ? readableOn(bg) : base.disc);
-
-  return { rim, bodyStart, bodyEnd, disc };
+  return {
+    rim: stroke ?? base.rim,
+    bodyStart,
+    bodyEnd: base.bodyEnd,
+    disc: fg ?? (bg && !preset ? readableOn(bodyStart) : base.disc),
+  };
 }
 
 export function normaliseSkin(raw: RawSkin | SkinItem | null | undefined, source: SkinSource): SiteSkin | null {
