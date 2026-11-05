@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import LazyDownloadDialog from "@/components/landing/LazyDownloadDialog";
 import DownloadCounter from "@/components/landing/DownloadCounter";
+import { PRESS_SPRING } from "@/lib/motion";
 
 const RankingSection = ({ releases }: { releases: GithubRelease[] }) => {
   const topArchitectures = (() => {
@@ -202,6 +203,8 @@ const DownloadsPage = () => {
         <motion.button
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
+          whileTap={{ scale: 0.95 }}
+          transition={PRESS_SPRING}
           onClick={() => navigate('/')}
           className="flex items-center gap-2 m3-label-large text-on-surface-variant hover:text-primary-ink transition-colors mb-12 group"
         >
@@ -301,9 +304,11 @@ const DownloadsPage = () => {
       <motion.button
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 1, type: "spring" }}
+        whileTap={{ scale: 0.92 }}
+        whileHover={{ scale: 1.05 }}
+        transition={PRESS_SPRING}
         onClick={() => setDownloadOpen(true)}
-        className="fixed bottom-8 right-8 w-16 h-16 rounded-[24px] bg-primary-container text-on-primary-container shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-transform z-50 group"
+        className="fixed bottom-8 right-8 w-16 h-16 rounded-[22px] bg-primary-container text-on-primary-container shadow-2xl flex items-center justify-center transition-colors z-50 group border border-outline-variant/40"
         aria-label="Download Toolz"
       >
         <Download size={28} />

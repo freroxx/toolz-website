@@ -26,6 +26,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { useSkin } from "@/components/theme/skin-context";
+import SkinIcon from "@/components/theme/SkinIcon";
 
 interface SpecPayload {
   search_query: string;
@@ -680,6 +682,7 @@ const CompareDialog = ({
 /* ── Page ─────────────────────────────────────────────────────────────── */
 const SpecPage = () => {
   const navigate = useNavigate();
+  const { activeSkin } = useSkin();
   const [search, setSearch] = useState(
     () => new URLSearchParams(window.location.search).get("q") ?? ""
   );
@@ -816,11 +819,11 @@ const SpecPage = () => {
         <header className="flex items-center justify-between gap-4 py-5">
           <button
             onClick={() => navigate("/")}
-            className="group flex items-center gap-3 text-left"
+            className="group flex items-center gap-3 text-left active:scale-95 transition-transform"
             aria-label="Back to Toolz home"
           >
-            <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-[16px] bg-primary-container">
-              <img src="/logo.png" alt="" className="h-full w-full scale-[1.7] object-cover" />
+            <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-[16px] bg-primary-container p-2">
+              <SkinIcon skin={activeSkin} size={28} />
             </span>
             <span className="leading-tight">
               <span className="block font-display text-[16px] font-bold tracking-tight text-on-surface transition-colors group-hover:text-primary-ink">
@@ -1121,8 +1124,8 @@ const SpecPage = () => {
           <div className="grid gap-8 md:grid-cols-[1.5fr_1fr_1fr]">
             <div>
               <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-[16px] bg-primary-container">
-                  <img src="/logo.png" alt="" className="h-full w-full scale-[1.7] object-cover" />
+                <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-[16px] bg-primary-container p-2">
+                  <SkinIcon skin={activeSkin} size={28} />
                 </span>
                 <div>
                   <div className="font-display text-[15px] font-bold text-on-surface">
