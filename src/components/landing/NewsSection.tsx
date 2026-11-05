@@ -6,6 +6,7 @@ import { usePublicNews, formatNewsDate } from "@/hooks/usePublicNews";
 import { stripMarkdown } from "@/lib/stripMarkdown";
 import { newsPriorityChipStyle } from "@/lib/newsStyle";
 import SectionHeader from "@/components/landing/SectionHeader";
+import { PRESS_SPRING } from "@/lib/motion";
 
 function updatedAgo(at: number): string | null {
   if (!at) return null;
@@ -72,60 +73,67 @@ const NewsSection = () => {
               {preview.map((n, i) => (
                 <motion.div
                   key={n.id}
-                  initial={{ opacity: 0, y: 24 }}
+                  initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.08, type: "spring", stiffness: 220, damping: 26 }}
                 >
-                  <Link
-                    to={`/news#news-${n.id}`}
-                    className="block rounded-3xl p-6 h-full transition-transform hover:-translate-y-1 active:scale-[0.99]"
-                    style={{
-                      background: "hsl(var(--md-surface-container-high))",
-                      border: "1px solid hsl(var(--md-outline-variant))",
-                    }}
+                  <motion.div
+                    whileHover={{ y: -3 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={PRESS_SPRING}
+                    className="h-full"
                   >
-                    <div className="flex items-center gap-2 mb-4">
-                      <span
-                        className="m3-label-small px-3 py-1 rounded-full font-bold uppercase tracking-wider"
-                        style={newsPriorityChipStyle(n.priority)}
-                      >
-                        {n.priority}
-                      </span>
-                      {n.pinned && (
-                        <span className="m3-label-small" style={{ color: "hsl(var(--md-primary-ink))" }}>
-                          Pinned
+                    <Link
+                      to={`/news#news-${n.id}`}
+                      className="block rounded-[22px] border p-6 h-full transition-colors hover:border-outline shadow-xs"
+                      style={{
+                        background: "hsl(var(--md-surface-container-high))",
+                        borderColor: "hsl(var(--md-outline-variant) / 0.5)",
+                      }}
+                    >
+                      <div className="flex items-center gap-2 mb-4">
+                        <span
+                          className="m3-label-small px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider"
+                          style={newsPriorityChipStyle(n.priority)}
+                        >
+                          {n.priority}
                         </span>
+                        {n.pinned && (
+                          <span className="m3-label-small font-semibold" style={{ color: "hsl(var(--md-primary-ink))" }}>
+                            Pinned
+                          </span>
+                        )}
+                        <span
+                          className="m3-label-small ml-auto font-medium"
+                          style={{ color: "hsl(var(--md-on-surface-variant))" }}
+                        >
+                          {formatNewsDate(n.publishAt)}
+                        </span>
+                      </div>
+                      {n.imageUrl && !broken.has(n.id) && (
+                        <img
+                          src={n.imageUrl}
+                          alt={n.title}
+                          loading="lazy"
+                          onError={() => setBroken((prev) => new Set(prev).add(n.id))}
+                          className="w-full h-auto rounded-[14px] mb-4 border border-outline-variant/30"
+                        />
                       )}
-                      <span
-                        className="m3-label-small ml-auto"
+                      <div
+                        className="m3-title-medium font-bold mb-2 line-clamp-2"
+                        style={{ color: "hsl(var(--md-on-surface))" }}
+                      >
+                        {n.title}
+                      </div>
+                      <div
+                        className="m3-body-small line-clamp-3 leading-relaxed"
                         style={{ color: "hsl(var(--md-on-surface-variant))" }}
                       >
-                        {formatNewsDate(n.publishAt)}
-                      </span>
-                    </div>
-                    {n.imageUrl && !broken.has(n.id) && (
-                      <img
-                        src={n.imageUrl}
-                        alt={n.title}
-                        loading="lazy"
-                        onError={() => setBroken((prev) => new Set(prev).add(n.id))}
-                        className="w-full h-auto rounded-2xl mb-4"
-                      />
-                    )}
-                    <div
-                      className="m3-title-large font-bold mb-2 line-clamp-2"
-                      style={{ color: "hsl(var(--md-on-surface))" }}
-                    >
-                      {n.title}
-                    </div>
-                    <div
-                      className="m3-body-medium line-clamp-3"
-                      style={{ color: "hsl(var(--md-on-surface-variant))" }}
-                    >
-                      {stripMarkdown(n.body)}
-                    </div>
-                  </Link>
+                        {stripMarkdown(n.body)}
+                      </div>
+                    </Link>
+                  </motion.div>
                 </motion.div>
               ))}
             </div>

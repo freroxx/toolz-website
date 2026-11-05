@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { MessageSquare, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
+import { PRESS_SPRING } from "@/lib/motion";
 
 const Discord = () => {
   const [widgetTheme, setWidgetTheme] = useState("dark");
@@ -31,12 +32,15 @@ const Discord = () => {
         >
           {/* Left card */}
           <div
-            className="flex flex-col justify-between gap-8 rounded-[32px] p-6 md:rounded-[40px] md:p-10"
-            style={{ background: "hsl(var(--md-secondary-container))" }}
+            className="flex flex-col justify-between gap-8 rounded-[28px] border p-6 md:p-9 shadow-xs"
+            style={{
+              background: "hsl(var(--md-secondary-container))",
+              borderColor: "hsl(var(--md-outline-variant) / 0.4)",
+            }}
           >
             <div>
               <span
-                className="m3-chip border-transparent"
+                className="m3-chip border-transparent shadow-xs"
                 style={{
                   background: "hsl(var(--md-secondary) / 0.18)",
                   color: "hsl(var(--md-on-secondary-container))",
@@ -49,60 +53,69 @@ const Discord = () => {
                 Community
               </span>
               <h2
-                className="m3-display-small mt-5 text-balance"
+                className="m3-display-small mt-5 font-bold text-balance"
                 style={{ color: "hsl(var(--md-on-secondary-container))" }}
               >
                 Join the Discord.
               </h2>
               <p
-                className="m3-body-large mt-3 max-w-md"
-                style={{ color: "hsl(var(--md-on-secondary-container) / 0.8)" }}
+                className="m3-body-large mt-3 max-w-md leading-relaxed"
+                style={{ color: "hsl(var(--md-on-secondary-container) / 0.85)" }}
               >
-                Get help, report bugs and follow development. Reports with steps
-                to reproduce get fixed fastest.
+                Direct access to contributors: get help, report bugs, share skins, and track
+                upcoming releases.
               </p>
             </div>
 
             <div
-              className="flex items-center gap-3 rounded-[20px] p-4"
-              style={{ background: "hsl(var(--md-secondary) / 0.14)" }}
+              className="flex items-center gap-3.5 rounded-[18px] border p-4"
+              style={{
+                background: "hsl(var(--md-secondary) / 0.12)",
+                borderColor: "hsl(var(--md-on-secondary-container) / 0.15)",
+              }}
             >
               <MessageSquare
-                size={20}
+                size={22}
                 style={{ color: "hsl(var(--md-on-secondary-container))" }}
               />
               <div>
                 <p
-                  className="m3-label-small opacity-90"
+                  className="m3-label-small font-medium opacity-85"
                   style={{ color: "hsl(var(--md-on-secondary-container))" }}
                 >
-                  Support
+                  Direct Support
                 </p>
                 <p
-                  className="m3-title-small"
+                  className="m3-title-small font-bold"
                   style={{ color: "hsl(var(--md-on-secondary-container))" }}
                 >
-                  Direct from the dev team
+                  From developers & power users
                 </p>
               </div>
             </div>
 
-            <a
+            <motion.a
               href="https://discord.gg/aAswRUerwh"
               target="_blank"
               rel="noopener noreferrer"
-              className="m3-btn-filled w-full justify-center gap-3 py-4 sm:w-auto sm:self-start"
+              whileTap={{ scale: 0.94 }}
+              whileHover={{ y: -2 }}
+              transition={PRESS_SPRING}
+              className="m3-btn-filled w-full justify-center gap-3 py-4 font-semibold shadow-md sm:w-auto sm:self-start"
             >
-              <MessageSquare size={20} />
+              <MessageSquare size={19} />
               Join Discord
-              <ExternalLink size={14} className="opacity-70" />
-            </a>
+              <ExternalLink size={14} className="opacity-80" />
+            </motion.a>
           </div>
 
           {/* Right: live widget */}
           <div
-            className="relative min-h-[420px] overflow-hidden rounded-[32px] md:rounded-[40px]"
-            style={{ background: "hsl(var(--md-surface-container))" }}
+            className="relative min-h-[420px] overflow-hidden rounded-[28px] border shadow-xs"
+            style={{
+              background: "hsl(var(--md-surface-container))",
+              borderColor: "hsl(var(--md-outline-variant) / 0.5)",
+            }}
           >
             <div
               className="flex items-center gap-3 border-b px-5 py-4"

@@ -2,6 +2,7 @@ import { WifiOff, Lock, Terminal, LayoutGrid, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import SectionHeader from "@/components/landing/SectionHeader";
 import { totalTools } from "@/lib/tools-catalog";
+import { PRESS_SPRING } from "@/lib/motion";
 
 // Grounded in the Toolz README: offline-first (not offline-only), SQLCipher
 // vaults, GPLv3, Android 12+, QS tiles / widgets / autofill.
@@ -104,19 +105,24 @@ const HowItWorks = () => {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
+                whileHover={{ y: -3 }}
                 transition={{
-                  delay: i * 0.06,
+                  delay: i * 0.05,
                   type: "spring",
-                  stiffness: 200,
+                  stiffness: 220,
                   damping: 26,
                 }}
-                className={`flex flex-col justify-between gap-6 rounded-[28px] p-6 md:rounded-[32px] md:p-7 ${
+                className={`flex flex-col justify-between gap-6 rounded-[24px] border p-6 md:p-7 shadow-xs ${
                   large ? "sm:col-span-2 lg:col-span-2" : ""
                 }`}
-                style={{ background: tone.background, minHeight: large ? 236 : 200 }}
+                style={{
+                  background: tone.background,
+                  borderColor: "hsl(var(--md-outline-variant) / 0.4)",
+                  minHeight: large ? 220 : 190,
+                }}
               >
                 <span
-                  className="grid h-12 w-12 place-items-center rounded-[16px]"
+                  className="grid h-12 w-12 place-items-center rounded-[16px] shadow-xs"
                   style={{ background: tone.icon, color: tone.color }}
                 >
                   <Icon size={22} />
@@ -125,15 +131,15 @@ const HowItWorks = () => {
                   <h3
                     className={
                       large
-                        ? "m3-display-small leading-tight"
-                        : "m3-title-large"
+                        ? "m3-display-small font-bold leading-tight"
+                        : "m3-title-large font-bold"
                     }
                     style={{ color: tone.color }}
                   >
                     {p.title}
                   </h3>
                   <p
-                    className={`mt-2 leading-relaxed opacity-80 ${
+                    className={`mt-2 leading-relaxed opacity-85 ${
                       large ? "m3-body-large max-w-lg" : "m3-body-small"
                     }`}
                     style={{ color: tone.color }}
@@ -150,12 +156,17 @@ const HowItWorks = () => {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-50px" }}
-            transition={{ delay: 0.28, type: "spring", stiffness: 200, damping: 26 }}
-            className="flex flex-col justify-between gap-6 rounded-[28px] p-6 md:rounded-[32px] md:p-7"
-            style={{ background: "hsl(var(--md-surface-container))", minHeight: 200 }}
+            whileHover={{ y: -3 }}
+            transition={{ delay: 0.24, type: "spring", stiffness: 220, damping: 26 }}
+            className="flex flex-col justify-between gap-6 rounded-[24px] border p-6 md:p-7 shadow-xs"
+            style={{
+              background: "hsl(var(--md-surface-container))",
+              borderColor: "hsl(var(--md-outline-variant) / 0.5)",
+              minHeight: 190,
+            }}
           >
             <span
-              className="grid h-12 w-12 place-items-center rounded-[16px]"
+              className="grid h-12 w-12 place-items-center rounded-[16px] shadow-xs"
               style={{
                 background: "hsl(var(--md-surface-container-highest))",
                 color: "hsl(var(--md-primary-ink))",
@@ -164,18 +175,18 @@ const HowItWorks = () => {
               <Sparkles size={22} />
             </span>
             <div>
-              <h3 className="m3-title-large text-on-surface">No fine print</h3>
-              <p className="m3-body-small mt-2 text-on-surface-variant">
-                Free, GPLv3, Android 12+, no account and no ads. The source is
-                public, so you can check every claim.
+              <h3 className="m3-title-large font-bold text-on-surface">No fine print</h3>
+              <p className="m3-body-small mt-2 text-on-surface-variant leading-relaxed">
+                Free, GPLv3, Android 12+, no accounts, and no trackers. The source code is
+                100% public on GitHub.
               </p>
             </div>
           </motion.article>
         </div>
 
         {/* Getting started */}
-        <div className="mt-10 md:mt-14">
-          <h3 className="m3-headline-small text-on-surface">Start in minutes</h3>
+        <div className="mt-12 md:mt-16">
+          <h3 className="m3-headline-small font-bold text-on-surface">Get started</h3>
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {steps.map((step, i) => (
               <motion.div
@@ -183,15 +194,22 @@ const HowItWorks = () => {
                 initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.06, type: "spring", stiffness: 200, damping: 26 }}
-                className="rounded-[22px] p-5"
-                style={{ background: "hsl(var(--md-surface-container))" }}
+                whileHover={{ y: -2 }}
+                transition={{ delay: i * 0.05, type: "spring", stiffness: 220, damping: 26 }}
+                className="rounded-[20px] border p-5 transition-colors"
+                style={{
+                  background: "hsl(var(--md-surface-container))",
+                  borderColor: "hsl(var(--md-outline-variant) / 0.5)",
+                }}
               >
-                <span className="m3-label-large tabular-nums text-primary-ink">
+                <span
+                  className="m3-label-large tabular-nums font-bold"
+                  style={{ color: "hsl(var(--md-primary))" }}
+                >
                   {step.num}
                 </span>
-                <p className="m3-title-small mt-2 text-on-surface">{step.label}</p>
-                <p className="m3-body-small mt-1 text-on-surface-variant">
+                <p className="m3-title-small font-semibold mt-2 text-on-surface">{step.label}</p>
+                <p className="m3-body-small mt-1 text-on-surface-variant leading-relaxed">
                   {step.sub}
                 </p>
               </motion.div>

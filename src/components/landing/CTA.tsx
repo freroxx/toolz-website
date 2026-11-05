@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useGithubDownloads } from "@/hooks/use-github-downloads";
 import { useLatestRelease } from "@/hooks/use-latest-release";
 import DownloadCounter from "@/components/landing/DownloadCounter";
+import { PRESS_SPRING } from "@/lib/motion";
 
 const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
   const navigate = useNavigate();
@@ -14,20 +15,23 @@ const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
     <section className="py-16 md:py-24">
       <div className="container mx-auto px-4">
         <div
-          className="relative overflow-hidden rounded-[36px] p-6 sm:p-9 md:rounded-[48px] md:p-12 lg:p-14"
-          style={{ background: "hsl(var(--md-primary-container))" }}
+          className="relative overflow-hidden rounded-[28px] border p-6 sm:p-9 md:rounded-[36px] md:p-12 shadow-sm"
+          style={{
+            background: "hsl(var(--md-primary-container))",
+            borderColor: "hsl(var(--md-outline-variant) / 0.5)",
+          }}
         >
           <div className="grid items-center gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-14">
             {/* ── Copy ── */}
             <div>
               <span
-                className="m3-chip border-transparent"
+                className="m3-chip border-transparent font-semibold shadow-xs"
                 style={{
                   background: "hsl(var(--md-primary) / 0.18)",
                   color: "hsl(var(--md-on-primary-container))",
                 }}
               >
-                Download
+                Open Source Utility
               </span>
 
               <motion.h2
@@ -35,7 +39,7 @@ const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.06 }}
-                className="m3-display-medium mt-5 text-balance"
+                className="m3-display-medium mt-5 font-bold text-balance"
                 style={{ color: "hsl(var(--md-on-primary-container))" }}
               >
                 Get Toolz.
@@ -46,12 +50,12 @@ const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.14 }}
-                className="m3-body-large mt-4 max-w-md"
-                style={{ color: "hsl(var(--md-on-primary-container) / 0.8)" }}
+                className="m3-body-large mt-4 max-w-md leading-relaxed"
+                style={{ color: "hsl(var(--md-on-primary-container) / 0.85)" }}
               >
-                Free and open-source (GPLv3) for Android 12 and up. Pick the APK
-                for your architecture from GitHub Releases
-                {versionName ? ` — latest is v${versionName}` : ""}.
+                GPL-3.0 licensed for Android 12 and up. Grab the universal APK or
+                the targeted build for your device architecture
+                {versionName ? ` (v${versionName})` : ""}.
               </motion.p>
 
               <motion.div
@@ -61,29 +65,39 @@ const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 transition={{ delay: 0.22 }}
                 className="mt-8 flex flex-col gap-3 sm:flex-row"
               >
-                <button
+                <motion.button
                   onClick={onDownloadClick}
-                  className="m3-btn-filled gap-2.5 px-8 py-4 text-base"
+                  whileTap={{ scale: 0.94 }}
+                  whileHover={{ y: -2 }}
+                  transition={PRESS_SPRING}
+                  className="m3-btn-filled gap-2.5 px-8 py-4 text-base font-semibold shadow-md"
                 >
                   <Download size={20} />
-                  Download
-                </button>
-                <a
+                  Download APK
+                </motion.button>
+                <motion.a
                   href="https://github.com/freroxx/toolz/releases"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="m3-btn-outlined gap-2 px-7 py-4 text-base"
+                  whileTap={{ scale: 0.94 }}
+                  whileHover={{ y: -2 }}
+                  transition={PRESS_SPRING}
+                  className="m3-btn-outlined gap-2 px-7 py-4 text-base font-semibold"
+                  style={{
+                    borderColor: "hsl(var(--md-on-primary-container) / 0.4)",
+                    color: "hsl(var(--md-on-primary-container))",
+                  }}
                 >
                   All releases
                   <ArrowUpRight size={18} />
-                </a>
+                </motion.a>
               </motion.div>
 
               <p
-                className="m3-label-medium mt-5"
-                style={{ color: "hsl(var(--md-on-primary-container) / 0.85)" }}
+                className="m3-label-medium mt-5 font-medium"
+                style={{ color: "hsl(var(--md-on-primary-container) / 0.8)" }}
               >
-                No account. No ads. Updates install from inside the app.
+                No accounts. No ads. Update notifications arrive in-app.
               </p>
             </div>
 
@@ -93,14 +107,14 @@ const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.16 }}
-              className="rounded-[28px] p-7 md:rounded-[36px] md:p-9"
+              className="rounded-[24px] p-7 md:p-9 shadow-md"
               style={{
                 background: "hsl(var(--md-primary))",
                 color: "hsl(var(--md-on-primary))",
               }}
             >
               <span
-                className="grid h-12 w-12 place-items-center rounded-[16px]"
+                className="grid h-12 w-12 place-items-center rounded-[16px] shadow-xs"
                 style={{ background: "hsl(var(--md-on-primary) / 0.16)" }}
               >
                 <Users size={24} />
@@ -110,21 +124,24 @@ const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 {isLoading ? "…" : <DownloadCounter value={totalDownloads || 0} duration={2.5} />}
               </div>
 
-              <p className="m3-label-medium mt-1 uppercase tracking-[0.14em]">
-                Downloads on GitHub
+              <p className="m3-label-medium mt-1 font-semibold uppercase tracking-[0.14em] opacity-90">
+                Total GitHub downloads
               </p>
 
-              <button
+              <motion.button
                 onClick={() => navigate("/downloads")}
-                className="m3-label-large mt-6 inline-flex items-center gap-2 rounded-full px-4 py-2.5 transition-transform active:scale-95"
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ y: -1 }}
+                transition={PRESS_SPRING}
+                className="m3-label-large mt-6 inline-flex items-center gap-2 rounded-full px-5 py-2.5 font-bold shadow-xs"
                 style={{
                   background: "hsl(var(--md-on-primary))",
                   color: "hsl(var(--md-primary))",
                 }}
               >
-                Per-release stats
+                Architecture statistics
                 <ArrowRight size={15} />
-              </button>
+              </motion.button>
             </motion.div>
           </div>
         </div>

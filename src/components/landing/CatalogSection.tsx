@@ -3,6 +3,7 @@ import { ArrowRight, Smartphone } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import SectionHeader from "@/components/landing/SectionHeader";
+import { PRESS_SPRING } from "@/lib/motion";
 
 interface SpecPayload {
   matched_device: string;
@@ -30,8 +31,11 @@ const CatalogSection = () => {
     <section id="catalog" className="scroll-mt-20 py-16 md:py-24">
       <div className="container mx-auto px-4">
         <div
-          className="overflow-hidden rounded-[32px] px-5 py-8 md:rounded-[40px] md:px-10 md:py-10"
-          style={{ background: "hsl(var(--md-surface-container-low))" }}
+          className="overflow-hidden rounded-[28px] border px-6 py-8 md:px-10 md:py-10 shadow-xs"
+          style={{
+            background: "hsl(var(--md-surface-container-low))",
+            borderColor: "hsl(var(--md-outline-variant) / 0.5)",
+          }}
         >
           <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-6">
             <SectionHeader
@@ -40,13 +44,19 @@ const CatalogSection = () => {
               title="Look up any device."
               description="Full hardware specs for thousands of phones, tablets and watches — the same catalog inside the app."
             />
-            <Link
-              to="/spec"
-              className="m3-btn-filled mb-4 gap-2 px-7 py-3.5 text-sm"
+            <motion.div
+              whileTap={{ scale: 0.94 }}
+              whileHover={{ y: -2 }}
+              transition={PRESS_SPRING}
             >
-              Open catalog
-              <ArrowRight size={17} />
-            </Link>
+              <Link
+                to="/spec"
+                className="m3-btn-filled mb-4 gap-2 px-7 py-3.5 text-sm shadow-sm"
+              >
+                Open catalog
+                <ArrowRight size={17} />
+              </Link>
+            </motion.div>
           </div>
 
           {/* White wells keep GSMArena product shots legible in both themes. */}

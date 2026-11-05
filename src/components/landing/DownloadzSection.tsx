@@ -10,6 +10,7 @@ import {
   Youtube,
 } from "lucide-react";
 import SectionHeader from "@/components/landing/SectionHeader";
+import { PRESS_SPRING } from "@/lib/motion";
 
 const DOWNLOADZ_URL = "https://toolz-downloadz.vercel.app";
 const YOUTUBE_RE = /(?:youtube\.com|youtu\.be)/i;
@@ -106,18 +107,21 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
 
           {/* ── Paste panel ── */}
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-60px" }}
-            transition={{ type: "spring", stiffness: 180, damping: 26 }}
-            className="overflow-hidden rounded-[32px] p-5 sm:p-7 md:rounded-[40px] md:p-9"
-            style={{ background: "hsl(var(--md-tertiary-container))" }}
+            transition={{ type: "spring", stiffness: 220, damping: 26 }}
+            className="overflow-hidden rounded-[28px] border p-6 sm:p-8"
+            style={{
+              background: "hsl(var(--md-tertiary-container))",
+              borderColor: "hsl(var(--md-outline-variant) / 0.5)",
+            }}
           >
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <span
                   className="grid h-11 w-11 place-items-center rounded-[14px]"
-                  style={{ background: "hsl(var(--md-tertiary) / 0.16)" }}
+                  style={{ background: "hsl(var(--md-tertiary) / 0.18)" }}
                 >
                   <Link2
                     size={20}
@@ -126,23 +130,23 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
                 </span>
                 <div>
                   <p
-                    className="m3-title-medium leading-tight"
+                    className="m3-title-medium font-bold leading-tight"
                     style={{ color: "hsl(var(--md-on-tertiary-container))" }}
                   >
                     Open Downloadz
                   </p>
                   <p
-                    className="m3-label-small opacity-90"
+                    className="m3-label-small opacity-85"
                     style={{ color: "hsl(var(--md-on-tertiary-container))" }}
                   >
-                    Web app · no install
+                    Web app · zero install
                   </p>
                 </div>
               </div>
               <span
-                className="m3-label-small inline-flex items-center gap-1.5 rounded-full px-3 py-1"
+                className="m3-label-small inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-semibold"
                 style={{
-                  background: "hsl(var(--md-tertiary) / 0.16)",
+                  background: "hsl(var(--md-tertiary) / 0.18)",
                   color: "hsl(var(--md-on-tertiary-container))",
                 }}
               >
@@ -154,7 +158,7 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
             <form onSubmit={submit} className="mt-6" noValidate>
               <label
                 htmlFor="downloadz-url"
-                className="m3-label-medium mb-2 block"
+                className="m3-label-medium mb-2 block font-semibold"
                 style={{ color: "hsl(var(--md-on-tertiary-container))" }}
               >
                 Public post link
@@ -173,14 +177,17 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
                   placeholder="https://www.tiktok.com/@…/video/…"
                   aria-invalid={Boolean(error)}
                   aria-describedby={error ? "downloadz-error" : "downloadz-help"}
-                  className="m3-body-medium min-w-0 flex-1 rounded-full border-2 border-transparent px-5 py-3.5 text-on-surface outline-none placeholder:text-on-surface-variant/60 focus:border-tertiary"
+                  className="m3-body-medium min-w-0 flex-1 rounded-full border border-outline-variant/60 px-5 py-3.5 text-on-surface outline-none placeholder:text-on-surface-variant/60 focus:border-tertiary focus:ring-2 focus:ring-tertiary/30"
                   style={{
                     background: "hsl(var(--md-surface))",
                   }}
                 />
-                <button
+                <motion.button
                   type="submit"
-                  className="m3-label-large inline-flex shrink-0 items-center justify-center gap-2 rounded-full px-6 py-3.5 transition-transform active:scale-95"
+                  whileTap={{ scale: 0.94 }}
+                  whileHover={{ y: -1 }}
+                  transition={PRESS_SPRING}
+                  className="m3-label-large inline-flex shrink-0 items-center justify-center gap-2 rounded-full px-6 py-3.5 font-bold shadow-sm"
                   style={{
                     background: "hsl(var(--md-tertiary))",
                     color: "hsl(var(--md-on-tertiary))",
@@ -188,7 +195,7 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
                 >
                   Open
                   <ArrowUpRight size={17} />
-                </button>
+                </motion.button>
               </div>
               {error ? (
                 <p

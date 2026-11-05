@@ -4,6 +4,7 @@ import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { APP_SCREENSHOTS as allScreenshots } from "@/lib/screenshots";
 import { categories as toolCategories, totalTools } from "@/lib/tools-catalog";
 import SectionHeader from "@/components/landing/SectionHeader";
+import { PRESS_SPRING } from "@/lib/motion";
 
 const Gallery = () => {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -109,16 +110,19 @@ const Gallery = () => {
           aria-label="App screenshots"
         >
           {allScreenshots.map((src, i) => (
-            <button
+            <motion.button
               key={src}
               data-card
               onClick={() => setSelectedIndex(i)}
-              className="group relative shrink-0 snap-center overflow-hidden rounded-[24px] focus-visible:ring-2 focus-visible:ring-secondary focus-visible:outline-none"
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -4 }}
+              transition={PRESS_SPRING}
+              className="group relative shrink-0 snap-center overflow-hidden rounded-[24px] border shadow-xs focus-visible:ring-2 focus-visible:ring-secondary focus-visible:outline-none"
               style={{
                 width: "min(220px, 60vw)",
                 aspectRatio: "9/19",
                 background: "hsl(var(--md-surface-container-high))",
-                border: "1px solid hsl(var(--md-outline-variant) / 0.5)",
+                borderColor: "hsl(var(--md-outline-variant) / 0.5)",
               }}
               aria-label={`Open screenshot ${i + 1} of ${allScreenshots.length}`}
             >
@@ -128,21 +132,21 @@ const Gallery = () => {
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                 loading="lazy"
               />
-            </button>
+            </motion.button>
           ))}
         </div>
 
-        <div className="mt-3 flex items-center justify-between gap-4">
-          <span className="m3-label-large tabular-nums text-on-surface-variant">
+        <div className="mt-4 flex items-center justify-between gap-4">
+          <span className="m3-label-large tabular-nums font-semibold text-on-surface-variant">
             {Math.min(
               allScreenshots.length,
               Math.round(position * (allScreenshots.length - 1)) + 1
             )}
-            <span className="opacity-90"> / {allScreenshots.length}</span>
+            <span className="opacity-70 font-normal"> / {allScreenshots.length}</span>
           </span>
           <div className="flex items-center gap-3">
             <div
-              className="h-1 w-32 overflow-hidden rounded-full sm:w-48"
+              className="h-1.5 w-32 overflow-hidden rounded-full sm:w-48"
               style={{ background: "hsl(var(--md-surface-container-highest))" }}
               aria-hidden="true"
             >
@@ -151,20 +155,24 @@ const Gallery = () => {
                 style={{ width: `${Math.max(4, position * 100)}%` }}
               />
             </div>
-            <button
+            <motion.button
+              whileTap={{ scale: 0.92 }}
+              transition={PRESS_SPRING}
               onClick={() => scrollByCards(-1)}
               aria-label="Previous screenshots"
-              className="grid h-11 w-11 place-items-center rounded-full text-on-surface-variant transition-all hover:bg-surface-container-high hover:text-primary-ink active:scale-90"
+              className="grid h-11 w-11 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary-ink"
             >
               <ChevronLeft size={20} />
-            </button>
-            <button
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.92 }}
+              transition={PRESS_SPRING}
               onClick={() => scrollByCards(1)}
               aria-label="Next screenshots"
-              className="grid h-11 w-11 place-items-center rounded-full bg-primary text-on-primary transition-all hover:brightness-110 active:scale-90"
+              className="grid h-11 w-11 place-items-center rounded-full bg-primary text-on-primary shadow-sm transition-colors hover:brightness-110"
             >
               <ChevronRight size={20} />
-            </button>
+            </motion.button>
           </div>
         </div>
       </motion.div>

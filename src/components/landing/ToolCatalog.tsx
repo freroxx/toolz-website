@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Check, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { categories, totalTools } from "@/lib/tools-catalog";
 import SectionHeader from "@/components/landing/SectionHeader";
+import { PRESS_SPRING } from "@/lib/motion";
 
 const colorMap = {
   primary: {
@@ -109,31 +110,33 @@ const ToolCatalog = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.22 }}
-            className="rounded-[28px] p-5 md:rounded-[36px] md:p-8"
-            style={{ background: "hsl(var(--md-surface-container))" }}
+            className="rounded-[28px] border p-5 md:p-7"
+            style={{
+              background: "hsl(var(--md-surface-container))",
+              borderColor: "hsl(var(--md-outline-variant) / 0.5)",
+            }}
             role="region"
             aria-label="Search results"
           >
-            <p className="m3-label-medium mb-2 uppercase tracking-[0.14em] text-on-surface-variant">
+            <p className="m3-label-medium mb-3 uppercase tracking-[0.14em] text-on-surface-variant font-semibold">
               {results.length} result{results.length === 1 ? "" : "s"} for “{query.trim()}”
             </p>
             {results.length === 0 ? (
-              <p className="m3-body-medium py-4 text-on-surface-variant">
-                Nothing matches. Try a shorter word like “clock”, “pdf” or “coin”.
+              <p className="m3-body-medium py-6 text-on-surface-variant">
+                No matching tools. Try searching for “clock”, “qr”, “password” or “currency”.
               </p>
             ) : (
-              <ul className="grid gap-x-8 sm:grid-cols-2">
+              <ul className="grid gap-2 sm:grid-cols-2">
                 {results.map(({ group, icon: Icon, color, tool }) => (
                   <li
                     key={`${group}-${tool.name}`}
-                    className="flex items-center gap-3 border-b py-3 last:border-b-0"
-                    style={{ borderColor: "hsl(var(--md-outline-variant) / 0.3)" }}
+                    className="flex items-center gap-3.5 rounded-[16px] p-3 transition-colors hover:bg-surface-container-high/60"
                   >
                     <span
-                      className="grid h-9 w-9 shrink-0 place-items-center rounded-[12px]"
+                      className="grid h-10 w-10 shrink-0 place-items-center rounded-[12px]"
                       style={{ background: colorMap[color].soft }}
                     >
-                      <Icon size={17} style={{ color: colorMap[color].icon }} />
+                      <Icon size={18} style={{ color: colorMap[color].icon }} />
                     </span>
                     <div className="min-w-0">
                       <div className="m3-title-small text-on-surface">{tool.name}</div>
@@ -164,22 +167,30 @@ const ToolCatalog = () => {
                     role="tab"
                     aria-selected={isActive}
                     onClick={() => setActiveId(c.id)}
-                    whileTap={{ scale: 0.97 }}
+                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ y: -1 }}
+                    transition={PRESS_SPRING}
                     className={cn(
-                      "relative flex min-h-[76px] items-center gap-2.5 overflow-hidden rounded-[20px] p-3 text-left transition-colors",
-                      !isActive && "hover:brightness-110"
+                      "relative flex min-h-[74px] items-center gap-2.5 overflow-hidden rounded-[20px] border p-3 text-left transition-colors",
                     )}
                     style={
                       isActive
-                        ? { background: cColors.selected }
-                        : { background: "hsl(var(--md-surface-container))" }
+                        ? {
+                            background: cColors.selected,
+                            borderColor: "transparent",
+                            boxShadow: "0 2px 8px hsl(var(--md-shadow) / 0.15)",
+                          }
+                        : {
+                            background: "hsl(var(--md-surface-container))",
+                            borderColor: "hsl(var(--md-outline-variant) / 0.4)",
+                          }
                     }
                   >
                     <span
                       className="grid h-9 w-9 shrink-0 place-items-center rounded-[12px]"
                       style={{
                         background: isActive
-                          ? "hsl(var(--md-on-surface) / 0.12)"
+                          ? "hsl(var(--md-on-surface) / 0.14)"
                           : "hsl(var(--md-surface-container-high))",
                       }}
                     >
@@ -194,7 +205,7 @@ const ToolCatalog = () => {
                     </span>
                     <span className="min-w-0 flex-1">
                       <span
-                        className="m3-label-large block leading-tight"
+                        className="m3-label-large block font-semibold leading-tight"
                         style={{
                           color: isActive
                             ? cColors.selectedText
@@ -207,7 +218,7 @@ const ToolCatalog = () => {
                         className="m3-label-small mt-0.5 block tabular-nums"
                         style={{
                           color: isActive
-                            ? `${cColors.selectedText}b3`
+                            ? `${cColors.selectedText}cc`
                             : "hsl(var(--md-on-surface-variant))",
                         }}
                       >
@@ -216,7 +227,7 @@ const ToolCatalog = () => {
                     </span>
                     {isActive && (
                       <Check
-                        size={14}
+                        size={15}
                         strokeWidth={3}
                         className="shrink-0"
                         style={{ color: cColors.selectedText }}
@@ -229,8 +240,11 @@ const ToolCatalog = () => {
 
             {/* Detail panel */}
             <div
-              className="overflow-hidden rounded-[28px] md:rounded-[36px]"
-              style={{ background: "hsl(var(--md-surface-container))" }}
+              className="overflow-hidden rounded-[28px] border"
+              style={{
+                background: "hsl(var(--md-surface-container))",
+                borderColor: "hsl(var(--md-outline-variant) / 0.5)",
+              }}
               role="tabpanel"
             >
               <AnimatePresence mode="wait">
