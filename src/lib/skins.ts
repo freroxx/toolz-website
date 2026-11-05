@@ -166,14 +166,21 @@ export function hexToHslTriplet(hex: string): string {
 
 /** ARGB long (Android) or a CSS hex string → `#rrggbb`. */
 export function toHex(value: unknown): string | null {
+  if (value === null || value === undefined || value === -1 || value === 0 || value === "-1" || value === "0") {
+    return null;
+  }
   if (typeof value === "string") {
     const s = value.trim();
+    if (s === "-1" || s === "0") return null;
     if (/^#[0-9a-f]{3}$/i.test(s) || /^#[0-9a-f]{6}$/i.test(s)) return s;
     if (/^[0-9a-f]{6,8}$/i.test(s)) value = parseInt(s.slice(-6), 16);
-    else if (/^\d+$/.test(s)) value = Number(s);
-    else return null;
+    else if (/^-?\d+$/.test(s)) {
+      const num = Number(s);
+      if (num === -1 || num === 0) return null;
+      value = num;
+    } else return null;
   }
-  if (typeof value !== "number" || !Number.isFinite(value)) return null;
+  if (typeof value !== "number" || !Number.isFinite(value) || value === -1 || value === 0) return null;
   const n = Math.floor(value) >>> 0;
   return `#${(n & 0xffffff).toString(16).padStart(6, "0")}`;
 }
@@ -422,10 +429,20 @@ export function buildThemeVars(skin: SiteSkin, mode: ResolvedMode): Record<strin
 
   const primary = main(p);
   const primaryHex = `hsl(${primary})`;
+
   // Text-safe variant: light tint on dark surfaces, deeper tone on light ones.
+  // For monochrome / near-white primaries in dark mode (e.g. Carbon), ensure
+  // distinct luminance and contrast against on-surface white (tone 94) so accents pop!
+  const isMonochrome = pSat < 18;
+  const isNearWhite = p.l > 80;
+
   const primaryInk = dark
-    ? triplet(p.h, clamp(pSat, 20, 72), Math.max(80, Math.min(p.l, 92)))
-    : triplet(p.h, p.s, Math.min(p.l, 24));
+    ? (isMonochrome && isNearWhite
+        ? triplet(p.h || 240, 16, 76)
+        : triplet(p.h, clamp(pSat, 20, 72), Math.max(80, Math.min(p.l, 92))))
+    : (isMonochrome && p.l < 30
+        ? triplet(p.h || 240, 16, 36)
+        : triplet(p.h, p.s, Math.min(p.l, 24)));
   const secondary = main(s, 50, 52);
   const secondaryHex = `hsl(${secondary})`;
   const tertiary = dark ? triplet(tHue, tSat, 80) : triplet(tHue, tSat, 40);
@@ -552,6 +569,21 @@ export function resolveMode(skinMode: SkinThemeMode, systemDark: boolean): Resol
   return systemDark ? "DARK" : "LIGHT";
 }
 
+function generateSkinSvg(skin: SiteSkin): string {
+  const { rim, bodyStart, bodyEnd, disc } = skin.icon;
+  const useGrad = skin.iconGradient && Boolean(bodyEnd);
+  const fill = useGrad ? "url(#skin-grad)" : bodyStart;
+  const round = skin.shape === "CIRCLE";
+  const gradDef = useGrad
+    ? `<defs><linearGradient id="skin-grad" x1="27%" y1="16%" x2="73%" y2="84%"><stop offset="0%" stop-color="${bodyStart}"/><stop offset="100%" stop-color="${bodyEnd ?? bodyStart}"/></linearGradient></defs>`
+    : "";
+  const shapeSvg = round
+    ? `<circle cx="540" cy="540" r="520" fill="${rim}"/><circle cx="540" cy="540" r="490" fill="${fill}"/>`
+    : `<path d="M1015.52,499.73A105.23,105.23,0,0,1,1015.52,580.27L904.72,847.77A105.23,105.23,0,0,1,847.77,904.72L580.27,1015.52A105.23,105.23,0,0,1,499.73,1015.52L232.23,904.72A105.23,105.23,0,0,1,175.28,847.77L64.48,580.27A105.23,105.23,0,0,1,64.48,499.73L175.28,232.23A105.23,105.23,0,0,1,232.23,175.28L499.73,64.48A105.23,105.23,0,0,1,580.27,64.48L847.77,175.28A105.23,105.23,0,0,1,904.72,232.23Z" fill="${rim}"/><path d="M982.04,510.49A77.12,77.12,0,0,1,982.04,569.51L873.44,831.7A77.12,77.12,0,0,1,831.7,873.44L569.51,982.04A77.12,77.12,0,0,1,510.49,982.04L248.3,873.44A77.12,77.12,0,0,1,206.56,831.7L97.96,569.51A77.12,77.12,0,0,1,97.96,510.49L206.56,248.3A77.12,77.12,0,0,1,248.3,206.56L510.49,97.96A77.12,77.12,0,0,1,569.51,97.96L831.7,206.56A77.12,77.12,0,0,1,873.44,248.3Z" fill="${fill}"/>`;
+  const discSvg = `<path d="M212,540A328,328,0,1,1,868,540A328,328,0,1,1,212,540Z" fill="${disc}"/><path d="M299.73,336.49L405.93,573.29A131.7,131.7,0,0,0,646.27,465.51L540.07,228.71A131.7,131.7,0,0,0,299.73,336.49Z" fill="${bodyStart}"/>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080">${gradDef}${shapeSvg}${discSvg}</svg>`;
+}
+
 const appliedKeys = new Set<string>();
 
 /**
@@ -581,6 +613,21 @@ export function applySkinTheme(skin: SiteSkin, mode: ResolvedMode): void {
   document
     .querySelectorAll('meta[name="theme-color"]')
     .forEach((meta) => meta.setAttribute("content", themeColor));
+
+  try {
+    const favicon = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+    if (favicon) {
+      if (skin.id === SITE_DEFAULT_SKIN_ID) {
+        favicon.href = "/logo.png";
+      } else {
+        const svg = generateSkinSvg(skin);
+        favicon.href = `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+      }
+    }
+  } catch {
+    /* ignore favicon errors */
+  }
+
   try {
     window.localStorage.setItem(THEME_COLOR_STORAGE_KEY, themeColor);
   } catch {
