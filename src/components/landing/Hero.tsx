@@ -1,4 +1,4 @@
-import { ArrowRight, Download, Github, ShieldCheck, Smartphone, WifiOff, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, Download, Github, ShieldCheck, Smartphone, WifiOff, Sparkles, ChevronLeft, ChevronRight, Lock, LayoutGrid, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useCallback } from "react";
 import { useLatestRelease } from "@/hooks/use-latest-release";
@@ -8,9 +8,16 @@ import { PRESS_SPRING } from "@/lib/motion";
 
 const stats = [
   { value: `${totalTools}`, label: "Built-in tools" },
-  { value: `${categories.length}`, label: "Categories" },
-  { value: "0", label: "Accounts needed" },
-  { value: "GPLv3", label: "Free & open" },
+  { value: `${categories.length}`, label: "Tool categories" },
+  { value: "0", label: "Accounts or logins" },
+  { value: "GPL-3.0", label: "Free & open source" },
+];
+
+const highlights = [
+  { icon: WifiOff, label: "100% Offline Core" },
+  { icon: Lock, label: "SQLCipher Encrypted" },
+  { icon: LayoutGrid, label: "QS Tiles & Widgets" },
+  { icon: ShieldCheck, label: "Zero Telemetry" },
 ];
 
 const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
@@ -32,61 +39,38 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
     if (paused) return;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduceMotion) return;
-    const t = setInterval(nextImg, 3800);
+    const t = setInterval(nextImg, 4200);
     return () => clearInterval(t);
   }, [paused, nextImg]);
 
   return (
-    <section className="relative overflow-hidden pt-28 pb-16 md:pt-36 md:pb-24">
-      {/* M3 Expressive Ambient Backdrop */}
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div
-          className="absolute -top-32 left-1/2 h-[480px] w-[680px] -translate-x-1/2 rounded-full opacity-25 blur-[120px]"
-          style={{
-            background: "radial-gradient(circle, hsl(var(--md-primary)) 0%, transparent 70%)",
-          }}
-        />
-        <div
-          className="absolute top-1/3 -right-24 h-[360px] w-[360px] rounded-full opacity-20 blur-[100px]"
-          style={{
-            background: "radial-gradient(circle, hsl(var(--md-secondary)) 0%, transparent 70%)",
-          }}
-        />
-      </div>
-
+    <section className="relative overflow-hidden pt-24 pb-16 md:pt-32 md:pb-24">
       <div className="container mx-auto px-4">
         <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
           {/* ── Left Column: Editorial Content ── */}
           <div className="flex flex-col items-start">
             {/* Version & OS chip */}
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="m3-chip inline-flex items-center gap-2 rounded-full border-none px-3.5 py-1.5 shadow-xs"
+            <div
+              className="m3-chip inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 shadow-xs"
               style={{
                 background: "hsl(var(--md-secondary-container))",
+                borderColor: "hsl(var(--md-outline-variant) / 0.4)",
                 color: "hsl(var(--md-on-secondary-container))",
               }}
             >
               <span
-                className="relative flex h-2 w-2"
-              >
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" style={{ background: "hsl(var(--md-secondary))" }} />
-                <span className="relative inline-flex h-2 w-2 rounded-full" style={{ background: "hsl(var(--md-secondary))" }} />
-              </span>
+                className="h-2 w-2 rounded-full"
+                style={{ background: "hsl(var(--md-secondary))" }}
+              />
               <span className="m3-label-medium font-semibold tracking-wide">
-                v{versionName} · Android 12+
+                Toolz v{versionName} · Android 12+
               </span>
-            </motion.div>
+            </div>
 
             {/* Display Headline */}
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.08, type: "spring", stiffness: 220, damping: 26 }}
+            <h1
               className="m3-display-large mt-6 tracking-tight text-on-surface"
-              style={{ fontSize: "clamp(2.75rem, 6.5vw, 5rem)", lineHeight: 1.02 }}
+              style={{ fontSize: "clamp(2.5rem, 6vw, 4.5rem)", lineHeight: 1.05 }}
             >
               Every essential tool.
               <br />
@@ -94,34 +78,25 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 className="font-extrabold"
                 style={{ color: "hsl(var(--md-primary))" }}
               >
-                Zero bloat.
+                Zero bloat. Zero trackers.
               </span>
-            </motion.h1>
+            </h1>
 
             {/* Body */}
-            <motion.p
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.16, duration: 0.4 }}
-              className="m3-body-large mt-6 max-w-xl text-on-surface-variant leading-relaxed"
-            >
-              Over {totalTools} utilities in a single open-source APK: converters, encrypted password
-              vaults, system monitors, social downloads, and sensors. No login, no telemetry, no tracking.
-            </motion.p>
+            <p className="m3-body-large mt-6 max-w-xl text-on-surface-variant leading-relaxed">
+              Over {totalTools} utilities unified into a single lightweight APK: unit converters,
+              encrypted SQLCipher password vaults, device sensor dashboards, social media downloaders,
+              and on-device OCR. No login, no cloud dependencies, no ads.
+            </p>
 
             {/* Tactile Actions with M3 Expressive Spring Bounces */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.24, duration: 0.4 }}
-              className="mt-8 flex flex-wrap items-center gap-3.5"
-            >
+            <div className="mt-8 flex flex-wrap items-center gap-3.5">
               <motion.button
                 onClick={onDownloadClick}
                 whileTap={{ scale: 0.94 }}
                 whileHover={{ y: -2 }}
                 transition={PRESS_SPRING}
-                className="m3-btn-filled gap-3 px-8 py-4 text-base shadow-md"
+                className="m3-btn-filled gap-3 px-8 py-4 text-base font-semibold shadow-md"
               >
                 <Download size={20} />
                 Download v{versionName}
@@ -132,7 +107,7 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 whileTap={{ scale: 0.94 }}
                 whileHover={{ y: -2 }}
                 transition={PRESS_SPRING}
-                className="m3-btn-tonal gap-2 px-6 py-4 text-base"
+                className="m3-btn-tonal gap-2 px-6 py-4 text-base font-semibold"
               >
                 Explore tools
                 <ArrowRight size={18} />
@@ -146,24 +121,37 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 whileHover={{ y: -2 }}
                 transition={PRESS_SPRING}
                 aria-label="Toolz source on GitHub"
-                className="m3-btn-outlined gap-2 px-5 py-4 text-base"
+                className="m3-btn-outlined gap-2 px-5 py-4 text-base font-semibold"
               >
                 <Github size={18} />
                 Source
               </motion.a>
-            </motion.div>
+            </div>
 
-            {/* M3 Stats Strip */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.32, duration: 0.4 }}
-              className="mt-10 grid w-full max-w-xl grid-cols-2 gap-2.5 sm:grid-cols-4"
-            >
+            {/* Architectural Highlights Row */}
+            <div className="mt-7 flex flex-wrap items-center gap-2">
+              {highlights.map(({ icon: Icon, label }) => (
+                <div
+                  key={label}
+                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-medium border"
+                  style={{
+                    background: "hsl(var(--md-surface-container-high))",
+                    borderColor: "hsl(var(--md-outline-variant) / 0.5)",
+                    color: "hsl(var(--md-on-surface-variant))",
+                  }}
+                >
+                  <Icon size={14} style={{ color: "hsl(var(--md-primary-ink))" }} />
+                  {label}
+                </div>
+              ))}
+            </div>
+
+            {/* M3 Stats Grid */}
+            <div className="mt-10 grid w-full max-w-xl grid-cols-2 gap-2.5 sm:grid-cols-4">
               {stats.map(({ value, label }) => (
                 <div
                   key={label}
-                  className="rounded-[16px] border p-3.5 text-center transition-colors hover:border-outline"
+                  className="rounded-[16px] border p-3.5 text-center transition-colors"
                   style={{
                     background: "hsl(var(--md-surface-container-low))",
                     borderColor: "hsl(var(--md-outline-variant) / 0.5)",
@@ -177,35 +165,32 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                   </div>
                 </div>
               ))}
-            </motion.div>
+            </div>
           </div>
 
           {/* ── Right Column: Interactive Phone Stage ── */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.14, type: "spring", stiffness: 180, damping: 24 }}
-            className="relative mx-auto flex w-full max-w-[400px] flex-col items-center justify-center lg:mx-0 lg:max-w-none"
-          >
-            {/* Phone container with subtle M3 elevation */}
+          <div className="relative mx-auto flex w-full max-w-[380px] flex-col items-center justify-center lg:mx-0 lg:max-w-none">
             <div className="relative w-full max-w-[300px]">
               {/* Phone Frame */}
               <div
-                className="m3-phone-frame relative mx-auto overflow-hidden p-2.5 shadow-2xl"
+                className="relative mx-auto overflow-hidden rounded-[36px] border p-2.5 shadow-2xl"
                 style={{
-                  borderRadius: "38px",
+                  background: "#0a0a0c",
                   borderColor: "hsl(var(--md-outline-variant) / 0.6)",
-                  background: "#08080a",
+                  boxShadow: "0 24px 64px -12px rgba(0, 0, 0, 0.7), 0 12px 24px -8px rgba(0, 0, 0, 0.5)",
                 }}
                 onMouseEnter={() => setPaused(true)}
                 onMouseLeave={() => setPaused(false)}
               >
-                {/* Android camera punch hole */}
-                <div className="absolute top-3.5 left-1/2 z-30 h-3 w-3 -translate-x-1/2 rounded-full bg-black shadow-inner ring-1 ring-white/10" />
+                {/* Speaker slit & Android camera punch hole */}
+                <div className="flex flex-col items-center pt-1 pb-2">
+                  <div className="h-1 w-10 rounded-full bg-white/20 mb-2" />
+                  <div className="h-3 w-3 rounded-full bg-black ring-1 ring-white/15" />
+                </div>
 
                 <div
-                  className="m3-phone-screen relative cursor-pointer overflow-hidden"
-                  style={{ borderRadius: "28px" }}
+                  className="relative cursor-pointer overflow-hidden rounded-[26px] bg-black"
+                  style={{ aspectRatio: "9/19" }}
                   onClick={nextImg}
                   role="button"
                   tabIndex={0}
@@ -223,10 +208,10 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                       src={FEATURED_SCREENSHOTS[imgIndex]}
                       alt={`Toolz screenshot ${imgIndex + 1}`}
                       className="absolute inset-0 h-full w-full object-cover"
-                      initial={{ opacity: 0, scale: 1.04 }}
+                      initial={{ opacity: 0, scale: 1.03 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.96 }}
-                      transition={{ duration: 0.3 }}
+                      exit={{ opacity: 0, scale: 0.97 }}
+                      transition={{ duration: 0.28 }}
                     />
                   </AnimatePresence>
                 </div>
@@ -234,14 +219,16 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
 
               {/* Navigation Arrows & Indicators */}
               <div className="mt-4 flex items-center justify-between px-2">
-                <button
+                <motion.button
                   type="button"
                   onClick={prevImg}
-                  className="grid h-9 w-9 place-items-center rounded-full text-on-surface-variant transition-transform hover:bg-surface-container-high active:scale-90"
+                  whileTap={{ scale: 0.9 }}
+                  transition={PRESS_SPRING}
+                  className="grid h-9 w-9 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high"
                   aria-label="Previous screenshot"
                 >
                   <ChevronLeft size={18} />
-                </button>
+                </motion.button>
 
                 <div className="flex items-center gap-1.5" aria-hidden="true">
                   {FEATURED_SCREENSHOTS.map((_, i) => (
@@ -262,48 +249,19 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                   ))}
                 </div>
 
-                <button
+                <motion.button
                   type="button"
                   onClick={nextImg}
-                  className="grid h-9 w-9 place-items-center rounded-full text-on-surface-variant transition-transform hover:bg-surface-container-high active:scale-90"
+                  whileTap={{ scale: 0.9 }}
+                  transition={PRESS_SPRING}
+                  className="grid h-9 w-9 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high"
                   aria-label="Next screenshot"
                 >
                   <ChevronRight size={18} />
-                </button>
+                </motion.button>
               </div>
-
-              {/* Floating Feature Badges */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.35, duration: 0.4 }}
-                className="absolute -left-10 top-16 hidden sm:flex items-center gap-2 rounded-2xl border px-3.5 py-2.5 shadow-lg backdrop-blur-md"
-                style={{
-                  background: "hsl(var(--md-surface-container) / 0.92)",
-                  borderColor: "hsl(var(--md-outline-variant) / 0.5)",
-                  color: "hsl(var(--md-on-surface))",
-                }}
-              >
-                <WifiOff size={16} className="text-secondary" />
-                <span className="m3-label-small font-semibold">Offline core</span>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.45, duration: 0.4 }}
-                className="absolute -right-10 bottom-24 hidden sm:flex items-center gap-2 rounded-2xl border px-3.5 py-2.5 shadow-lg backdrop-blur-md"
-                style={{
-                  background: "hsl(var(--md-surface-container) / 0.92)",
-                  borderColor: "hsl(var(--md-outline-variant) / 0.5)",
-                  color: "hsl(var(--md-on-surface))",
-                }}
-              >
-                <ShieldCheck size={16} className="text-primary-ink" />
-                <span className="m3-label-small font-semibold">SQLCipher Vaults</span>
-              </motion.div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

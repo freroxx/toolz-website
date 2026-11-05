@@ -7,6 +7,7 @@ import ThemeButton from "@/components/theme/ThemeButton";
 import ThemeDialog from "@/components/theme/ThemeDialog";
 import { useSkin } from "@/components/theme/skin-context";
 import SkinIcon from "@/components/theme/SkinIcon";
+import { PRESS_SPRING } from "@/lib/motion";
 
 const navLinks = [
   { label: "Tools", href: "/#features" },
@@ -89,7 +90,7 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                   Toolz
                 </span>
                 <span className="m3-label-small" style={{ color: "hsl(var(--md-primary-ink))" }}>
-                  v{versionName} BETA
+                  v{versionName}
                 </span>
               </div>
             </Link>
@@ -126,24 +127,30 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
             {/* Desktop CTA */}
             <div className="hidden lg:flex items-center gap-3">
               <ThemeButton onClick={() => setThemeOpen(true)} className="h-9 w-9" />
-              <a
+              <motion.a
                 href="https://github.com/freroxx/toolz"
                 target="_blank"
                 rel="noopener noreferrer"
+                whileTap={{ scale: 0.94 }}
+                whileHover={{ y: -1 }}
+                transition={PRESS_SPRING}
                 className="m3-btn-outlined h-9 px-4 text-sm gap-2"
                 aria-label="View source on GitHub"
               >
                 <Github size={16} />
                 Source
-              </a>
-              <button
+              </motion.a>
+              <motion.button
                 onClick={onDownloadClick}
-                className="m3-btn-filled h-9 px-5 text-sm gap-2"
+                whileTap={{ scale: 0.94 }}
+                whileHover={{ y: -1 }}
+                transition={PRESS_SPRING}
+                className="m3-btn-filled h-9 px-5 text-sm gap-2 shadow-xs"
                 aria-label={`Download Toolz v${versionName}`}
               >
                 <Download size={16} />
                 Download
-              </button>
+              </motion.button>
             </div>
 
             {/* Mobile trigger */}
@@ -214,7 +221,7 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                       Toolz
                     </span>
                     <span className="m3-label-small" style={{ color: "hsl(var(--md-primary-ink))" }}>
-                      v{versionName} BETA
+                      v{versionName}
                     </span>
                   </div>
                 </div>
@@ -270,22 +277,26 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 className="p-6 flex flex-col gap-3 border-t"
                 style={{ borderColor: "hsl(var(--md-outline-variant))" }}
               >
-                <button
+                <motion.button
                   onClick={() => { setMobileOpen(false); onDownloadClick(); }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={PRESS_SPRING}
                   className="m3-btn-filled w-full justify-center py-3 text-sm gap-2"
                 >
                   <Download size={16} />
                   Download v{versionName}
-                </button>
-                <a
+                </motion.button>
+                <motion.a
                   href="https://github.com/freroxx/toolz"
                   target="_blank"
                   rel="noopener noreferrer"
+                  whileTap={{ scale: 0.95 }}
+                  transition={PRESS_SPRING}
                   className="m3-btn-outlined w-full justify-center py-3 text-sm gap-2"
                 >
                   <Github size={16} />
                   View Source
-                </a>
+                </motion.a>
               </div>
             </motion.div>
           </>

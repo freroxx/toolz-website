@@ -176,18 +176,6 @@ const DownloadsPage = () => {
 
   return (
     <div className="min-h-screen bg-surface selection:bg-primary/30 selection:text-primary-foreground">
-      {/* Background Expression */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <div
-          className="absolute top-0 right-0 w-[60%] h-[60%] opacity-10 blur-[120px]"
-          style={{ background: "radial-gradient(circle, hsl(var(--md-primary)) 0%, transparent 70%)" }}
-        />
-        <div
-          className="absolute bottom-0 left-0 w-[50%] h-[50%] opacity-10 blur-[100px]"
-          style={{ background: "radial-gradient(circle, hsl(var(--md-secondary)) 0%, transparent 70%)" }}
-        />
-      </div>
-
       <div className="container mx-auto px-4 py-12 relative z-10 max-w-5xl">
         {/* Navigation */}
         <motion.button

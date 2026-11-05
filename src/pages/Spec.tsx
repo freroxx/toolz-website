@@ -807,13 +807,6 @@ const SpecPage = () => {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-surface font-sans text-on-surface">
-      {/* Expressive tonal wash */}
-      <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0">
-        <div className="absolute -right-40 -top-56 h-[560px] w-[560px] rounded-full bg-primary/20 blur-[140px]" />
-        <div className="absolute -left-48 top-[32%] h-[440px] w-[440px] rounded-full bg-tertiary/10 blur-[130px]" />
-        <div className="absolute bottom-0 right-[20%] h-[360px] w-[360px] rounded-full bg-secondary/10 blur-[140px]" />
-      </div>
-
       <div className="relative z-10 mx-auto max-w-[1200px] px-4 sm:px-6">
         {/* Top app bar */}
         <header className="flex items-center justify-between gap-4 py-5">
