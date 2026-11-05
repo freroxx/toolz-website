@@ -132,7 +132,7 @@ const ThemeDialog = ({
             <div className="flex items-start justify-between gap-4 px-5 pb-3 pt-5 sm:px-6 sm:pt-6">
               <div className="min-w-0">
                 <p
-                  className="m3-label-medium font-semibold uppercase tracking-[0.16em]"
+                  className="m3-label-large font-semibold"
                   style={{ color: "hsl(var(--md-primary-ink))" }}
                 >
                   {view === "about" ? "About skins" : "Appearance"}
@@ -256,7 +256,7 @@ const ThemeDialog = ({
                   >
                     <SkinIcon skin={activeSkin} size={48} />
                     <div className="min-w-0 flex-1">
-                      <p className="m3-label-small uppercase tracking-[0.14em]" style={{ opacity: 0.9 }}>
+                      <p className="m3-label-medium" style={{ opacity: 0.9 }}>
                         Active skin
                       </p>
                       <p className="m3-title-large truncate text-[18px]">{activeSkin.name}</p>
@@ -267,7 +267,7 @@ const ThemeDialog = ({
                   </div>
 
                   <div className="mt-5 flex items-center justify-between">
-                    <p className="m3-label-medium font-semibold uppercase tracking-[0.14em]" style={{ color: "hsl(var(--md-on-surface-variant))" }}>
+                    <p className="m3-label-large font-semibold" style={{ color: "hsl(var(--md-on-surface-variant))" }}>
                       Included
                     </p>
                     <span className="m3-label-small tabular-nums" style={{ color: "hsl(var(--md-on-surface-variant) / 0.9)" }}>
@@ -286,7 +286,7 @@ const ThemeDialog = ({
                   </div>
 
                   <div className="mt-5 flex items-center justify-between">
-                    <p className="m3-label-medium font-semibold uppercase tracking-[0.14em]" style={{ color: "hsl(var(--md-on-surface-variant))" }}>
+                    <p className="m3-label-large font-semibold" style={{ color: "hsl(var(--md-on-surface-variant))" }}>
                       Community
                     </p>
                     <span className="m3-label-small tabular-nums" style={{ color: "hsl(var(--md-on-surface-variant) / 0.9)" }}>

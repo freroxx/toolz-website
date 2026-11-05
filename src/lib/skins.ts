@@ -222,13 +222,31 @@ function asShape(value: unknown): IconShape {
   return v === "CIRCLE" || v === "PILL" ? "CIRCLE" : "OCTAGON";
 }
 
-function iconFor(raw: RawSkin): SkinIconPalette {
-  const preset = ICON_PRESETS[String(raw.iconPresetId ?? "")] ?? FALLBACK_ICON;
+/**
+ * Icon palette for skins that don't ship one of the named presets (custom
+ * uploads, or a preset added to the app after this site shipped). Without
+ * this every unknown skin fell back to Grape Haze, so the navbar icon looked
+ * identical no matter what the user picked.
+ */
+function deriveIcon(primary: string | null, secondary: string | null): SkinIconPalette {
+  const body = primary ?? DEFAULT_PRIMARY;
+  const accent = secondary ?? DEFAULT_SECONDARY;
   return {
-    rim: toHex(raw.iconStroke) ?? preset.rim,
-    bodyStart: toHex(raw.iconBg) ?? preset.bodyStart,
-    bodyEnd: preset.bodyEnd,
-    disc: toHex(raw.iconFg) ?? preset.disc,
+    rim: accent,
+    bodyStart: body,
+    bodyEnd: accent,
+    disc: readableOn(body),
+  };
+}
+
+function iconFor(raw: RawSkin): SkinIconPalette {
+  const preset = ICON_PRESETS[String(raw.iconPresetId ?? "")];
+  const base = preset ?? deriveIcon(toHex(raw.primary), toHex(raw.secondary));
+  return {
+    rim: toHex(raw.iconStroke) ?? base.rim,
+    bodyStart: toHex(raw.iconBg) ?? base.bodyStart,
+    bodyEnd: base.bodyEnd,
+    disc: toHex(raw.iconFg) ?? base.disc,
   };
 }
 

@@ -1,10 +1,12 @@
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSkin } from "@/components/theme/skin-context";
 import SkinIcon from "@/components/theme/SkinIcon";
 
 /**
- * Small navbar affordance showing the active skin's launcher icon.
- * Opens the theme sheet (rendered once by <Navbar>).
+ * Navbar affordance showing the active skin's launcher icon. Opens the theme
+ * sheet (rendered once by <Navbar>). The icon is keyed by skin id so picking a
+ * new look visibly swaps the mark instead of silently repainting it.
  */
 const ThemeButton = ({
   onClick,
@@ -23,19 +25,19 @@ const ThemeButton = ({
       aria-label={`Theme: ${activeSkin.name}. Open theme picker`}
       title={`Theme — ${activeSkin.name}`}
       className={cn(
-        "group relative flex h-10 w-10 items-center justify-center rounded-full border transition-all active:scale-90",
+        "group relative flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-on-surface/[0.08] active:scale-90",
         className
       )}
-      style={{
-        borderColor: "hsl(var(--md-outline-variant) / 0.55)",
-        background: "hsl(var(--md-surface-container-low) / 0.6)",
-      }}
     >
-      <SkinIcon
-        skin={activeSkin}
-        size={23}
-        className="transition-transform duration-300 group-hover:rotate-[-6deg] group-hover:scale-110"
-      />
+      <motion.span
+        key={activeSkin.id}
+        initial={{ opacity: 0, scale: 0.85 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.18 }}
+        className="flex items-center justify-center"
+      >
+        <SkinIcon skin={activeSkin} size={24} />
+      </motion.span>
     </button>
   );
 };
