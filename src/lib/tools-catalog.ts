@@ -55,6 +55,7 @@ export const categories: Category[] = [
       { name: "File Converter", desc: "FFmpeg conversion for video, audio and images." },
       { name: "PDF Reader", desc: "Viewer with text extraction." },
       { name: "Background Remover", desc: "Cutouts computed fully on-device, four quality tiers." },
+      { name: "Living Widgets", desc: "Animated homescreen widgets for looping video frames, GIFs and photo slideshows." },
       { name: "File Cleaner", desc: "Reclaims storage by clearing redundant cache." },
       { name: "Sound Meter", desc: "Live decibel readings of your surroundings." },
     ],
