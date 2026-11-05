@@ -95,13 +95,7 @@ const Gallery = () => {
         </div>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-80px" }}
-        transition={{ type: "spring", stiffness: 200, damping: 26 }}
-        className="container mx-auto px-4"
-      >
+      <div className="container mx-auto px-4">
         <div
           ref={trackRef}
           className="mask-fade-horizontal -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-4 pt-1"
@@ -175,7 +169,7 @@ const Gallery = () => {
             </motion.button>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Lightbox */}
       <AnimatePresence>

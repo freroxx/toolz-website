@@ -188,10 +188,13 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
                       const recommended = apk.abi === release.detectedAbi;
                       const size = formatApkSize(apk.sizeBytes);
                       return (
-                        <a
+                        <motion.a
                           key={apk.abi}
                           href={apk.downloadUrl}
-                          className="group flex items-center gap-3 rounded-2xl border p-3.5 transition-colors"
+                          whileTap={{ scale: 0.96 }}
+                          whileHover={{ y: -2 }}
+                          transition={{ type: "spring", stiffness: 600, damping: 18 }}
+                          className="group flex items-center gap-3 rounded-[16px] border p-3.5 transition-colors"
                           style={{
                             background: recommended
                               ? "hsl(var(--md-primary-container))"
@@ -205,7 +208,7 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
                           }}
                         >
                           <span
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px]"
                             style={{
                               background: recommended
                                 ? "hsl(var(--md-on-primary-container) / 0.12)"
@@ -232,7 +235,7 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
                               This device
                             </span>
                           )}
-                        </a>
+                        </motion.a>
                       );
                     })}
                   </div>

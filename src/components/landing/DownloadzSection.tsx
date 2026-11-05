@@ -106,11 +106,7 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
           </div>
 
           {/* ── Paste panel ── */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ type: "spring", stiffness: 220, damping: 26 }}
+          <div
             className="overflow-hidden rounded-[28px] border p-6 sm:p-8"
             style={{
               background: "hsl(var(--md-tertiary-container))",
@@ -244,7 +240,7 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
                 </li>
               ))}
             </ol>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

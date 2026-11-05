@@ -244,15 +244,13 @@ const News = () => {
             <p className="m3-label-large" style={{ color: "hsl(var(--md-on-surface-variant))" }}>
               Showing {paged.length} of {visible.length}{query.trim() ? ` for “${query.trim()}”` : ""}
             </p>
-            {paged.map((n, i) => (
+            {paged.map((n) => (
               <motion.article
                 key={n.id}
                 id={`news-${n.id}`}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-40px" }}
-                transition={{ delay: Math.min(i * 0.05, 0.3), type: "spring", stiffness: 220, damping: 26 }}
-                className="rounded-3xl p-6 sm:p-8 scroll-mt-28"
+                whileHover={{ y: -2 }}
+                transition={{ type: "spring", stiffness: 300, damping: 28 }}
+                className="rounded-[20px] p-6 sm:p-8 scroll-mt-28"
                 style={{
                   background: "hsl(var(--md-surface-container-high))",
                   border: activeHash === `news-${n.id}`

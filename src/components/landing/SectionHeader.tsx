@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -11,9 +10,9 @@ interface SectionHeaderProps {
 }
 
 /**
- * Shared section header: a tonal assist chip, expressive display type and
- * supporting copy. Left-aligned by default so sections read as a continuous
- * page rather than a stack of centred marketing blocks.
+ * Section header — chip + display title + optional body copy.
+ * No scroll animations: content is immediately visible per M3 Expressive
+ * philosophy (motion lives in interactions, not viewport triggers).
  */
 const SectionHeader = ({
   chip,
@@ -22,11 +21,7 @@ const SectionHeader = ({
   align = "left",
   className,
 }: SectionHeaderProps) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: "-80px" }}
-    transition={{ type: "spring", stiffness: 200, damping: 26 }}
+  <div
     className={cn(
       "mb-10 md:mb-14",
       align === "center" ? "text-center" : "text-left",
@@ -53,7 +48,7 @@ const SectionHeader = ({
         {description}
       </p>
     )}
-  </motion.div>
+  </div>
 );
 
 export default SectionHeader;

@@ -39,10 +39,7 @@ const RankingSection = ({ releases }: { releases: GithubRelease[] }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
       {/* Top Architectures */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true }}
+      <div
         className="m3-card-outlined p-6 flex flex-col gap-4"
       >
         <h3 className="m3-title-medium flex items-center gap-2 text-on-surface">
@@ -65,11 +62,7 @@ const RankingSection = ({ releases }: { releases: GithubRelease[] }) => {
       </motion.div>
 
       {/* Top Versions */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.1 }}
+      <div
         className="m3-card-outlined p-6 flex flex-col gap-4"
       >
         <h3 className="m3-title-medium flex items-center gap-2 text-on-surface">
@@ -102,10 +95,7 @@ const ReleaseCard = ({ release }: { release: GithubRelease }) => {
   });
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
+    <div
       className="m3-card-filled p-6 md:p-8 flex flex-col gap-6"
     >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -164,7 +154,7 @@ const ReleaseCard = ({ release }: { release: GithubRelease }) => {
         View release on GitHub
         <ExternalLink size={14} />
       </a>
-    </motion.div>
+    </div>
   );
 };
 

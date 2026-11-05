@@ -1,46 +1,65 @@
-import { useEffect, useState } from "react";
-import { MessageSquare, ExternalLink } from "lucide-react";
+import { Github, MessageSquare, ExternalLink, Star, GitPullRequest } from "lucide-react";
 import { motion } from "framer-motion";
 import { PRESS_SPRING } from "@/lib/motion";
 
+const links = [
+  {
+    icon: MessageSquare,
+    title: "Discord server",
+    desc: "Bug reports, feature requests, community skins",
+    href: "https://discord.gg/aAswRUerwh",
+    tone: "secondary" as const,
+  },
+  {
+    icon: Star,
+    title: "Star on GitHub",
+    desc: "Follow the repository and track new releases",
+    href: "https://github.com/freroxx/toolz",
+    tone: "tertiary" as const,
+  },
+  {
+    icon: GitPullRequest,
+    title: "Contribute",
+    desc: "Open an issue or submit a pull request — GPLv3",
+    href: "https://github.com/freroxx/toolz/issues",
+    tone: "primary" as const,
+  },
+];
+
+const toneMap = {
+  primary: {
+    bg: "hsl(var(--md-primary-container))",
+    icon: "hsl(var(--md-primary) / 0.20)",
+    color: "hsl(var(--md-on-primary-container))",
+  },
+  secondary: {
+    bg: "hsl(var(--md-secondary-container))",
+    icon: "hsl(var(--md-secondary) / 0.20)",
+    color: "hsl(var(--md-on-secondary-container))",
+  },
+  tertiary: {
+    bg: "hsl(var(--md-tertiary-container))",
+    icon: "hsl(var(--md-tertiary) / 0.20)",
+    color: "hsl(var(--md-on-tertiary-container))",
+  },
+};
+
 const Discord = () => {
-  const [widgetTheme, setWidgetTheme] = useState("dark");
-
-  useEffect(() => {
-    const read = () =>
-      setWidgetTheme(
-        document.documentElement.dataset.theme === "light" ? "light" : "dark"
-      );
-    read();
-    const observer = new MutationObserver(read);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["data-theme"],
-    });
-    return () => observer.disconnect();
-  }, []);
-
   return (
     <section id="discord" className="scroll-mt-20 py-16 md:py-24">
       <div className="container mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ type: "spring", stiffness: 200, damping: 26 }}
-          className="grid gap-4 lg:grid-cols-2"
-        >
-          {/* Left card */}
+        <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
+          {/* Left — editorial copy */}
           <div
-            className="flex flex-col justify-between gap-8 rounded-[28px] border p-6 md:p-9 shadow-xs"
+            className="flex flex-col justify-between gap-8 rounded-[24px] border p-6 md:p-9"
             style={{
               background: "hsl(var(--md-secondary-container))",
-              borderColor: "hsl(var(--md-outline-variant) / 0.4)",
+              borderColor: "hsl(var(--md-outline-variant) / 0.35)",
             }}
           >
             <div>
               <span
-                className="m3-chip border-transparent shadow-xs"
+                className="m3-chip border-transparent"
                 style={{
                   background: "hsl(var(--md-secondary) / 0.18)",
                   color: "hsl(var(--md-on-secondary-container))",
@@ -56,42 +75,15 @@ const Discord = () => {
                 className="m3-display-small mt-5 font-bold text-balance"
                 style={{ color: "hsl(var(--md-on-secondary-container))" }}
               >
-                Join the Discord.
+                Join the conversation.
               </h2>
               <p
                 className="m3-body-large mt-3 max-w-md leading-relaxed"
                 style={{ color: "hsl(var(--md-on-secondary-container) / 0.85)" }}
               >
-                Direct access to contributors: get help, report bugs, share skins, and track
-                upcoming releases.
+                Ask for help, share your skins, report bugs, and track what is coming
+                next — directly with the developers on Discord and GitHub.
               </p>
-            </div>
-
-            <div
-              className="flex items-center gap-3.5 rounded-[18px] border p-4"
-              style={{
-                background: "hsl(var(--md-secondary) / 0.12)",
-                borderColor: "hsl(var(--md-on-secondary-container) / 0.15)",
-              }}
-            >
-              <MessageSquare
-                size={22}
-                style={{ color: "hsl(var(--md-on-secondary-container))" }}
-              />
-              <div>
-                <p
-                  className="m3-label-small font-medium opacity-85"
-                  style={{ color: "hsl(var(--md-on-secondary-container))" }}
-                >
-                  Direct Support
-                </p>
-                <p
-                  className="m3-title-small font-bold"
-                  style={{ color: "hsl(var(--md-on-secondary-container))" }}
-                >
-                  From developers & power users
-                </p>
-              </div>
             </div>
 
             <motion.a
@@ -103,57 +95,74 @@ const Discord = () => {
               transition={PRESS_SPRING}
               className="m3-btn-filled w-full justify-center gap-3 py-4 font-semibold shadow-md sm:w-auto sm:self-start"
             >
-              <MessageSquare size={19} />
+              <MessageSquare size={18} />
               Join Discord
-              <ExternalLink size={14} className="opacity-80" />
+              <ExternalLink size={13} className="opacity-70" />
             </motion.a>
           </div>
 
-          {/* Right: live widget */}
-          <div
-            className="relative min-h-[420px] overflow-hidden rounded-[28px] border shadow-xs"
-            style={{
-              background: "hsl(var(--md-surface-container))",
-              borderColor: "hsl(var(--md-outline-variant) / 0.5)",
-            }}
-          >
-            <div
-              className="flex items-center gap-3 border-b px-5 py-4"
-              style={{ borderColor: "hsl(var(--md-outline-variant) / 0.5)" }}
-            >
-              <span
-                className="grid h-8 w-8 place-items-center rounded-[10px]"
-                style={{ background: "hsl(var(--md-secondary-container))" }}
-              >
-                <MessageSquare
-                  size={15}
-                  style={{ color: "hsl(var(--md-on-secondary-container))" }}
-                />
-              </span>
-              <span className="m3-label-large text-on-surface">Toolz Discord</span>
-              <span className="m3-label-small ml-auto inline-flex items-center gap-1.5 text-on-surface-variant">
-                <span
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{ background: "hsl(var(--md-secondary))" }}
-                />
-                Live
-              </span>
-            </div>
+          {/* Right — link cards */}
+          <div className="flex flex-col gap-3">
+            {links.map(({ icon: Icon, title, desc, href, tone }) => {
+              const t = toneMap[tone];
+              return (
+                <motion.a
+                  key={href}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ y: -2 }}
+                  transition={PRESS_SPRING}
+                  className="group flex items-center gap-4 rounded-[18px] border p-5 transition-colors"
+                  style={{
+                    background: t.bg,
+                    borderColor: "hsl(var(--md-outline-variant) / 0.35)",
+                    color: t.color,
+                  }}
+                >
+                  <span
+                    className="grid h-11 w-11 shrink-0 place-items-center rounded-[12px]"
+                    style={{ background: t.icon }}
+                  >
+                    <Icon size={19} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="m3-title-small font-bold leading-tight">{title}</p>
+                    <p className="m3-body-small mt-0.5 opacity-80">{desc}</p>
+                  </div>
+                  <ExternalLink
+                    size={14}
+                    className="shrink-0 opacity-50 transition-opacity group-hover:opacity-80"
+                  />
+                </motion.a>
+              );
+            })}
 
-            <div className="absolute inset-x-0 bottom-0 top-[57px]">
-              <iframe
-                src={`https://discord.com/widget?id=1483976991261724692&theme=${widgetTheme}`}
-                width="100%"
-                height="100%"
-                allowTransparency={true}
-                frameBorder="0"
-                sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
-                title="Toolz Discord Server"
-                className="h-full w-full"
-              />
+            {/* GitHub stats strip */}
+            <div
+              className="mt-1 flex flex-wrap items-center gap-4 rounded-[16px] border p-4"
+              style={{
+                background: "hsl(var(--md-surface-container))",
+                borderColor: "hsl(var(--md-outline-variant) / 0.4)",
+              }}
+            >
+              <Github size={16} style={{ color: "hsl(var(--md-on-surface-variant))" }} />
+              <span className="m3-label-medium text-on-surface-variant">
+                freroxx / toolz
+              </span>
+              <span
+                className="m3-label-small ml-auto rounded-full px-2.5 py-1 font-semibold"
+                style={{
+                  background: "hsl(var(--md-secondary-container))",
+                  color: "hsl(var(--md-on-secondary-container))",
+                }}
+              >
+                GPLv3
+              </span>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

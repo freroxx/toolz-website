@@ -20,7 +20,8 @@ function updatedAgo(at: number): string | null {
 
 /**
  * Home page news teaser: up to 3 latest real announcements + entry to /news.
- * Renders nothing when the feed is empty or unreachable (keeps home clean).
+ * No whileInView — content is immediately visible.
+ * Renders nothing when the feed is empty or unreachable.
  */
 const NewsSection = () => {
   const { items, loading, updatedAt } = usePublicNews();
@@ -33,113 +34,98 @@ const NewsSection = () => {
   return (
     <section id="news" className="scroll-mt-20 py-16 md:py-24">
       <div className="container mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ type: "spring", stiffness: 200, damping: 25 }}
-        >
-          <div className="flex flex-wrap items-end justify-between gap-4 mb-10">
-            <SectionHeader
-              align="left"
-              className="mb-0"
-              chip="Announcements"
-              title="Latest news."
-              description={
-                <>
-                  Changelog highlights from the Toolz team — the same feed the app shows.
-                  {stamp && <span className="m3-label-small ml-2">{stamp}</span>}
-                </>
-              }
-            />
-            <Link to="/news" className="m3-btn-outlined h-11 px-5 text-sm gap-2">
-              All news
-              <ArrowRight size={16} />
-            </Link>
+        <div className="flex flex-wrap items-end justify-between gap-4 mb-10">
+          <SectionHeader
+            align="left"
+            className="mb-0"
+            chip="Announcements"
+            title="Latest news."
+            description={
+              <>
+                Changelog highlights from the Toolz team — the same feed the app shows.
+                {stamp && <span className="m3-label-small ml-2">{stamp}</span>}
+              </>
+            }
+          />
+          <Link to="/news" className="m3-btn-outlined h-11 px-5 text-sm gap-2">
+            All news
+            <ArrowRight size={16} />
+          </Link>
+        </div>
+
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="rounded-[20px] p-6 min-h-[180px] animate-pulse"
+                style={{ background: "hsl(var(--md-surface-container-high))" }}
+              />
+            ))}
           </div>
-
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {[0, 1, 2].map((i) => (
-                <div
-                  key={i}
-                  className="rounded-3xl p-6 min-h-[180px] animate-pulse"
-                  style={{ background: "hsl(var(--md-surface-container-high))" }}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {preview.map((n, i) => (
-                <motion.div
-                  key={n.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.08, type: "spring", stiffness: 220, damping: 26 }}
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {preview.map((n) => (
+              <motion.div
+                key={n.id}
+                whileHover={{ y: -3 }}
+                whileTap={{ scale: 0.98 }}
+                transition={PRESS_SPRING}
+                className="h-full"
+              >
+                <Link
+                  to={`/news#news-${n.id}`}
+                  className="block rounded-[20px] border p-6 h-full transition-colors hover:border-outline"
+                  style={{
+                    background: "hsl(var(--md-surface-container-high))",
+                    borderColor: "hsl(var(--md-outline-variant) / 0.5)",
+                  }}
                 >
-                  <motion.div
-                    whileHover={{ y: -3 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={PRESS_SPRING}
-                    className="h-full"
-                  >
-                    <Link
-                      to={`/news#news-${n.id}`}
-                      className="block rounded-[22px] border p-6 h-full transition-colors hover:border-outline shadow-xs"
-                      style={{
-                        background: "hsl(var(--md-surface-container-high))",
-                        borderColor: "hsl(var(--md-outline-variant) / 0.5)",
-                      }}
+                  <div className="flex items-center gap-2 mb-4">
+                    <span
+                      className="m3-label-small px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider"
+                      style={newsPriorityChipStyle(n.priority)}
                     >
-                      <div className="flex items-center gap-2 mb-4">
-                        <span
-                          className="m3-label-small px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider"
-                          style={newsPriorityChipStyle(n.priority)}
-                        >
-                          {n.priority}
-                        </span>
-                        {n.pinned && (
-                          <span className="m3-label-small font-semibold" style={{ color: "hsl(var(--md-primary-ink))" }}>
-                            Pinned
-                          </span>
-                        )}
-                        <span
-                          className="m3-label-small ml-auto font-medium"
-                          style={{ color: "hsl(var(--md-on-surface-variant))" }}
-                        >
-                          {formatNewsDate(n.publishAt)}
-                        </span>
-                      </div>
-                      {n.imageUrl && !broken.has(n.id) && (
-                        <img
-                          src={n.imageUrl}
-                          alt={n.title}
-                          loading="lazy"
-                          onError={() => setBroken((prev) => new Set(prev).add(n.id))}
-                          className="w-full h-auto rounded-[14px] mb-4 border border-outline-variant/30"
-                        />
-                      )}
-                      <div
-                        className="m3-title-medium font-bold mb-2 line-clamp-2"
-                        style={{ color: "hsl(var(--md-on-surface))" }}
-                      >
-                        {n.title}
-                      </div>
-                      <div
-                        className="m3-body-small line-clamp-3 leading-relaxed"
-                        style={{ color: "hsl(var(--md-on-surface-variant))" }}
-                      >
-                        {stripMarkdown(n.body)}
-                      </div>
-                    </Link>
-                  </motion.div>
-                </motion.div>
-              ))}
-            </div>
-          )}
-
-        </motion.div>
+                      {n.priority}
+                    </span>
+                    {n.pinned && (
+                      <span className="m3-label-small font-semibold" style={{ color: "hsl(var(--md-primary-ink))" }}>
+                        Pinned
+                      </span>
+                    )}
+                    <span
+                      className="m3-label-small ml-auto font-medium"
+                      style={{ color: "hsl(var(--md-on-surface-variant))" }}
+                    >
+                      {formatNewsDate(n.publishAt)}
+                    </span>
+                  </div>
+                  {n.imageUrl && !broken.has(n.id) && (
+                    <img
+                      src={n.imageUrl}
+                      alt={n.title}
+                      loading="lazy"
+                      onError={() => setBroken((prev) => new Set(prev).add(n.id))}
+                      className="w-full h-auto rounded-[12px] mb-4 border border-outline-variant/30"
+                    />
+                  )}
+                  <div
+                    className="m3-title-medium font-bold mb-2 line-clamp-2"
+                    style={{ color: "hsl(var(--md-on-surface))" }}
+                  >
+                    {n.title}
+                  </div>
+                  <div
+                    className="m3-body-small line-clamp-3 leading-relaxed"
+                    style={{ color: "hsl(var(--md-on-surface-variant))" }}
+                  >
+                    {stripMarkdown(n.body)}
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
