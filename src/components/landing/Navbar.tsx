@@ -5,6 +5,8 @@ import { Link, useLocation } from "react-router-dom";
 import { useLatestRelease } from "@/hooks/use-latest-release";
 import ThemeButton from "@/components/theme/ThemeButton";
 import ThemeDialog from "@/components/theme/ThemeDialog";
+import { useSkin } from "@/components/theme/skin-context";
+import SkinIcon from "@/components/theme/SkinIcon";
 
 const navLinks = [
   { label: "Tools", href: "/#features" },
@@ -22,6 +24,7 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
   const navRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const { versionName } = useLatestRelease();
+  const { activeSkin } = useSkin();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -75,12 +78,8 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
               className="flex items-center gap-3 group active:scale-95 transition-transform"
               aria-label="Toolz home"
             >
-              <div className="relative w-10 h-10 rounded-[22%] overflow-hidden m3-surface-container-high flex items-center justify-center p-0 shadow-lg shadow-black/20">
-                <img
-                  src="/logo.png"
-                  alt="Toolz"
-                  className="w-full h-full object-cover scale-[1.6] transition-transform duration-500 group-hover:scale-[1.8]"
-                />
+              <div className="relative w-10 h-10 rounded-[22%] overflow-hidden m3-surface-container-high flex items-center justify-center p-1.5 shadow-lg shadow-black/20">
+                <SkinIcon skin={activeSkin} size={28} />
               </div>
               <div className="flex flex-col leading-none">
                 <span
@@ -115,7 +114,7 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                         layoutId="nav-indicator"
                         className="absolute inset-0 rounded-full"
                         style={{ background: "hsl(var(--md-secondary-container))" }}
-                        transition={{ type: "spring", stiffness: 400, damping: 35 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
                       />
                     )}
                     <span className="relative z-10">{link.label}</span>
@@ -206,7 +205,10 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 style={{ borderColor: "hsl(var(--md-outline-variant))" }}
               >
                 <div className="flex items-center gap-3">
-                  <img src="/logo.png" alt="Toolz" className="w-8 h-8 object-contain" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-[20%]"
+                    style={{ background: "hsl(var(--md-surface-container-high))" }}>
+                    <SkinIcon skin={activeSkin} size={26} />
+                  </div>
                   <div className="flex flex-col">
                     <span className="m3-title-medium font-bold" style={{ color: "hsl(var(--md-on-surface))" }}>
                       Toolz
