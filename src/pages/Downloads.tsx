@@ -59,7 +59,7 @@ const RankingSection = ({ releases }: { releases: GithubRelease[] }) => {
             </div>
           ))}
         </div>
-      </motion.div>
+      </div>
 
       {/* Top Versions */}
       <div
@@ -82,7 +82,7 @@ const RankingSection = ({ releases }: { releases: GithubRelease[] }) => {
             </div>
           ))}
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };

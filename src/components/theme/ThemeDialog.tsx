@@ -30,7 +30,7 @@ const SkinTile = ({
       whileTap={{ scale: 0.95 }}
       whileHover={{ y: -2 }}
       transition={PRESS_SPRING}
-      className="group relative flex items-center gap-3.5 rounded-[20px] border p-3 text-left transition-colors sm:p-3.5"
+      className="group relative flex items-center gap-3.5 rounded-[16px] border p-3 text-left transition-colors sm:p-3.5"
       style={
         active
           ? {
@@ -292,7 +292,7 @@ const ThemeDialog = ({
                 <>
                   {/* Active skin summary card */}
                   <div
-                    className="flex items-center gap-4 rounded-[22px] border p-4.5"
+                    className="flex items-center gap-4 rounded-[16px] border p-4.5"
                     style={{
                       background: "hsl(var(--md-primary-container))",
                       borderColor: "transparent",

@@ -110,7 +110,7 @@ const ToolCatalog = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.22 }}
-            className="rounded-[28px] border p-5 md:p-7"
+            className="rounded-[24px] border p-5 md:p-7"
             style={{
               background: "hsl(var(--md-surface-container))",
               borderColor: "hsl(var(--md-outline-variant) / 0.5)",
@@ -171,7 +171,7 @@ const ToolCatalog = () => {
                     whileHover={{ y: -1 }}
                     transition={PRESS_SPRING}
                     className={cn(
-                      "relative flex min-h-[74px] items-center gap-2.5 overflow-hidden rounded-[20px] border p-3 text-left transition-colors",
+                      "relative flex min-h-[74px] items-center gap-2.5 overflow-hidden rounded-[16px] border p-3 text-left transition-colors",
                     )}
                     style={
                       isActive
@@ -240,7 +240,7 @@ const ToolCatalog = () => {
 
             {/* Detail panel */}
             <div
-              className="overflow-hidden rounded-[28px] border"
+              className="overflow-hidden rounded-[24px] border"
               style={{
                 background: "hsl(var(--md-surface-container))",
                 borderColor: "hsl(var(--md-outline-variant) / 0.5)",

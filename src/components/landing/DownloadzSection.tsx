@@ -7,7 +7,9 @@ import {
   Link2,
   Music2,
   ShieldCheck,
+  Sparkles,
   Youtube,
+  Zap,
 } from "lucide-react";
 import SectionHeader from "@/components/landing/SectionHeader";
 import { PRESS_SPRING } from "@/lib/motion";
@@ -21,10 +23,17 @@ const platforms = [
   { icon: Youtube, label: "YouTube · in app" },
 ];
 
-const steps = [
-  { n: "01", title: "Copy the post link", copy: "Use Share → Copy link in TikTok or Instagram." },
-  { n: "02", title: "Paste it here", copy: "Downloadz reads the public post and lists the available files." },
-  { n: "03", title: "Pick a quality", copy: "Choose video, audio-only or a photo, then save it." },
+const highlights = [
+  {
+    icon: Zap,
+    title: "Direct extraction",
+    desc: "Inspects public media posts and provides direct links to original video and audio files.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Private & tracker-free",
+    desc: "Runs completely stateless without cookies, registrations, or user telemetry.",
+  },
 ];
 
 const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
@@ -55,34 +64,37 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
   return (
     <section id="downloadz" className="scroll-mt-20 py-16 md:py-24">
       <div className="container mx-auto px-4">
-        <div className="grid items-center gap-10 lg:grid-cols-[0.92fr_1.08fr] lg:gap-16">
-          {/* ── Copy ── */}
+        <div className="grid items-center gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16">
+          {/* ── Left Column: Editorial Info ── */}
           <div>
             <SectionHeader
               className="mb-6 md:mb-8"
-              chip="Toolz Downloadz"
+              chip="Web Companion"
               title={
                 <>
                   Paste a link.
                   <br />
-                  <span className="text-primary-ink">Keep the video.</span>
+                  <span style={{ color: "hsl(var(--md-primary))" }}>Save the media.</span>
                 </>
               }
-              description="A companion web tool for public TikTok and Instagram posts. It runs outside the app, needs no account, and hands you the file directly."
+              description="A lightweight web companion for downloading public TikTok and Instagram posts without installing the app. Zero setup, no sign-in required."
             />
 
             <div className="flex flex-wrap gap-2">
               {platforms.map(({ icon: Icon, label }) => (
                 <span key={label} className="m3-chip gap-2">
-                  <Icon size={15} className="text-primary-ink" />
+                  <Icon size={15} style={{ color: "hsl(var(--md-primary))" }} />
                   {label}
                 </span>
               ))}
             </div>
 
             <div
-              className="mt-6 flex items-start gap-3 rounded-[20px] p-4"
-              style={{ background: "hsl(var(--md-surface-container))" }}
+              className="mt-6 flex items-start gap-3 rounded-[16px] border p-4"
+              style={{
+                background: "hsl(var(--md-surface-container))",
+                borderColor: "hsl(var(--md-outline-variant) / 0.4)",
+              }}
             >
               <Info
                 size={18}
@@ -90,74 +102,67 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
                 style={{ color: "hsl(var(--md-primary-ink))" }}
               />
               <p className="m3-body-small text-on-surface-variant">
-                YouTube links are rejected on the web — YouTube blocks web
-                downloaders. The app&apos;s Media Downloader handles YouTube
-                on-device instead.{" "}
+                YouTube restricts browser-based downloaders. To download YouTube videos and audio at full quality,
+                use the on-device Media Downloader inside the Toolz Android app.{" "}
                 <button
                   type="button"
                   onClick={onDownloadClick}
-                  className="font-semibold text-primary-ink hover:underline"
+                  className="font-semibold underline hover:no-underline"
+                  style={{ color: "hsl(var(--md-primary-ink))" }}
                 >
-                  Get the app
+                  Get the APK
                 </button>
                 .
               </p>
             </div>
           </div>
 
-          {/* ── Paste panel ── */}
+          {/* ── Right Column: Interactive URL Tool Card ── */}
           <div
-            className="overflow-hidden rounded-[28px] border p-6 sm:p-8"
+            className="overflow-hidden rounded-[24px] border p-6 sm:p-8 shadow-xs"
             style={{
-              background: "hsl(var(--md-tertiary-container))",
+              background: "hsl(var(--md-surface-container))",
               borderColor: "hsl(var(--md-outline-variant) / 0.5)",
             }}
           >
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <span
-                  className="grid h-11 w-11 place-items-center rounded-[14px]"
-                  style={{ background: "hsl(var(--md-tertiary) / 0.18)" }}
+                  className="grid h-11 w-11 place-items-center rounded-[12px]"
+                  style={{
+                    background: "hsl(var(--md-secondary-container))",
+                    color: "hsl(var(--md-on-secondary-container))",
+                  }}
                 >
-                  <Link2
-                    size={20}
-                    style={{ color: "hsl(var(--md-on-tertiary-container))" }}
-                  />
+                  <Link2 size={20} />
                 </span>
                 <div>
-                  <p
-                    className="m3-title-medium font-bold leading-tight"
-                    style={{ color: "hsl(var(--md-on-tertiary-container))" }}
-                  >
-                    Open Downloadz
+                  <p className="m3-title-medium font-bold leading-tight text-on-surface">
+                    Toolz Downloadz
                   </p>
-                  <p
-                    className="m3-label-small opacity-85"
-                    style={{ color: "hsl(var(--md-on-tertiary-container))" }}
-                  >
-                    Web app · zero install
+                  <p className="m3-label-small text-on-surface-variant">
+                    Web utility · toolz-downloadz.vercel.app
                   </p>
                 </div>
               </div>
               <span
                 className="m3-label-small inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-semibold"
                 style={{
-                  background: "hsl(var(--md-tertiary) / 0.18)",
-                  color: "hsl(var(--md-on-tertiary-container))",
+                  background: "hsl(var(--md-secondary-container))",
+                  color: "hsl(var(--md-on-secondary-container))",
                 }}
               >
-                <ShieldCheck size={13} />
-                No account
+                <Sparkles size={12} />
+                Instant
               </span>
             </div>
 
             <form onSubmit={submit} className="mt-6" noValidate>
               <label
                 htmlFor="downloadz-url"
-                className="m3-label-medium mb-2 block font-semibold"
-                style={{ color: "hsl(var(--md-on-tertiary-container))" }}
+                className="m3-label-medium mb-2 block font-semibold text-on-surface"
               >
-                Public post link
+                Post or reel link
               </label>
               <div className="flex flex-col gap-2.5 sm:flex-row">
                 <input
@@ -173,21 +178,15 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
                   placeholder="https://www.tiktok.com/@…/video/…"
                   aria-invalid={Boolean(error)}
                   aria-describedby={error ? "downloadz-error" : "downloadz-help"}
-                  className="m3-body-medium min-w-0 flex-1 rounded-full border border-outline-variant/60 px-5 py-3.5 text-on-surface outline-none placeholder:text-on-surface-variant/60 focus:border-tertiary focus:ring-2 focus:ring-tertiary/30"
-                  style={{
-                    background: "hsl(var(--md-surface))",
-                  }}
+                  className="m3-body-medium min-w-0 flex-1 rounded-full border border-outline-variant/60 px-5 py-3 text-on-surface outline-none placeholder:text-on-surface-variant/50 focus:border-primary focus:ring-2 focus:ring-primary/25"
+                  style={{ background: "hsl(var(--md-surface-container-high))" }}
                 />
                 <motion.button
                   type="submit"
                   whileTap={{ scale: 0.94 }}
                   whileHover={{ y: -1 }}
                   transition={PRESS_SPRING}
-                  className="m3-label-large inline-flex shrink-0 items-center justify-center gap-2 rounded-full px-6 py-3.5 font-bold shadow-sm"
-                  style={{
-                    background: "hsl(var(--md-tertiary))",
-                    color: "hsl(var(--md-on-tertiary))",
-                  }}
+                  className="m3-btn-filled shrink-0 gap-2 px-6 py-3 font-semibold shadow-xs"
                 >
                   Open
                   <ArrowUpRight size={17} />
@@ -205,41 +204,46 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
               ) : (
                 <p
                   id="downloadz-help"
-                  className="m3-label-small mt-2.5 opacity-90"
-                  style={{ color: "hsl(var(--md-on-tertiary-container))" }}
+                  className="m3-label-small mt-2.5 text-on-surface-variant"
                 >
-                  Opens toolz-downloadz.vercel.app in a new tab with the link filled in.
+                  Launches Downloadz with your link pre-loaded.
                 </p>
               )}
             </form>
 
             <div
               className="my-6 h-px"
-              style={{ background: "hsl(var(--md-on-tertiary-container) / 0.15)" }}
+              style={{ background: "hsl(var(--md-outline-variant) / 0.3)" }}
             />
 
-            <ol className="flex flex-col gap-3">
-              {steps.map(({ n, title, copy }) => (
-                <li key={n} className="flex items-start gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              {highlights.map(({ icon: Icon, title, desc }) => (
+                <div
+                  key={title}
+                  className="flex items-start gap-3 rounded-[16px] border p-3.5"
+                  style={{
+                    background: "hsl(var(--md-surface-container-low))",
+                    borderColor: "hsl(var(--md-outline-variant) / 0.4)",
+                  }}
+                >
                   <span
-                    className="m3-label-small mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full tabular-nums"
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-[8px]"
                     style={{
-                      background: "hsl(var(--md-tertiary) / 0.16)",
-                      color: "hsl(var(--md-on-tertiary-container))",
+                      background: "hsl(var(--md-secondary-container))",
+                      color: "hsl(var(--md-on-secondary-container))",
                     }}
                   >
-                    {n}
+                    <Icon size={16} />
                   </span>
-                  <p
-                    className="m3-body-small"
-                    style={{ color: "hsl(var(--md-on-tertiary-container))" }}
-                  >
-                    <span className="m3-title-small">{title}.</span>{" "}
-                    <span className="opacity-75">{copy}</span>
-                  </p>
-                </li>
+                  <div className="min-w-0">
+                    <p className="m3-title-small text-on-surface">{title}</p>
+                    <p className="m3-body-small mt-0.5 text-on-surface-variant leading-relaxed">
+                      {desc}
+                    </p>
+                  </div>
+                </div>
               ))}
-            </ol>
+            </div>
           </div>
         </div>
       </div>
