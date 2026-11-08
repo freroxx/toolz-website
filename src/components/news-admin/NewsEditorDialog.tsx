@@ -459,7 +459,7 @@ export function NewsEditorDialog({
                   </div>
                   <div className="grid gap-2">
                     <Label>Action URL</Label>
-                    <Input value={form.actionUrl ?? ''} onChange={(e) => set('actionUrl', e.target.value || null)} placeholder="https://… or toolz://…" className="rounded-xl" />
+                    <Input value={form.actionUrl ?? ''} onChange={(e) => set('actionUrl', e.target.value || null)} placeholder="https://… (discord, vercel, etc.), toolz://… or discord://…" className="rounded-xl" />
                   </div>
                   {(form.actionLabel ?? '').trim() && !(form.actionUrl ?? '').trim() ? (
                     <p className="col-span-2 text-xs font-semibold text-[hsl(var(--md-on-tertiary-container))]">

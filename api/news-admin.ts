@@ -14,7 +14,33 @@ import crypto from 'crypto';
 const PRIORITIES = ['info', 'feature', 'fix', 'promo', 'critical'] as const;
 const STATUSES = ['draft', 'published', 'archived'] as const;
 const FREQS = ['once', 'every_launch', 'daily', 'weekly', 'interval'] as const;
-const DEFAULT_HOSTS = ['toolz-app.vercel.app', 'github.com', 'freroxx.github.io', 'raw.githubusercontent.com', 'i.ibb.co', 'ibb.co'];
+export const DEFAULT_HOSTS = [
+  'toolz-app.vercel.app',
+  'frerox.vercel.app',
+  'downloadz.vercel.app',
+  'downloads.vercel.app',
+  'vercel.app',
+  'discord.com',
+  'discord.gg',
+  'discord.media',
+  'discord.net',
+  'discordapp.com',
+  'discordapp.net',
+  'discord.me',
+  'github.com',
+  'github.io',
+  'freroxx.github.io',
+  'raw.githubusercontent.com',
+  'gitlab.com',
+  't.me',
+  'telegram.org',
+  'twitter.com',
+  'x.com',
+  'youtube.com',
+  'youtu.be',
+  'i.ibb.co',
+  'ibb.co',
+];
 
 function sha256(s: string): Buffer {
   return crypto.createHash('sha256').update(s).digest();
@@ -55,15 +81,15 @@ function semverOk(v: string): boolean {
   return /^\d+(\.\d+){0,2}(-[A-Za-z0-9.+-]+)?$/.test(v.trim());
 }
 
-function urlOk(u: string, allowed: string[]): string | null {
+export function urlOk(u: string, allowed: string[]): string | null {
   let parsed: URL;
   try {
     parsed = new URL(u);
   } catch {
     return 'must be a valid URL';
   }
-  if (parsed.protocol !== 'https:' && !(u.startsWith('toolz://'))) return 'must be https:// or toolz://';
   if (/^(javascript|data|file):/i.test(u)) return 'forbidden scheme';
+  if (parsed.protocol !== 'https:' && !(u.startsWith('toolz://') || u.startsWith('discord://'))) return 'must be https://, toolz:// or discord://';
   const host = parsed.hostname.toLowerCase();
   if (/^\d+\.\d+\.\d+\.\d+$/.test(host)) return 'IP hosts not allowed';
   if (parsed.protocol === 'https:' && allowed.length > 0) {
