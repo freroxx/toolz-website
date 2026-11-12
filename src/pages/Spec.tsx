@@ -18,12 +18,15 @@ import {
   ArrowLeftRight,
   ExternalLink,
   Trash2,
+  RefreshCw,
+  WifiOff,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useSkin } from "@/components/theme/skin-context";
 import SkinIcon from "@/components/theme/SkinIcon";
+import { QuickModeToggle } from "@/components/theme/ThemeButton";
 
 interface SpecPayload {
   search_query: string;
@@ -44,7 +47,10 @@ interface CatalogResponse {
   devices: SpecPayload[];
 }
 
+type SortKey = "relevance" | "az" | "za";
+
 const FALLBACK_IMG = "https://fdn2.gsmarena.com/vv/bigpic/smartphone.jpg";
+const MAX_COMPARE = 3;
 
 const BRANDS = [
   "All",
@@ -65,6 +71,8 @@ const BRANDS = [
   "Infinix",
   "Tecno",
 ] as const;
+
+const SUGGESTIONS = ["Galaxy S24", "Pixel 9", "iPhone 16", "Xiaomi 14", "OnePlus 12"];
 
 const BRAND_PATTERN =
   /^(samsung|apple|google|xiaomi|redmi|poco|oneplus|nothing|motorola|oppo|vivo|realme|honor|huawei|sony|asus|infinix|tecno|nokia|lenovo|lg)/i;
@@ -234,6 +242,9 @@ const SpecDetailsDialog = ({
 }) => {
   const sections = Object.entries(device.specifications ?? {});
 
+  const jumpTo = (i: number) =>
+    document.getElementById(`spec-sec-${i}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+
   return (
     <DialogContent className="flex max-h-[92dvh] w-[calc(100%-1rem)] flex-col gap-0 overflow-hidden rounded-[28px] border-0 bg-surface-container-low p-0 shadow-2xl sm:mx-auto sm:w-[94vw] sm:max-w-5xl">
       <DialogTitle className="sr-only">{device.matched_device} specifications</DialogTitle>
@@ -241,7 +252,7 @@ const SpecDetailsDialog = ({
       <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto">
         <div className="grid lg:grid-cols-[340px_minmax(0,1fr)]">
           {/* Summary */}
-          <aside className="bg-surface-container p-6 lg:self-start">
+          <aside className="bg-surface-container p-6 lg:sticky lg:top-0 lg:self-start">
             <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-primary-ink">
               {getBrand(device.matched_device)}
             </p>
@@ -261,6 +272,11 @@ const SpecDetailsDialog = ({
               <button
                 onClick={onToggleCompare}
                 disabled={!compareSelected && compareDisabled}
+                title={
+                  !compareSelected && compareDisabled
+                    ? `Compare is full (${MAX_COMPARE} devices)`
+                    : undefined
+                }
                 className={cn(
                   "inline-flex h-12 items-center justify-center gap-2 rounded-full px-6 text-[14px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40",
                   compareSelected
@@ -284,30 +300,54 @@ const SpecDetailsDialog = ({
           </aside>
 
           {/* Spec sections */}
-          <div className="space-y-3 p-4 sm:p-6">
-            {sections.map(([section, data]) => (
-              <section key={section} className="rounded-[24px] bg-surface-container p-5">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary-container text-on-secondary-container">
-                    <SectionIcon section={section} />
-                  </span>
-                  <h3 className="font-display text-base font-bold text-on-surface">{section}</h3>
-                </div>
-                <dl className="mt-3">
-                  {Object.entries(data).map(([key, value]) => (
-                    <div
-                      key={key}
-                      className="grid gap-1 border-t border-outline-variant/30 py-3 sm:grid-cols-[160px_1fr] sm:gap-6"
-                    >
-                      <dt className="text-[13px] text-on-surface-variant">{key}</dt>
-                      <dd className="text-[13px] font-medium leading-relaxed text-on-surface">
-                        {value}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              </section>
-            ))}
+          <div className="min-w-0">
+            {sections.length > 2 && (
+              <nav
+                aria-label="Spec sections"
+                className="sticky top-0 z-10 flex gap-2 overflow-x-auto bg-surface-container-low px-4 py-3 pr-14 [scrollbar-width:none] sm:px-6 [&::-webkit-scrollbar]:hidden"
+              >
+                {sections.map(([section], i) => (
+                  <button
+                    key={section}
+                    onClick={() => jumpTo(i)}
+                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-outline-variant/70 px-3.5 text-[12px] font-medium text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
+                  >
+                    <SectionIcon section={section} size={13} />
+                    {section}
+                  </button>
+                ))}
+              </nav>
+            )}
+
+            <div className={cn("space-y-3 px-4 pb-6 sm:px-6", sections.length <= 2 && "pt-6")}>
+              {sections.map(([section, data], i) => (
+                <section
+                  key={section}
+                  id={`spec-sec-${i}`}
+                  className="scroll-mt-16 rounded-[24px] bg-surface-container p-5"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary-container text-on-secondary-container">
+                      <SectionIcon section={section} />
+                    </span>
+                    <h3 className="font-display text-base font-bold text-on-surface">{section}</h3>
+                  </div>
+                  <dl className="mt-3">
+                    {Object.entries(data).map(([key, value]) => (
+                      <div
+                        key={key}
+                        className="grid gap-1 border-t border-outline-variant/30 py-3 sm:grid-cols-[160px_1fr] sm:gap-6"
+                      >
+                        <dt className="text-[13px] text-on-surface-variant">{key}</dt>
+                        <dd className="text-[13px] font-medium leading-relaxed text-on-surface">
+                          {value}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </section>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -318,18 +358,23 @@ const SpecDetailsDialog = ({
 /* ── Catalog card ─────────────────────────────────────────────────────── */
 const SpecCard = ({
   device,
+  index,
   compareSelected,
   compareDisabled,
   onOpen,
   onToggleCompare,
 }: {
   device: SpecPayload;
+  index: number;
   compareSelected: boolean;
   compareDisabled: boolean;
   onOpen: () => void;
   onToggleCompare: () => void;
 }) => (
-  <article
+  <motion.article
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.22, delay: Math.min(index, 8) * 0.03 }}
     className={cn(
       "relative flex flex-col rounded-[28px] transition-colors",
       compareSelected
@@ -377,7 +422,13 @@ const SpecCard = ({
           ? `Remove ${device.matched_device} from compare`
           : `Add ${device.matched_device} to compare`
       }
-      title={compareSelected ? "Remove from compare" : "Add to compare"}
+      title={
+        compareSelected
+          ? "Remove from compare"
+          : compareDisabled
+            ? `Compare is full (${MAX_COMPARE} devices)`
+            : "Add to compare"
+      }
       className={cn(
         "absolute right-7 top-7 flex h-10 w-10 items-center justify-center rounded-full shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40",
         compareSelected
@@ -387,7 +438,7 @@ const SpecCard = ({
     >
       {compareSelected ? <Check size={17} strokeWidth={2.5} /> : <ArrowLeftRight size={16} />}
     </button>
-  </article>
+  </motion.article>
 );
 
 /* ── Compare helpers ──────────────────────────────────────────────────── */
@@ -431,10 +482,14 @@ const CompareDialog = ({
   devices: SpecPayload[];
   diffOnly: boolean;
   setDiffOnly: (v: boolean) => void;
-  onRemove: (id: string) => void;
+  onRemove: (device: SpecPayload) => void;
   onClear: () => void;
 }) => {
   const groups = useMemo(() => buildCompareRows(devices), [devices]);
+  const diffCount = useMemo(
+    () => groups.reduce((n, g) => n + g.rows.filter((r) => r.differs).length, 0),
+    [groups]
+  );
   const visibleGroups = useMemo(
     () =>
       diffOnly
@@ -453,7 +508,12 @@ const CompareDialog = ({
       <DialogTitle className="sr-only">Compare devices</DialogTitle>
 
       <div className="flex flex-wrap items-center gap-3 px-6 py-5 pr-16">
-        <h2 className="font-display text-xl font-bold text-on-surface">Compare devices</h2>
+        <div>
+          <h2 className="font-display text-xl font-bold text-on-surface">Compare devices</h2>
+          <p className="text-[13px] text-on-surface-variant">
+            {diffCount} spec{diffCount === 1 ? "" : "s"} differ
+          </p>
+        </div>
         <div className="ml-auto flex items-center gap-2">
           <button
             onClick={() => setDiffOnly(!diffOnly)}
@@ -492,7 +552,7 @@ const CompareDialog = ({
                 className="relative rounded-[20px] bg-surface-container p-3 text-center"
               >
                 <button
-                  onClick={() => onRemove(d.matched_device)}
+                  onClick={() => onRemove(d)}
                   aria-label={`Remove ${d.matched_device}`}
                   className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-surface-container-high text-on-surface-variant transition-colors hover:bg-error/15 hover:text-error"
                 >
@@ -563,10 +623,13 @@ const SpecPage = () => {
   );
   const [debouncedSearch, setDebouncedSearch] = useState(search);
   const [filter, setFilter] = useState<string>("All");
-  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [sort, setSort] = useState<SortKey>("relevance");
+  // Selected devices are stored as objects so they survive new searches.
+  const [compareList, setCompareList] = useState<SpecPayload[]>([]);
   const [compareOpen, setCompareOpen] = useState(false);
   const [diffOnly, setDiffOnly] = useState(false);
-  const [detailsId, setDetailsId] = useState<string | null>(null);
+  const [details, setDetails] = useState<SpecPayload | null>(null);
+  const [preview, setPreview] = useState<SpecPayload[]>([]);
   // Paged rendering: mounting 700+ cards at once is what caused the lag.
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -608,7 +671,7 @@ const SpecPage = () => {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const { data, isLoading, isFetching } = useQuery<CatalogResponse>({
+  const { data, isLoading, isFetching, isError, refetch } = useQuery<CatalogResponse>({
     queryKey: ["specs", debouncedSearch],
     queryFn: async () => {
       const res = await fetch(`/api/spec?json=1&q=${encodeURIComponent(debouncedSearch)}`);
@@ -619,6 +682,11 @@ const SpecPage = () => {
   });
 
   const devices = useMemo(() => data?.devices ?? [], [data]);
+
+  // Hero preview: the first four devices ever loaded, kept stable across searches.
+  useEffect(() => {
+    if (devices.length) setPreview((p) => (p.length ? p : devices.slice(0, 4)));
+  }, [devices]);
 
   const brandCounts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -634,14 +702,19 @@ const SpecPage = () => {
   }, [devices]);
 
   const filteredDevices = useMemo(() => {
-    if (filter === "All") return devices;
-    return devices.filter((dev) => brandMatchesFilter(getBrand(dev.matched_device), filter));
-  }, [devices, filter]);
+    const base =
+      filter === "All"
+        ? devices
+        : devices.filter((dev) => brandMatchesFilter(getBrand(dev.matched_device), filter));
+    if (sort === "relevance") return base;
+    const sorted = [...base].sort((a, b) => a.matched_device.localeCompare(b.matched_device));
+    return sort === "za" ? sorted.reverse() : sorted;
+  }, [devices, filter, sort]);
 
   // Reset paging whenever the result set changes.
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [debouncedSearch, filter, data]);
+  }, [debouncedSearch, filter, sort, data]);
 
   const visibleDevices = useMemo(
     () => filteredDevices.slice(0, visibleCount),
@@ -665,26 +738,25 @@ const SpecPage = () => {
     return () => io.disconnect();
   }, [hasMore, filteredDevices.length]);
 
-  const compareDevices = useMemo(
-    () =>
-      compareIds
-        .map((id) => devices.find((d) => d.matched_device === id))
-        .filter((d): d is SpecPayload => Boolean(d)),
-    [compareIds, devices]
-  );
+  const compareIds = useMemo(() => compareList.map((d) => d.matched_device), [compareList]);
+  const compareFull = compareList.length >= MAX_COMPARE;
 
-  const detailsDevice = useMemo(
-    () => (detailsId ? devices.find((d) => d.matched_device === detailsId) ?? null : null),
-    [detailsId, devices]
-  );
-
-  const toggleCompare = (id: string) => {
-    setCompareIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : prev.length >= 3 ? prev : [...prev, id]
+  const toggleCompare = (device: SpecPayload) => {
+    setCompareList((prev) =>
+      prev.some((d) => d.matched_device === device.matched_device)
+        ? prev.filter((d) => d.matched_device !== device.matched_device)
+        : prev.length >= MAX_COMPARE
+          ? prev
+          : [...prev, device]
     );
   };
 
-  const compareFull = compareIds.length >= 3;
+  const applySearch = (term: string) => {
+    setSearch(term);
+    setDebouncedSearch(term);
+    setFilter("All");
+    document.getElementById("results")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const resultsLabel = isLoading
     ? "Loading…"
@@ -712,6 +784,7 @@ const SpecPage = () => {
           </button>
 
           <nav className="flex items-center gap-1">
+            <QuickModeToggle />
             <button
               onClick={() => navigate("/")}
               className="inline-flex h-10 items-center gap-2 rounded-full px-4 text-[13px] font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
@@ -732,35 +805,81 @@ const SpecPage = () => {
         </header>
 
         {/* Hero */}
-        <section className="pb-10 pt-12 sm:pt-16">
-          <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-primary-ink">
-            Spec catalog
-          </p>
-          <h1
-            className="mt-3 max-w-3xl text-balance font-display font-extrabold tracking-tight"
-            style={{ fontSize: "clamp(2.5rem, 6vw, 4.25rem)", lineHeight: 1.04 }}
+        <section className="grid items-center gap-12 pb-12 pt-10 sm:pt-14 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16">
+          <div>
+            <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-primary-ink">
+              Spec catalog
+            </p>
+            <h1
+              className="mt-3 max-w-3xl text-balance font-display font-extrabold tracking-tight"
+              style={{ fontSize: "clamp(2.5rem, 6vw, 4.25rem)", lineHeight: 1.04 }}
+            >
+              Find any phone.
+              <br />
+              <span className="text-primary">Read every spec.</span>
+            </h1>
+            <p className="mt-5 max-w-xl text-pretty text-[16px] leading-relaxed text-on-surface-variant">
+              Search real device hardware, open a complete datasheet, or line up three phones to see
+              exactly what changes between them.
+              {typeof data?.totalInRedis === "number" && (
+                <>
+                  {" "}
+                  <span className="font-medium text-on-surface">
+                    {data.totalInRedis.toLocaleString()} devices
+                  </span>{" "}
+                  indexed.
+                </>
+              )}
+            </p>
+
+            <div className="mt-8 flex flex-wrap items-center gap-2">
+              <span className="mr-1 text-[13px] text-on-surface-variant">Popular</span>
+              {SUGGESTIONS.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => applySearch(s)}
+                  className="inline-flex h-9 items-center rounded-full border border-outline-variant/70 px-4 text-[13px] font-medium text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Catalog preview */}
+          <div
+            className="hidden rounded-[40px] bg-primary-container p-6 lg:block"
+            aria-label="Catalog preview"
           >
-            Find any phone.
-            <br />
-            <span className="text-primary">Read every spec.</span>
-          </h1>
-          <p className="mt-5 max-w-xl text-pretty text-[16px] leading-relaxed text-on-surface-variant">
-            Search real device hardware, open a complete datasheet, or line up three phones to see
-            exactly what changes between them.
-            {typeof data?.totalInRedis === "number" && (
-              <>
-                {" "}
-                <span className="font-medium text-on-surface">
-                  {data.totalInRedis.toLocaleString()} devices
-                </span>{" "}
-                indexed.
-              </>
-            )}
-          </p>
+            <div className="grid grid-cols-2 gap-3 pb-6 [&>*:nth-child(even)]:translate-y-6">
+              {preview.length
+                ? preview.map((d) => (
+                    <button
+                      key={d.matched_device}
+                      onClick={() => setDetails(d)}
+                      aria-label={`Open ${d.matched_device} specifications`}
+                      className="flex aspect-[4/5] items-center justify-center rounded-[26px] bg-white p-5 transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    >
+                      <img
+                        src={d.image || FALLBACK_IMG}
+                        alt=""
+                        className="max-h-full max-w-full object-contain"
+                        onError={handleImgError}
+                      />
+                    </button>
+                  ))
+                : Array.from({ length: 4 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="aspect-[4/5] animate-pulse rounded-[26px] bg-white/60"
+                    />
+                  ))}
+            </div>
+          </div>
         </section>
 
         {/* Toolbar */}
-        <section id="catalog" className="scroll-mt-0">
+        <section id="catalog">
           <div className="sticky top-0 z-30 -mx-4 border-b border-outline-variant/40 bg-surface px-4 pb-3 pt-3 sm:-mx-6 sm:px-6">
             <div className="relative">
               <Search
@@ -815,20 +934,52 @@ const SpecPage = () => {
             </div>
           </div>
 
-          {/* Result meta */}
+          {/* Result meta + sort */}
           <div
-            className="flex flex-wrap items-center gap-x-2 px-1 pb-5 pt-6 text-[13px] text-on-surface-variant"
-            aria-live="polite"
+            id="results"
+            className="flex scroll-mt-36 flex-wrap items-center gap-x-2 gap-y-3 px-1 pb-5 pt-6 text-[13px] text-on-surface-variant"
           >
-            <span className="font-medium text-on-surface">{resultsLabel}</span>
-            {filter !== "All" && <span>· {filter}</span>}
-            {debouncedSearch && <span>· “{debouncedSearch}”</span>}
-            {data?.autoEnriched && <span>· New match cached</span>}
+            <p className="flex flex-wrap items-center gap-x-2" aria-live="polite">
+              <span className="font-medium text-on-surface">{resultsLabel}</span>
+              {filter !== "All" && <span>· {filter}</span>}
+              {debouncedSearch && <span>· “{debouncedSearch}”</span>}
+              {data?.autoEnriched && <span>· New match cached</span>}
+            </p>
+
+            <label className="ml-auto inline-flex items-center gap-2">
+              <span className="sr-only sm:not-sr-only">Sort</span>
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as SortKey)}
+                className="h-9 cursor-pointer rounded-full border border-outline-variant/70 bg-transparent px-4 text-[13px] font-medium text-on-surface outline-none transition-colors hover:bg-surface-container-high focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <option value="relevance">Relevance</option>
+                <option value="az">Name A–Z</option>
+                <option value="za">Name Z–A</option>
+              </select>
+            </label>
           </div>
 
           {/* Grid */}
           <div className="min-h-[400px] pb-12">
-            {isLoading && !data ? (
+            {isError && !data ? (
+              <div className="rounded-[28px] bg-surface-container px-6 py-20 text-center">
+                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-error/15 text-error">
+                  <WifiOff size={24} />
+                </span>
+                <h2 className="mt-5 font-display text-2xl font-bold">Couldn't load the catalog</h2>
+                <p className="mx-auto mt-2 max-w-sm text-[14px] leading-relaxed text-on-surface-variant">
+                  Check your connection and try again.
+                </p>
+                <button
+                  onClick={() => refetch()}
+                  className="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-[14px] font-semibold text-on-primary transition-colors hover:bg-primary/90"
+                >
+                  <RefreshCw size={15} />
+                  Try again
+                </button>
+              </div>
+            ) : isLoading && !data ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div
@@ -840,14 +991,15 @@ const SpecPage = () => {
             ) : filteredDevices.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {visibleDevices.map((dev) => (
+                  {visibleDevices.map((dev, i) => (
                     <SpecCard
                       key={dev.matched_device}
                       device={dev}
+                      index={i}
                       compareSelected={compareIds.includes(dev.matched_device)}
                       compareDisabled={compareFull && !compareIds.includes(dev.matched_device)}
-                      onOpen={() => setDetailsId(dev.matched_device)}
-                      onToggleCompare={() => toggleCompare(dev.matched_device)}
+                      onOpen={() => setDetails(dev)}
+                      onToggleCompare={() => toggleCompare(dev)}
                     />
                   ))}
                 </div>
@@ -892,6 +1044,18 @@ const SpecPage = () => {
                     </button>
                   )}
                 </div>
+                <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+                  <span className="text-[13px] text-on-surface-variant">Try</span>
+                  {SUGGESTIONS.slice(0, 3).map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => applySearch(s)}
+                      className="inline-flex h-9 items-center rounded-full border border-outline-variant/70 px-4 text-[13px] font-medium text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -899,9 +1063,7 @@ const SpecPage = () => {
 
         {/* Footer */}
         <footer className="mb-28 flex flex-col justify-between gap-4 border-t border-outline-variant/40 pt-8 text-[13px] text-on-surface-variant sm:flex-row sm:items-center">
-          <p>
-            © 2026 Toolz Project · Spec images and data © GSMArena, shown for reference.
-          </p>
+          <p>© 2026 Toolz Project · Spec images and data © GSMArena, shown for reference.</p>
           <nav className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <a href="/" className="transition-colors hover:text-on-surface">
               Home
@@ -935,7 +1097,7 @@ const SpecPage = () => {
 
       {/* Compare tray */}
       <AnimatePresence>
-        {compareIds.length > 0 && (
+        {compareList.length > 0 && (
           <motion.div
             initial={{ y: 32, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -945,46 +1107,47 @@ const SpecPage = () => {
           >
             <div className="flex items-center gap-3 rounded-full bg-inverse-surface p-2 pl-3 text-inverse-on-surface shadow-xl">
               <div className="flex items-center">
-                {compareIds.map((id, i) => {
-                  const d = devices.find((x) => x.matched_device === id);
-                  return (
-                    <button
-                      key={id}
-                      onClick={() => toggleCompare(id)}
-                      aria-label={`Remove ${id} from compare`}
-                      title={`Remove ${id}`}
-                      className="relative -ml-2 h-10 w-10 overflow-hidden rounded-full border-2 border-inverse-surface bg-white first:ml-0"
-                      style={{ zIndex: 10 - i }}
-                    >
-                      <img
-                        src={d?.image || FALLBACK_IMG}
-                        alt=""
-                        className="h-full w-full object-contain p-1"
-                        onError={handleImgError}
-                      />
-                    </button>
-                  );
-                })}
+                {compareList.map((d, i) => (
+                  <button
+                    key={d.matched_device}
+                    onClick={() => toggleCompare(d)}
+                    aria-label={`Remove ${d.matched_device} from compare`}
+                    title={`Remove ${d.matched_device}`}
+                    className="relative -ml-2 h-10 w-10 overflow-hidden rounded-full border-2 border-inverse-surface bg-white first:ml-0"
+                    style={{ zIndex: 10 - i }}
+                  >
+                    <img
+                      src={d.image || FALLBACK_IMG}
+                      alt=""
+                      className="h-full w-full object-contain p-1"
+                      onError={handleImgError}
+                    />
+                  </button>
+                ))}
               </div>
 
               <span className="text-[13px] font-medium tabular-nums">
-                {compareIds.length}/3
+                {compareList.length}/{MAX_COMPARE}
                 <span className="ml-1.5 hidden opacity-70 sm:inline">
-                  {compareIds.length < 2 ? "Pick one more" : "selected"}
+                  {compareFull
+                    ? "Full"
+                    : compareList.length < 2
+                      ? "Pick one more"
+                      : "selected"}
                 </span>
               </span>
 
               <div className="ml-auto flex items-center gap-1 sm:ml-2">
                 <button
-                  onClick={() => setCompareIds([])}
+                  onClick={() => setCompareList([])}
                   aria-label="Clear compare"
                   className="flex h-10 w-10 items-center justify-center rounded-full opacity-80 transition-colors hover:bg-white/10 hover:opacity-100"
                 >
                   <Trash2 size={16} />
                 </button>
                 <button
-                  onClick={() => compareDevices.length >= 2 && setCompareOpen(true)}
-                  disabled={compareDevices.length < 2}
+                  onClick={() => compareList.length >= 2 && setCompareOpen(true)}
+                  disabled={compareList.length < 2}
                   className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-[13px] font-semibold text-on-primary transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <ArrowLeftRight size={15} />
@@ -997,26 +1160,26 @@ const SpecPage = () => {
       </AnimatePresence>
 
       {/* One shared datasheet dialog */}
-      <Dialog open={detailsDevice !== null} onOpenChange={(o) => !o && setDetailsId(null)}>
-        {detailsDevice && (
+      <Dialog open={details !== null} onOpenChange={(o) => !o && setDetails(null)}>
+        {details && (
           <SpecDetailsDialog
-            device={detailsDevice}
-            compareSelected={compareIds.includes(detailsDevice.matched_device)}
-            compareDisabled={compareFull && !compareIds.includes(detailsDevice.matched_device)}
-            onToggleCompare={() => toggleCompare(detailsDevice.matched_device)}
+            device={details}
+            compareSelected={compareIds.includes(details.matched_device)}
+            compareDisabled={compareFull && !compareIds.includes(details.matched_device)}
+            onToggleCompare={() => toggleCompare(details)}
           />
         )}
       </Dialog>
 
       <Dialog open={compareOpen} onOpenChange={setCompareOpen}>
-        {compareDevices.length >= 2 ? (
+        {compareList.length >= 2 ? (
           <CompareDialog
-            devices={compareDevices}
+            devices={compareList}
             diffOnly={diffOnly}
             setDiffOnly={setDiffOnly}
             onRemove={toggleCompare}
             onClear={() => {
-              setCompareIds([]);
+              setCompareList([]);
               setCompareOpen(false);
             }}
           />
