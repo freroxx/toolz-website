@@ -10,9 +10,9 @@ interface SectionHeaderProps {
 }
 
 /**
- * Section header — chip + display title + optional body copy.
- * No scroll animations: content is immediately visible per M3 Expressive
- * philosophy (motion lives in interactions, not viewport triggers).
+ * Section header: quiet eyebrow label, display title, optional body copy.
+ * The eyebrow is plain text rather than a pill, so the page isn't a wall of
+ * chips. Content is visible immediately; motion lives in interactions.
  */
 const SectionHeader = ({
   chip,
@@ -23,25 +23,22 @@ const SectionHeader = ({
 }: SectionHeaderProps) => (
   <div
     className={cn(
-      "mb-10 md:mb-14",
+      "mb-10 md:mb-12",
       align === "center" ? "text-center" : "text-left",
       className
     )}
   >
-    <div
-      className="m3-chip inline-flex border-transparent"
-      style={{
-        background: "hsl(var(--md-secondary-container))",
-        color: "hsl(var(--md-on-secondary-container))",
-      }}
+    <p
+      className="m3-label-large font-semibold uppercase tracking-[0.14em]"
+      style={{ color: "hsl(var(--md-primary-ink))" }}
     >
       {chip}
-    </div>
-    <h2 className="m3-display-small mt-5 text-balance text-on-surface">{title}</h2>
+    </p>
+    <h2 className="m3-display-small mt-3 text-balance font-bold text-on-surface">{title}</h2>
     {description && (
       <p
         className={cn(
-          "m3-body-large mt-3 text-on-surface-variant md:mt-4",
+          "m3-body-large mt-4 text-pretty text-on-surface-variant",
           align === "center" ? "mx-auto max-w-xl" : "max-w-2xl"
         )}
       >

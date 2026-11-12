@@ -51,12 +51,13 @@ const Gallery = () => {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [position, setPosition] = useState(0);
   const trackRef = useRef<HTMLDivElement>(null);
+  const total = allScreenshots.length;
 
   const scrollByCards = useCallback((dir: 1 | -1) => {
     const track = trackRef.current;
     if (!track) return;
     const card = track.querySelector<HTMLElement>("[data-card]");
-    const step = card ? card.offsetWidth + 16 : 240;
+    const step = card ? card.offsetWidth + 20 : 240;
     track.scrollBy({ left: dir * step * 2, behavior: "smooth" });
   }, []);
 
@@ -74,89 +75,56 @@ const Gallery = () => {
 
   const next = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setSelectedIndex((prev) =>
-      prev !== null ? (prev + 1) % allScreenshots.length : null
-    );
-  }, []);
+    setSelectedIndex((p) => (p !== null ? (p + 1) % total : null));
+  }, [total]);
 
   const prev = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setSelectedIndex((prev) =>
-      prev !== null
-        ? (prev - 1 + allScreenshots.length) % allScreenshots.length
-        : null
-    );
-  }, []);
+    setSelectedIndex((p) => (p !== null ? (p - 1 + total) % total : null));
+  }, [total]);
 
   useEffect(() => {
     if (selectedIndex === null) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setSelectedIndex(null);
-      if (e.key === "ArrowRight")
-        setSelectedIndex((p) =>
-          p !== null ? (p + 1) % allScreenshots.length : p
-        );
-      if (e.key === "ArrowLeft")
-        setSelectedIndex((p) =>
-          p !== null ? (p - 1 + allScreenshots.length) % allScreenshots.length : p
-        );
+      if (e.key === "ArrowRight") setSelectedIndex((p) => (p !== null ? (p + 1) % total : p));
+      if (e.key === "ArrowLeft") setSelectedIndex((p) => (p !== null ? (p - 1 + total) % total : p));
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selectedIndex]);
+  }, [selectedIndex, total]);
 
-  const currentIndex = Math.min(
-    allScreenshots.length,
-    Math.round(position * (allScreenshots.length - 1)) + 1
+  const currentIndex = Math.min(total, Math.round(position * (total - 1)) + 1);
+
+  const navButton = (label: string, onClick: () => void, icon: React.ReactNode) => (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className="grid h-11 w-11 place-items-center rounded-full border text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
+      style={{ borderColor: "hsl(var(--md-outline-variant))" }}
+    >
+      {icon}
+    </button>
   );
 
   return (
     <section
       id="gallery"
-      className="scroll-mt-20 py-16 md:py-24"
+      className="scroll-mt-20 py-20 md:py-28"
       style={{ background: "hsl(var(--md-surface-container-low))" }}
     >
       <div className="container mx-auto px-4">
-        {/* Header Row */}
-        <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
-          <SectionHeader
-            className="mb-6 max-w-2xl md:mb-8"
-            chip="Visual Tour"
-            title="See it before you install it."
-            description={`${allScreenshots.length} screenshots captured from the real app — ${totalTools} tools across ${toolCategories.length} categories.`}
-          />
+        <SectionHeader
+          chip="Visual tour"
+          title="See it before you install it."
+          description={`${total} screenshots from the real app, covering ${totalTools} tools across ${toolCategories.length} groups.`}
+        />
 
-          <div className="mb-6 flex flex-wrap items-center gap-2 md:mb-8">
-            {[
-              { value: `${allScreenshots.length}`, label: "Screens" },
-              { value: `${toolCategories.length}`, label: "Groups" },
-              { value: `${totalTools}`, label: "Tools" },
-            ].map(({ value, label }) => (
-              <div
-                key={label}
-                className="flex items-baseline gap-1.5 rounded-full border px-4 py-2 shadow-2xs"
-                style={{
-                  background: "hsl(var(--md-surface-container))",
-                  borderColor: "hsl(var(--md-outline-variant) / 0.4)",
-                }}
-              >
-                <span className="m3-title-small tabular-nums font-bold text-on-surface">
-                  {value}
-                </span>
-                <span className="m3-label-small font-medium text-on-surface-variant">
-                  {label}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Horizontal Carousel Track */}
-      <div className="container mx-auto px-4">
+        {/* Carousel */}
         <div
           ref={trackRef}
-          className="mask-fade-horizontal -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 pt-1"
+          className="mask-fade-horizontal -mx-4 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-2"
           style={{ scrollbarWidth: "none" }}
           role="region"
           aria-label="App screenshots carousel"
@@ -167,247 +135,151 @@ const Gallery = () => {
               <motion.button
                 key={src}
                 data-card
+                type="button"
                 onClick={() => setSelectedIndex(i)}
-                whileTap={{ scale: 0.95 }}
-                whileHover={{ y: -6, scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
                 transition={PRESS_SPRING}
-                className="group relative shrink-0 snap-center overflow-hidden rounded-[30px] border shadow-sm transition-all focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
-                style={{
-                  width: "min(220px, 62vw)",
-                  aspectRatio: "9/19.5",
-                  background: "#0c0c0e",
-                  borderColor: "hsl(var(--md-outline-variant) / 0.5)",
-                  boxShadow: "0 10px 28px -8px rgba(0, 0, 0, 0.4)",
-                }}
-                aria-label={`Open ${title} screenshot (${i + 1} of ${allScreenshots.length})`}
+                className="group shrink-0 snap-center text-left focus-visible:outline-none"
+                style={{ width: "min(200px, 58vw)" }}
+                aria-label={`Open ${title} screenshot (${i + 1} of ${total})`}
               >
-                {/* Mini speaker and camera notch */}
-                <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center pointer-events-none">
-                  <div className="h-0.5 w-8 rounded-full bg-white/20 mb-1" />
-                  <div className="h-2 w-2 rounded-full bg-black ring-1 ring-white/15" />
-                </div>
-
-                <img
-                  src={src}
-                  alt={`Toolz ${title}`}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                  loading="lazy"
-                />
-
-                {/* Subtle glass glare */}
-                <div
-                  className="pointer-events-none absolute inset-0 z-10 transition-opacity duration-300 opacity-0 group-hover:opacity-100"
+                <span
+                  className="block overflow-hidden rounded-[28px] border bg-black transition-shadow group-hover:shadow-lg group-focus-visible:ring-2 group-focus-visible:ring-primary"
                   style={{
-                    background:
-                      "linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 60%)",
+                    aspectRatio: "9/19.5",
+                    borderColor: "hsl(var(--md-outline-variant) / 0.6)",
                   }}
-                />
-
-                {/* Bottom title badge */}
-                <div className="absolute inset-x-2 bottom-2 z-20 pointer-events-none">
-                  <div
-                    className="flex items-center justify-between rounded-full px-3 py-1.5 backdrop-blur-md shadow-xs border"
-                    style={{
-                      background: "hsl(var(--md-surface-container-highest) / 0.9)",
-                      borderColor: "hsl(var(--md-outline-variant) / 0.3)",
-                    }}
-                  >
-                    <span className="truncate text-[11px] font-semibold text-on-surface">
-                      {title}
-                    </span>
-                    <span className="text-[10px] tabular-nums text-on-surface-variant font-medium ml-1">
-                      #{i + 1}
-                    </span>
-                  </div>
-                </div>
+                >
+                  <img
+                    src={src}
+                    alt={`Toolz ${title}`}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                </span>
+                <span className="m3-label-large mt-3 block truncate px-1 font-semibold text-on-surface">
+                  {title}
+                </span>
               </motion.button>
             );
           })}
         </div>
 
-        {/* Balanced, Symmetrical M3 Controls */}
-        <div
-          className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-full border px-5 py-2.5 shadow-2xs"
-          style={{
-            background: "hsl(var(--md-surface-container))",
-            borderColor: "hsl(var(--md-outline-variant) / 0.4)",
-          }}
-        >
-          {/* Left: Monospace Counter */}
-          <div className="flex items-center gap-2">
-            <span className="m3-label-large tabular-nums font-bold text-on-surface">
-              {String(currentIndex).padStart(2, "0")}
-            </span>
-            <span className="text-on-surface-variant opacity-60 font-normal">/</span>
-            <span className="m3-label-medium tabular-nums text-on-surface-variant">
-              {String(allScreenshots.length).padStart(2, "0")}
-            </span>
-            <span className="hidden sm:inline m3-label-small text-on-surface-variant ml-1 font-medium">
-              screens
-            </span>
-          </div>
+        {/* Controls */}
+        <div className="mt-8 flex items-center gap-5">
+          <span className="m3-label-large tabular-nums text-on-surface-variant">
+            <span className="font-bold text-on-surface">{String(currentIndex).padStart(2, "0")}</span>
+            {" / "}
+            {String(total).padStart(2, "0")}
+          </span>
 
-          {/* Center: Smooth Progress Pill */}
           <div
-            className="flex-1 max-w-xs h-2 overflow-hidden rounded-full mx-2"
+            className="h-1 max-w-xs flex-1 overflow-hidden rounded-full"
             style={{ background: "hsl(var(--md-surface-container-highest))" }}
             aria-hidden="true"
           >
-            <motion.div
+            <div
               className="h-full rounded-full"
               style={{
                 background: "hsl(var(--md-primary))",
-                width: `${Math.max(3, position * 100)}%`,
+                width: `${Math.max(4, position * 100)}%`,
+                transition: "width 150ms linear",
               }}
-              transition={{ duration: 0.15 }}
             />
           </div>
 
-          {/* Right: Symmetrical Nav Action Buttons */}
-          <div className="flex items-center gap-2">
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.9 }}
-              transition={PRESS_SPRING}
-              onClick={() => scrollByCards(-1)}
-              aria-label="Previous screenshots"
-              className="grid h-10 w-10 place-items-center rounded-full border text-on-surface-variant hover:text-on-surface transition-colors"
-              style={{
-                background: "hsl(var(--md-surface-container-high))",
-                borderColor: "hsl(var(--md-outline-variant) / 0.4)",
-              }}
-            >
-              <ChevronLeft size={19} />
-            </motion.button>
-
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.9 }}
-              transition={PRESS_SPRING}
-              onClick={() => scrollByCards(1)}
-              aria-label="Next screenshots"
-              className="grid h-10 w-10 place-items-center rounded-full border text-on-surface-variant hover:text-on-surface transition-colors"
-              style={{
-                background: "hsl(var(--md-surface-container-high))",
-                borderColor: "hsl(var(--md-outline-variant) / 0.4)",
-              }}
-            >
-              <ChevronRight size={19} />
-            </motion.button>
+          <div className="ml-auto flex items-center gap-2">
+            {navButton("Previous screenshots", () => scrollByCards(-1), <ChevronLeft size={20} />)}
+            {navButton("Next screenshots", () => scrollByCards(1), <ChevronRight size={20} />)}
           </div>
         </div>
       </div>
 
-      {/* Lightbox Modal */}
+      {/* Lightbox */}
       <AnimatePresence>
         {selectedIndex !== null && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.18 }}
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6"
-            style={{
-              background: "hsl(var(--md-scrim) / 0.88)",
-              backdropFilter: "blur(16px)",
-            }}
+            style={{ background: "hsl(var(--md-scrim) / 0.85)" }}
             onClick={() => setSelectedIndex(null)}
             role="dialog"
             aria-modal="true"
-            aria-label="Screenshot lightbox viewer"
+            aria-label="Screenshot viewer"
           >
-            {/* Top Close Button */}
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              className="absolute right-4 top-4 z-[130] grid h-11 w-11 place-items-center rounded-full border shadow-md transition-transform sm:right-8 sm:top-8"
+            <button
+              type="button"
+              className="absolute right-4 top-4 z-[130] grid h-11 w-11 place-items-center rounded-full sm:right-8 sm:top-8"
               style={{
                 background: "hsl(var(--md-surface-container-high))",
-                borderColor: "hsl(var(--md-outline-variant) / 0.5)",
                 color: "hsl(var(--md-on-surface))",
               }}
               onClick={(e) => {
                 e.stopPropagation();
                 setSelectedIndex(null);
               }}
-              aria-label="Close lightbox"
+              aria-label="Close viewer"
             >
               <X size={20} />
-            </motion.button>
+            </button>
 
-            {/* Left Nav Button */}
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              className="absolute left-2 z-[130] grid h-12 w-12 place-items-center rounded-full border shadow-lg sm:left-8 sm:h-14 sm:w-14"
+            <button
+              type="button"
+              className="absolute left-2 z-[130] grid h-12 w-12 place-items-center rounded-full sm:left-8"
               style={{
                 background: "hsl(var(--md-surface-container-high))",
-                borderColor: "hsl(var(--md-outline-variant) / 0.5)",
                 color: "hsl(var(--md-on-surface))",
               }}
               onClick={prev}
               aria-label="Previous screenshot"
             >
               <ChevronLeft size={24} />
-            </motion.button>
+            </button>
 
-            {/* Right Nav Button */}
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              className="absolute right-2 z-[130] grid h-12 w-12 place-items-center rounded-full border shadow-lg sm:right-8 sm:h-14 sm:w-14"
+            <button
+              type="button"
+              className="absolute right-2 z-[130] grid h-12 w-12 place-items-center rounded-full sm:right-8"
               style={{
                 background: "hsl(var(--md-surface-container-high))",
-                borderColor: "hsl(var(--md-outline-variant) / 0.5)",
                 color: "hsl(var(--md-on-surface))",
               }}
               onClick={next}
               aria-label="Next screenshot"
             >
               <ChevronRight size={24} />
-            </motion.button>
+            </button>
 
-            {/* Lightbox Device Mockup */}
-            <motion.div
+            <motion.figure
               key={selectedIndex}
-              initial={{ scale: 0.92, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.92, opacity: 0, y: -20 }}
-              transition={{ type: "spring", stiffness: 280, damping: 28 }}
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative z-[110] overflow-hidden rounded-[36px] border-[3px] shadow-2xl"
-              style={{
-                maxHeight: "86vh",
-                aspectRatio: "9/19.5",
-                background: "#0c0c0e",
-                borderColor: "hsl(var(--md-outline-variant) / 0.6)",
-                boxShadow:
-                  "0 32px 100px -16px rgba(0, 0, 0, 0.9), 0 0 50px -10px hsl(var(--md-primary) / 0.3)",
-              }}
+              className="relative z-[110] flex max-h-[90vh] flex-col items-center gap-4"
             >
               <img
                 src={allScreenshots[selectedIndex]}
                 alt={SCREEN_TITLES[selectedIndex] ?? `Toolz screenshot ${selectedIndex + 1}`}
-                className="h-full w-full object-contain"
-                style={{ background: "#000" }}
+                className="min-h-0 rounded-[32px] border-[3px] bg-black object-contain"
+                style={{
+                  maxHeight: "78vh",
+                  aspectRatio: "9/19.5",
+                  borderColor: "hsl(var(--md-outline-variant) / 0.6)",
+                }}
               />
-
-              {/* Title & Index Pill */}
-              <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-                <div
-                  className="flex items-center gap-2.5 rounded-full border px-4 py-2 text-white shadow-lg backdrop-blur-xl"
-                  style={{
-                    background: "rgba(12, 12, 16, 0.85)",
-                    borderColor: "rgba(255, 255, 255, 0.15)",
-                  }}
-                >
-                  <span className="text-[13px] font-bold text-white">
-                    {SCREEN_TITLES[selectedIndex] ?? `Screen ${selectedIndex + 1}`}
-                  </span>
-                  <span className="h-3 w-px bg-white/25" />
-                  <span className="text-[12px] tabular-nums text-white/80">
-                    {selectedIndex + 1} / {allScreenshots.length}
-                  </span>
-                </div>
-              </div>
-            </motion.div>
+              <figcaption className="m3-label-large text-white/90">
+                <span className="font-bold text-white">
+                  {SCREEN_TITLES[selectedIndex] ?? `Screen ${selectedIndex + 1}`}
+                </span>
+                <span className="ml-3 tabular-nums text-white/70">
+                  {selectedIndex + 1} / {total}
+                </span>
+              </figcaption>
+            </motion.figure>
           </motion.div>
         )}
       </AnimatePresence>

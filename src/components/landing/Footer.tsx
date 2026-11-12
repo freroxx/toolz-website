@@ -49,7 +49,7 @@ const Footer = () => {
         <div className="flex flex-col justify-between gap-12 md:flex-row">
           <div className="max-w-sm">
             <Link to="/" aria-label="Toolz home">
-              <motion.div {...logoMotion} className="inline-flex items-center gap-3 group">
+              <motion.div {...logoMotion} className="inline-flex items-center gap-3">
                 <span
                   className="grid h-12 w-12 place-items-center overflow-hidden rounded-[16px] p-2"
                   style={{ background: "hsl(var(--md-surface-container-high))" }}
@@ -59,11 +59,11 @@ const Footer = () => {
                 <span className="m3-headline-small text-on-surface">Toolz</span>
               </motion.div>
             </Link>
-            <p className="m3-body-small mt-5 text-on-surface-variant">
-              {totalTools} tools in one Android app. Free, open source, and built
-              to keep your data on your device.
+            <p className="m3-body-medium mt-5 text-on-surface-variant">
+              {totalTools} tools in one Android app. Free, open source, and built to keep your data on
+              your device.
             </p>
-            <div className="mt-6 flex items-center gap-2">
+            <div className="mt-6 flex items-center gap-1">
               {[
                 { icon: Github, href: REPO, label: "GitHub" },
                 { icon: MessageSquare, href: "https://discord.gg/aAswRUerwh", label: "Discord" },
@@ -74,7 +74,7 @@ const Footer = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
-                  className="grid h-10 w-10 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary-ink"
+                  className="grid h-10 w-10 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
                 >
                   <Icon size={19} />
                 </a>
@@ -82,12 +82,10 @@ const Footer = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 sm:gap-12 lg:gap-20">
+          <div className="grid grid-cols-2 gap-10 sm:grid-cols-3 sm:gap-14 lg:gap-20">
             {columns.map((col) => (
               <div key={col.title}>
-                <p className="m3-label-medium uppercase tracking-[0.14em] text-on-surface-variant/90">
-                  {col.title}
-                </p>
+                <p className="m3-label-large font-semibold text-on-surface">{col.title}</p>
                 <ul className="mt-4 flex flex-col gap-3">
                   {col.links.map((link) => (
                     <li key={link.label}>
@@ -96,7 +94,7 @@ const Footer = () => {
                           href={link.href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="m3-body-small inline-flex items-center gap-1 text-on-surface-variant transition-colors hover:text-primary-ink"
+                          className="m3-body-medium inline-flex items-center gap-1 text-on-surface-variant transition-colors hover:text-on-surface"
                         >
                           {link.label}
                           <ArrowUpRight size={13} className="opacity-50" />
@@ -104,7 +102,7 @@ const Footer = () => {
                       ) : (
                         <Link
                           to={link.href}
-                          className="m3-body-small text-on-surface-variant transition-colors hover:text-primary-ink"
+                          className="m3-body-medium text-on-surface-variant transition-colors hover:text-on-surface"
                         >
                           {link.label}
                         </Link>
@@ -121,16 +119,10 @@ const Footer = () => {
           className="mt-12 flex flex-col justify-between gap-3 border-t pt-6 sm:flex-row sm:items-center"
           style={{ borderColor: "hsl(var(--md-outline-variant) / 0.5)" }}
         >
-          <p className="m3-label-small text-on-surface-variant/90">
-            © 2026 Toolz Project
+          <p className="m3-label-medium text-on-surface-variant">© 2026 Toolz Project</p>
+          <p className="m3-label-medium text-on-surface-variant">
+            Android 12+ · GPL-3.0 · No ads, no tracking
           </p>
-          <div className="m3-label-small flex items-center gap-3 text-on-surface-variant/90">
-            <span>Android 12 and up</span>
-            <span className="h-1 w-1 rounded-full bg-current opacity-50" />
-            <span>GPL-3.0</span>
-            <span className="h-1 w-1 rounded-full bg-current opacity-50" />
-            <span>No ads · no tracking</span>
-          </div>
         </div>
       </div>
     </footer>

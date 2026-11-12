@@ -50,7 +50,7 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 32 }}
-          className="flex h-full w-full flex-col overflow-hidden border shadow-2xl"
+          className="flex h-full w-full flex-col overflow-hidden border shadow-xl"
           style={{
             background: "hsl(var(--md-surface-container))",
             borderColor: "hsl(var(--md-outline-variant) / 0.5)",
@@ -177,7 +177,7 @@ const DownloadDialog = ({ open, onOpenChange }: DownloadDialogProps) => {
                     {[0, 1, 2].map((i) => (
                       <div
                         key={i}
-                        className="h-[68px] rounded-2xl"
+                        className="h-[68px] animate-pulse rounded-2xl"
                         style={{ background: "hsl(var(--md-surface-container-high))" }}
                       />
                     ))}

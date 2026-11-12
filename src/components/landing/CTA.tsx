@@ -1,10 +1,11 @@
 import { motion } from "framer-motion";
-import { Download, Users, ArrowRight, ArrowUpRight, ShieldCheck, Smartphone } from "lucide-react";
+import { Download, ArrowRight, ArrowUpRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useGithubDownloads } from "@/hooks/use-github-downloads";
 import { useLatestRelease } from "@/hooks/use-latest-release";
 import DownloadCounter from "@/components/landing/DownloadCounter";
 import { PRESS_SPRING } from "@/lib/motion";
+import { SHAPES } from "@/components/expressive/shapes";
 
 const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
   const navigate = useNavigate();
@@ -12,46 +13,32 @@ const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
   const { versionName } = useLatestRelease();
 
   return (
-    <section className="py-16 md:py-24" style={{ background: "hsl(var(--md-surface))" }}>
+    <section className="py-20 md:py-28" style={{ background: "hsl(var(--md-surface))" }}>
       <div className="container mx-auto px-4">
         <div
-          className="relative overflow-hidden rounded-[48px] border p-6 sm:p-9 md:p-12 shadow-sm"
+          className="p-8 sm:p-12 md:p-16"
           style={{
-            background: "hsl(var(--md-surface-container))",
-            borderColor: "hsl(var(--md-outline-variant) / 0.5)",
+            borderRadius: SHAPES.extraLarge,
+            background: "hsl(var(--md-primary-container))",
+            color: "hsl(var(--md-on-primary-container))",
           }}
         >
-          <div className="grid items-center gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-14">
-            {/* ── Copy ── */}
+          <div className="grid items-center gap-12 lg:grid-cols-[1.2fr_0.8fr] lg:gap-16">
             <div>
-              <div
-                className="m3-chip inline-flex items-center gap-2 border-transparent font-semibold shadow-xs"
-                style={{
-                  background: "hsl(var(--md-secondary-container))",
-                  color: "hsl(var(--md-on-secondary-container))",
-                }}
-              >
-                <Smartphone size={14} />
-                Android 12 and up · GPL-3.0
-              </div>
-
-              <h2 className="m3-display-medium mt-5 font-bold text-balance text-on-surface">
+              <h2 className="m3-display-medium text-balance font-bold">
                 Ready to simplify your phone?
               </h2>
-
-              <p className="m3-body-large mt-4 max-w-md leading-relaxed text-on-surface-variant">
-                Download the universal APK or targeted architecture build
-                {versionName ? ` (v${versionName})` : ""}. No accounts, no subscriptions,
-                and no tracking — ever.
+              <p className="m3-body-large mt-4 max-w-md text-pretty opacity-90">
+                Get the universal APK or an architecture-specific build
+                {versionName ? ` (v${versionName})` : ""}. No accounts, no subscriptions, no tracking.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <motion.button
                   onClick={onDownloadClick}
-                  whileTap={{ scale: 0.94 }}
-                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.96 }}
                   transition={PRESS_SPRING}
-                  className="m3-btn-filled gap-2.5 px-8 py-4 text-base font-semibold shadow-md"
+                  className="m3-btn-filled gap-2.5 px-8 py-4 text-base font-semibold"
                 >
                   <Download size={20} />
                   Download v{versionName}
@@ -60,65 +47,46 @@ const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                   href="https://github.com/freroxx/toolz/releases"
                   target="_blank"
                   rel="noopener noreferrer"
-                  whileTap={{ scale: 0.94 }}
-                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.96 }}
                   transition={PRESS_SPRING}
                   className="m3-btn-outlined gap-2 px-7 py-4 text-base font-semibold"
+                  style={{
+                    color: "hsl(var(--md-on-primary-container))",
+                    borderColor: "hsl(var(--md-on-primary-container) / 0.4)",
+                  }}
                 >
                   All releases
                   <ArrowUpRight size={18} />
                 </motion.a>
               </div>
-
-              <div className="mt-6 flex items-center gap-2 text-on-surface-variant m3-label-medium">
-                <ShieldCheck size={16} style={{ color: "hsl(var(--md-primary-ink))" }} />
-                <span>Verified open source on GitHub. Updates arrive in-app.</span>
-              </div>
             </div>
 
-            {/* ── Download count card ── */}
             <div
-              className="rounded-[32px] border p-7 md:p-9 shadow-sm"
+              className="p-7 md:p-9"
               style={{
-                background: "hsl(var(--md-surface-container-high))",
-                borderColor: "hsl(var(--md-outline-variant) / 0.5)",
+                borderRadius: SHAPES.large,
+                background: "hsl(var(--md-on-primary-container) / 0.08)",
               }}
             >
-              <div
-                className="grid h-12 w-12 place-items-center rounded-[14px]"
-                style={{
-                  background: "hsl(var(--md-primary-container))",
-                  color: "hsl(var(--md-on-primary-container))",
-                }}
-              >
-                <Users size={22} />
-              </div>
-
-              <div className="m3-display-small mt-6 font-bold tabular-nums text-on-surface">
+              <div className="m3-display-small font-bold tabular-nums">
                 {isLoading ? (
                   <div
                     className="h-10 w-28 animate-pulse rounded-xl"
-                    style={{ background: "hsl(var(--md-surface-container-highest))" }}
+                    style={{ background: "hsl(var(--md-on-primary-container) / 0.15)" }}
                   />
                 ) : (
                   <DownloadCounter value={totalDownloads || 0} duration={2.5} />
                 )}
               </div>
+              <p className="m3-label-large mt-1 font-semibold opacity-80">Total GitHub downloads</p>
 
-              <p className="m3-label-medium mt-1 font-semibold uppercase tracking-[0.14em] text-on-surface-variant">
-                Total GitHub downloads
-              </p>
-
-              <motion.button
+              <button
                 onClick={() => navigate("/downloads")}
-                whileTap={{ scale: 0.95 }}
-                whileHover={{ y: -1 }}
-                transition={PRESS_SPRING}
-                className="m3-btn-tonal mt-6 inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold"
+                className="m3-label-large mt-6 inline-flex items-center gap-2 font-semibold underline-offset-4 hover:underline"
               >
                 Architecture statistics
                 <ArrowRight size={15} />
-              </motion.button>
+              </button>
             </div>
           </div>
         </div>

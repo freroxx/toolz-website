@@ -9,7 +9,6 @@ import {
   Link2,
   Music2,
   ShieldCheck,
-  Sparkles,
   X,
   Youtube,
   Zap,
@@ -26,24 +25,24 @@ type PlatformKey = "tiktok" | "instagram" | "youtube";
 const platforms = [
   { id: "tiktok" as PlatformKey, icon: Music2, label: "TikTok", placeholder: "https://www.tiktok.com/@creator/video/..." },
   { id: "instagram" as PlatformKey, icon: Instagram, label: "Instagram", placeholder: "https://www.instagram.com/reel/..." },
-  { id: "youtube" as PlatformKey, icon: Youtube, label: "YouTube · In App", placeholder: "https://youtube.com/watch?v=..." },
+  { id: "youtube" as PlatformKey, icon: Youtube, label: "YouTube · In app", placeholder: "https://youtube.com/watch?v=..." },
 ];
 
 const highlights = [
   {
     icon: Zap,
     title: "Direct extraction",
-    desc: "Inspects public media posts to extract original video and audio CDN files without quality loss.",
+    desc: "Fetches the original video and audio files from public posts, without re-encoding.",
   },
   {
     icon: ShieldCheck,
-    title: "Private & tracker-free",
-    desc: "Runs completely stateless without cookies, registrations, user telemetry, or server storage.",
+    title: "Private by design",
+    desc: "No cookies, no sign-up, no telemetry and no server-side storage.",
   },
   {
     icon: ExternalLink,
-    title: "Web companion",
-    desc: "Companion web utility for quick downloads on desktop or browsers where the APK isn't installed.",
+    title: "Works in any browser",
+    desc: "Handy on desktop or anywhere the APK isn't installed.",
   },
 ];
 
@@ -53,6 +52,19 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
   const [error, setError] = useState("");
   const [showYoutubeNotice, setShowYoutubeNotice] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const detectPlatform = (text: string) => {
+    if (YOUTUBE_RE.test(text)) {
+      setSelectedPlatform("youtube");
+      setShowYoutubeNotice(true);
+    } else if (text.includes("instagram.com")) {
+      setSelectedPlatform("instagram");
+      setShowYoutubeNotice(false);
+    } else if (text.includes("tiktok.com")) {
+      setSelectedPlatform("tiktok");
+      setShowYoutubeNotice(false);
+    }
+  };
 
   const handlePlatformClick = (p: PlatformKey) => {
     setSelectedPlatform(p);
@@ -70,16 +82,7 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
       if (text) {
         setUrl(text);
         setError("");
-        if (YOUTUBE_RE.test(text)) {
-          setSelectedPlatform("youtube");
-          setShowYoutubeNotice(true);
-        } else if (text.includes("instagram.com")) {
-          setSelectedPlatform("instagram");
-          setShowYoutubeNotice(false);
-        } else if (text.includes("tiktok.com")) {
-          setSelectedPlatform("tiktok");
-          setShowYoutubeNotice(false);
-        }
+        detectPlatform(text);
       }
     } catch {
       inputRef.current?.focus();
@@ -107,75 +110,34 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
     );
   };
 
-  const currentPlaceholder = platforms.find((p) => p.id === selectedPlatform)?.placeholder ?? "Paste video or reel URL...";
+  const currentPlaceholder =
+    platforms.find((p) => p.id === selectedPlatform)?.placeholder ?? "Paste video or reel URL...";
 
   return (
     <section
       id="downloadz"
-      className="scroll-mt-20 py-16 md:py-24"
+      className="scroll-mt-20 py-20 md:py-28"
       style={{ background: "hsl(var(--md-surface))" }}
     >
       <div className="container mx-auto px-4">
-        {/* Section Header */}
-        <div className="flex flex-col items-center text-center mb-10">
-          <SectionHeader
-            className="mb-0 max-w-2xl text-center"
-            align="center"
-            chip="Web Companion"
-            title="Paste a link. Save the media."
-            description="A lightweight web companion for downloading public TikTok and Instagram posts without installing the app. Zero setup, no sign-in required."
-          />
-        </div>
+        <SectionHeader
+          align="center"
+          chip="Web companion"
+          title="Paste a link. Save the media."
+          description="Download public TikTok and Instagram posts from your browser. No install, no sign-in."
+        />
 
-        {/* Main Interactive Station */}
-        <div className="max-w-3xl mx-auto">
+        <div className="mx-auto max-w-3xl">
           <div
-            className="overflow-hidden border p-6 sm:p-9 shadow-md transition-all"
+            className="border p-6 sm:p-9"
             style={{
               borderRadius: SHAPES.extraLarge,
               background: "hsl(var(--md-surface-container))",
-              borderColor: "hsl(var(--md-outline-variant) / 0.45)",
+              borderColor: "hsl(var(--md-outline-variant) / 0.5)",
             }}
           >
-            {/* Header bar */}
-            <div className="flex items-center justify-between gap-4 mb-6">
-              <div className="flex items-center gap-3">
-                <span
-                  className="grid h-12 w-12 place-items-center rounded-[16px] shadow-xs"
-                  style={{
-                    background: "hsl(var(--md-secondary-container))",
-                    color: "hsl(var(--md-on-secondary-container))",
-                  }}
-                >
-                  <Link2 size={22} />
-                </span>
-                <div>
-                  <p className="m3-title-medium font-bold text-on-surface">
-                    Toolz Downloadz
-                  </p>
-                  <p className="m3-label-small text-on-surface-variant">
-                    Web Companion · toolz-downloadz.vercel.app
-                  </p>
-                </div>
-              </div>
-
-              <span
-                className="m3-label-small inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-semibold"
-                style={{
-                  background: "hsl(var(--md-secondary-container))",
-                  color: "hsl(var(--md-on-secondary-container))",
-                }}
-              >
-                <Sparkles size={13} />
-                Instant Web Tool
-              </span>
-            </div>
-
-            {/* Platform Selection Chips */}
-            <div className="flex flex-wrap items-center gap-2 mb-6">
-              <span className="m3-label-small mr-1 font-semibold text-on-surface-variant">
-                Platform:
-              </span>
+            {/* Platform chips */}
+            <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Platform">
               {platforms.map(({ id, icon: Icon, label }) => {
                 const isActive = selectedPlatform === id;
                 return (
@@ -183,23 +145,21 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
                     key={id}
                     type="button"
                     onClick={() => handlePlatformClick(id)}
-                    whileTap={{ scale: 0.94 }}
+                    whileTap={{ scale: 0.95 }}
                     transition={PRESS_SPRING}
-                    className="inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[13px] font-semibold transition-all"
+                    aria-pressed={isActive}
+                    className="m3-label-large inline-flex items-center gap-2 rounded-full border px-4 py-2 font-semibold transition-colors"
                     style={{
                       background: isActive
                         ? "hsl(var(--md-secondary-container))"
-                        : "hsl(var(--md-surface-container-high))",
-                      borderColor: isActive
-                        ? "transparent"
-                        : "hsl(var(--md-outline-variant) / 0.4)",
+                        : "transparent",
+                      borderColor: isActive ? "transparent" : "hsl(var(--md-outline-variant))",
                       color: isActive
                         ? "hsl(var(--md-on-secondary-container))"
                         : "hsl(var(--md-on-surface-variant))",
-                      boxShadow: isActive ? "0 2px 8px hsl(var(--md-shadow) / 0.15)" : "none",
                     }}
                   >
-                    <Icon size={14} style={{ color: isActive ? "hsl(var(--md-primary))" : "inherit" }} />
+                    <Icon size={15} />
                     {label}
                   </motion.button>
                 );
@@ -207,18 +167,16 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
             </div>
 
             {/* Form */}
-            <form onSubmit={submit} noValidate>
+            <form onSubmit={submit} noValidate className="mt-6">
               <label
                 htmlFor="downloadz-url"
-                className="m3-label-medium mb-2.5 block font-semibold text-on-surface"
+                className="m3-label-large mb-2 block font-semibold text-on-surface"
               >
                 Post or reel link
               </label>
 
-              <div
-                className="flex items-center gap-2 rounded-[20px] border border-outline-variant/60 bg-surface-container-high p-1.5 pl-4 transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/25 shadow-xs"
-              >
-                <Link2 size={19} className="shrink-0 text-on-surface-variant" />
+              <div className="flex items-center gap-1.5 rounded-full border border-outline-variant/70 bg-surface-container-high p-1.5 pl-5 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/25">
+                <Link2 size={18} className="shrink-0 text-on-surface-variant" />
                 <input
                   ref={inputRef}
                   id="downloadz-url"
@@ -228,15 +186,12 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
                   onChange={(e) => {
                     setUrl(e.target.value);
                     if (error) setError("");
-                    if (YOUTUBE_RE.test(e.target.value)) {
-                      setSelectedPlatform("youtube");
-                      setShowYoutubeNotice(true);
-                    }
+                    if (YOUTUBE_RE.test(e.target.value)) detectPlatform(e.target.value);
                   }}
                   placeholder={currentPlaceholder}
                   aria-invalid={Boolean(error)}
                   aria-describedby={error ? "downloadz-error" : "downloadz-help"}
-                  className="min-w-0 flex-1 bg-transparent py-3 text-[15px] text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none"
+                  className="min-w-0 flex-1 bg-transparent px-2 py-3 text-[15px] text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none"
                 />
 
                 {url && (
@@ -245,9 +200,10 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
                     onClick={() => {
                       setUrl("");
                       setError("");
+                      inputRef.current?.focus();
                     }}
                     aria-label="Clear input"
-                    className="grid h-8 w-8 place-items-center rounded-full text-on-surface-variant hover:bg-surface-container-highest transition-transform active:scale-90"
+                    className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-highest"
                   >
                     <X size={16} />
                   </button>
@@ -258,17 +214,16 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
                   onClick={handlePaste}
                   title="Paste from clipboard"
                   aria-label="Paste from clipboard"
-                  className="hidden sm:grid h-9 w-9 place-items-center rounded-full text-on-surface-variant hover:bg-surface-container-highest transition-transform active:scale-90"
+                  className="hidden h-9 w-9 shrink-0 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-highest sm:grid"
                 >
                   <Clipboard size={16} />
                 </button>
 
                 <motion.button
                   type="submit"
-                  whileTap={{ scale: 0.94 }}
-                  whileHover={{ y: -1 }}
+                  whileTap={{ scale: 0.96 }}
                   transition={PRESS_SPRING}
-                  className="m3-btn-filled shrink-0 gap-2 px-6 py-3 font-semibold shadow-xs"
+                  className="m3-btn-filled shrink-0 gap-2 px-6 py-3 font-semibold"
                 >
                   Open
                   <ArrowUpRight size={17} />
@@ -279,20 +234,20 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
                 <p
                   id="downloadz-error"
                   role="alert"
-                  className="m3-body-small mt-2.5 font-medium"
+                  className="m3-body-small mt-2.5 px-2 font-medium"
                   style={{ color: "hsl(var(--md-error))" }}
                 >
                   {error}
                 </p>
               ) : (
-                <p id="downloadz-help" className="m3-label-small mt-2.5 text-on-surface-variant">
-                  Launches Toolz Downloadz web viewer with your media stream pre-loaded.
+                <p id="downloadz-help" className="m3-body-small mt-2.5 px-2 text-on-surface-variant">
+                  Opens Toolz Downloadz with your link pre-filled.
                 </p>
               )}
             </form>
 
-            {/* Smart YouTube / In-App Callout */}
-            <AnimatePresence>
+            {/* YouTube notice */}
+            <AnimatePresence initial={false}>
               {showYoutubeNotice && (
                 <motion.div
                   initial={{ opacity: 0, height: 0, marginTop: 0 }}
@@ -302,34 +257,32 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
                   className="overflow-hidden"
                 >
                   <div
-                    className="flex items-start gap-3.5 rounded-[18px] border p-4.5"
+                    className="flex items-start gap-3.5 rounded-[20px] p-5"
                     style={{
                       background: "hsl(var(--md-secondary-container))",
-                      borderColor: "hsl(var(--md-secondary) / 0.4)",
                       color: "hsl(var(--md-on-secondary-container))",
                     }}
+                    role="note"
                   >
-                    <Info size={20} className="mt-0.5 shrink-0 text-primary" />
+                    <Info size={20} className="mt-0.5 shrink-0" />
                     <div className="min-w-0 flex-1">
-                      <p className="m3-title-small font-bold">
-                        YouTube Extraction Runs Inside the App
-                      </p>
+                      <p className="m3-title-small font-bold">YouTube downloads run in the app</p>
                       <p className="m3-body-small mt-1 leading-relaxed opacity-90">
-                        YouTube restricts browser-based downloaders. To download YouTube videos at full 1080p/4K
-                        or extract MP3 audio directly, use the on-device Media Downloader inside the Toolz Android app.
+                        YouTube blocks browser-based downloaders. Use the on-device Media Downloader in
+                        the Toolz Android app for up to 1080p/4K video or MP3 audio.
                       </p>
-                      <div className="mt-3 flex items-center gap-3">
+                      <div className="mt-4 flex items-center gap-4">
                         <button
                           type="button"
                           onClick={onDownloadClick}
-                          className="m3-btn-filled h-8 px-4 text-[12px] font-semibold"
+                          className="m3-btn-filled h-9 px-5 text-[13px] font-semibold"
                         >
-                          Get Toolz APK
+                          Get the app
                         </button>
                         <button
                           type="button"
                           onClick={() => setShowYoutubeNotice(false)}
-                          className="text-[12px] font-semibold underline hover:no-underline opacity-80"
+                          className="m3-label-large font-semibold underline-offset-2 hover:underline"
                         >
                           Dismiss
                         </button>
@@ -339,37 +292,28 @@ const DownloadzSection = ({ onDownloadClick }: { onDownloadClick: () => void }) 
                 </motion.div>
               )}
             </AnimatePresence>
+          </div>
 
-            <div className="my-7 h-px" style={{ background: "hsl(var(--md-outline-variant) / 0.3)" }} />
-
-            {/* Feature Cards Grid */}
-            <div className="grid gap-3.5 sm:grid-cols-3">
-              {highlights.map(({ icon: Icon, title, desc }) => (
-                <div
-                  key={title}
-                  className="flex flex-col justify-between gap-3 rounded-[20px] border p-4"
+          {/* Highlights */}
+          <ul className="mt-10 grid gap-8 sm:grid-cols-3">
+            {highlights.map(({ icon: Icon, title, desc }) => (
+              <li key={title} className="flex flex-col gap-3">
+                <span
+                  className="grid h-10 w-10 place-items-center rounded-[14px]"
                   style={{
-                    background: "hsl(var(--md-surface-container-low))",
-                    borderColor: "hsl(var(--md-outline-variant) / 0.4)",
+                    background: "hsl(var(--md-secondary-container))",
+                    color: "hsl(var(--md-on-secondary-container))",
                   }}
                 >
-                  <span
-                    className="grid h-9 w-9 place-items-center rounded-[12px]"
-                    style={{
-                      background: "hsl(var(--md-secondary-container))",
-                      color: "hsl(var(--md-on-secondary-container))",
-                    }}
-                  >
-                    <Icon size={17} />
-                  </span>
-                  <div>
-                    <p className="m3-title-small font-bold text-on-surface">{title}</p>
-                    <p className="m3-body-small mt-1 text-on-surface-variant leading-relaxed">{desc}</p>
-                  </div>
+                  <Icon size={18} />
+                </span>
+                <div>
+                  <p className="m3-title-small font-bold text-on-surface">{title}</p>
+                  <p className="m3-body-small mt-1 leading-relaxed text-on-surface-variant">{desc}</p>
                 </div>
-              ))}
-            </div>
-          </div>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>
