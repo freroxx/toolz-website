@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import SectionHeader from "@/components/landing/SectionHeader";
 import { PRESS_SPRING } from "@/lib/motion";
+import { SHAPES } from "@/components/expressive/shapes";
 
 interface SpecPayload {
   matched_device: string;
@@ -28,7 +29,11 @@ const CatalogSection = () => {
   const previewDevices = data?.devices?.slice(0, 10) || [];
 
   return (
-    <section id="catalog" className="scroll-mt-20 py-16 md:py-24">
+    <section
+      id="catalog"
+      className="scroll-mt-20 py-16 md:py-24"
+      style={{ background: "hsl(var(--md-surface-container-low))" }}
+    >
       <div className="container mx-auto px-4">
         <div
           className="overflow-hidden rounded-[24px] border px-6 py-8 md:px-10 md:py-10"
@@ -59,7 +64,7 @@ const CatalogSection = () => {
             </motion.div>
           </div>
 
-          {/* Device strip — surface-tinted cards instead of hard white boxes */}
+          {/* Device strip — theme-aware blend mode via CSS class */}
           <div
             className="mask-fade-horizontal -mx-5 flex gap-3 overflow-x-auto px-5 pb-2 pt-1 md:-mx-10 md:px-10"
             style={{ scrollbarWidth: "none" }}
@@ -68,8 +73,11 @@ const CatalogSection = () => {
               ? [1, 2, 3, 4, 5, 6].map((i) => (
                   <div
                     key={i}
-                    className="h-44 w-28 shrink-0 animate-pulse rounded-[16px]"
-                    style={{ background: "hsl(var(--md-surface-container-high))" }}
+                    className="h-48 w-36 shrink-0 animate-pulse"
+                    style={{
+                      borderRadius: SHAPES.large,
+                      background: "hsl(var(--md-surface-container-high))",
+                    }}
                   />
                 ))
               : previewDevices.map((dev) => (
@@ -78,12 +86,12 @@ const CatalogSection = () => {
                     whileHover={{ y: -3 }}
                     whileTap={{ scale: 0.96 }}
                     transition={PRESS_SPRING}
-                    className="w-28 shrink-0"
+                    className="w-36 shrink-0"
                   >
-                    {/* Surface-tinted card — matches the page in both light & dark themes */}
                     <div
-                      className="flex h-40 items-center justify-center rounded-[16px] border p-3"
+                      className="flex h-48 items-center justify-center border p-3"
                       style={{
+                        borderRadius: SHAPES.large,
                         background: "hsl(var(--md-surface-container-high))",
                         borderColor: "hsl(var(--md-outline-variant) / 0.4)",
                       }}
@@ -92,8 +100,7 @@ const CatalogSection = () => {
                         src={dev.image}
                         alt={dev.matched_device}
                         loading="lazy"
-                        className="max-h-full max-w-full object-contain"
-                        style={{ mixBlendMode: "multiply" }}
+                        className="device-img max-h-full max-w-full object-contain"
                       />
                     </div>
                     <p className="m3-label-small mt-2 line-clamp-1 text-on-surface-variant">
@@ -104,7 +111,7 @@ const CatalogSection = () => {
 
             {!isLoading && previewDevices.length === 0 && (
               <div
-                className="flex h-44 flex-1 items-center justify-center gap-2 rounded-[16px]"
+                className="flex h-48 flex-1 items-center justify-center gap-2 rounded-[24px]"
                 style={{ background: "hsl(var(--md-surface-container))" }}
               >
                 <Smartphone size={18} className="text-on-surface-variant" />

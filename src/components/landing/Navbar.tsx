@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Menu, X, Download, Github } from "lucide-react";
+import { Menu, X, Download } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "react-router-dom";
 import { useLatestRelease } from "@/hooks/use-latest-release";
@@ -7,7 +7,8 @@ import ThemeButton from "@/components/theme/ThemeButton";
 import ThemeDialog from "@/components/theme/ThemeDialog";
 import { useSkin } from "@/components/theme/skin-context";
 import SkinIcon from "@/components/theme/SkinIcon";
-import { PRESS_SPRING } from "@/lib/motion";
+import { PRESS_SPRING, INDICATOR_SPRING } from "@/lib/motion";
+import { useBouncyClick } from "@/components/expressive/useBouncyClick";
 
 const navLinks = [
   { label: "Tools", href: "/#features" },
@@ -22,10 +23,12 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
   const [activeHref, setActiveHref] = useState("");
-  const navRef = useRef<HTMLDivElement>(null);
+  const hamburgerRef = useRef<HTMLButtonElement>(null);
+  const firstLinkRef = useRef<HTMLAnchorElement>(null);
   const location = useLocation();
   const { versionName } = useLatestRelease();
   const { activeSkin } = useSkin();
+  const logoMotion = useBouncyClick();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -33,10 +36,18 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Focus management for mobile drawer
+  useEffect(() => {
+    if (mobileOpen) {
+      setTimeout(() => firstLinkRef.current?.focus(), 50);
+    } else {
+      hamburgerRef.current?.focus();
+    }
+  }, [mobileOpen]);
+
   // Active section tracker
   useEffect(() => {
     if (location.pathname !== "/") return;
-
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -74,72 +85,63 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link
-              to="/"
-              className="flex items-center gap-3 group active:scale-95 transition-transform"
-              aria-label="Toolz home"
-            >
-              <div className="relative w-10 h-10 rounded-[22%] overflow-hidden m3-surface-container-high flex items-center justify-center p-1.5 shadow-lg shadow-black/20">
-                <SkinIcon skin={activeSkin} size={28} />
-              </div>
-              <div className="flex flex-col leading-none">
-                <span
-                  className="m3-title-medium font-bold tracking-tight"
-                  style={{ color: "hsl(var(--md-on-surface))" }}
-                >
-                  Toolz
-                </span>
-                <span className="m3-label-small" style={{ color: "hsl(var(--md-primary-ink))" }}>
-                  v{versionName}
-                </span>
-              </div>
+            <Link to="/" aria-label="Toolz home">
+              <motion.div
+                {...logoMotion}
+                className="flex items-center gap-3 group"
+              >
+                <div className="relative w-10 h-10 rounded-[22%] overflow-hidden m3-surface-container-high flex items-center justify-center p-1.5 shadow-lg shadow-black/20">
+                  <SkinIcon skin={activeSkin} size={28} />
+                </div>
+                <div className="flex flex-col leading-none">
+                  <span
+                    className="m3-title-medium font-bold tracking-tight"
+                    style={{ color: "hsl(var(--md-on-surface))" }}
+                  >
+                    Toolz
+                  </span>
+                  <span className="m3-label-small" style={{ color: "hsl(var(--md-primary-ink))" }}>
+                    v{versionName}
+                  </span>
+                </div>
+              </motion.div>
             </Link>
 
-            {/* Desktop Nav with M3 indicator pill */}
-            <div ref={navRef} className="hidden lg:flex items-center gap-1 relative">
+            {/* Desktop Nav with M3 indicator pill — always rendered, opacity animated */}
+            <div className="hidden lg:flex items-center gap-1 relative">
               {navLinks.map((link) => {
-                const isActive = (location.pathname === link.href) || (location.pathname === "/" && activeHref === link.href.replace("/", ""));
+                const isActive =
+                  location.pathname === link.href ||
+                  (location.pathname === "/" &&
+                    activeHref === link.href.replace("/", ""));
                 return (
                   <Link
                     key={link.href}
                     to={link.href}
-                    className="relative px-5 py-2 rounded-full m3-label-large transition-all duration-300 group"
+                    className="relative px-5 py-2 rounded-full m3-label-large transition-colors duration-200 group"
                     style={{
                       color: isActive
                         ? "hsl(var(--md-on-secondary-container))"
                         : "hsl(var(--md-on-surface-variant))",
+                      zIndex: 1,
                     }}
                   >
-                    {isActive && (
-                      <motion.div
-                        layoutId="nav-indicator"
-                        className="absolute inset-0 rounded-full"
-                        style={{ background: "hsl(var(--md-secondary-container))" }}
-                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                      />
-                    )}
+                    <motion.div
+                      layoutId="nav-indicator"
+                      className="absolute inset-0 rounded-full"
+                      style={{ background: "hsl(var(--md-secondary-container))" }}
+                      animate={{ opacity: isActive ? 1 : 0 }}
+                      transition={INDICATOR_SPRING}
+                    />
                     <span className="relative z-10">{link.label}</span>
                   </Link>
                 );
               })}
             </div>
 
-            {/* Desktop CTA */}
+            {/* Desktop CTA — theme toggle + download only */}
             <div className="hidden lg:flex items-center gap-3">
               <ThemeButton onClick={() => setThemeOpen(true)} className="h-9 w-9" />
-              <motion.a
-                href="https://github.com/freroxx/toolz"
-                target="_blank"
-                rel="noopener noreferrer"
-                whileTap={{ scale: 0.94 }}
-                whileHover={{ y: -1 }}
-                transition={PRESS_SPRING}
-                className="m3-btn-outlined h-9 px-4 text-sm gap-2"
-                aria-label="View source on GitHub"
-              >
-                <Github size={16} />
-                Source
-              </motion.a>
               <motion.button
                 onClick={onDownloadClick}
                 whileTap={{ scale: 0.94 }}
@@ -157,18 +159,32 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
             <div className="flex items-center gap-2 lg:hidden">
               <ThemeButton onClick={() => setThemeOpen(true)} />
               <button
+                ref={hamburgerRef}
                 className="w-10 h-10 flex items-center justify-center rounded-full m3-state-layer"
                 style={{ color: "hsl(var(--md-on-surface-variant))" }}
                 onClick={() => setMobileOpen(!mobileOpen)}
                 aria-label={mobileOpen ? "Close menu" : "Open menu"}
+                aria-expanded={mobileOpen}
               >
                 <AnimatePresence mode="wait">
                   {mobileOpen ? (
-                    <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}>
+                    <motion.div
+                      key="close"
+                      initial={{ rotate: -90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: 90, opacity: 0 }}
+                      transition={{ duration: 0.15 }}
+                    >
                       <X size={20} />
                     </motion.div>
                   ) : (
-                    <motion.div key="open" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.15 }}>
+                    <motion.div
+                      key="open"
+                      initial={{ rotate: 90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: -90, opacity: 0 }}
+                      transition={{ duration: 0.15 }}
+                    >
                       <Menu size={20} />
                     </motion.div>
                   )}
@@ -192,10 +208,14 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
               className="fixed inset-0 z-40 lg:hidden"
               style={{ background: "hsl(var(--md-scrim) / 0.5)" }}
               onClick={() => setMobileOpen(false)}
+              aria-hidden="true"
             />
 
             {/* Drawer */}
             <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Navigation menu"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
@@ -212,8 +232,10 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 style={{ borderColor: "hsl(var(--md-outline-variant))" }}
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-[20%]"
-                    style={{ background: "hsl(var(--md-surface-container-high))" }}>
+                  <div
+                    className="flex h-9 w-9 items-center justify-center rounded-[20%]"
+                    style={{ background: "hsl(var(--md-surface-container-high))" }}
+                  >
                     <SkinIcon skin={activeSkin} size={26} />
                   </div>
                   <div className="flex flex-col">
@@ -226,12 +248,7 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
-                  <ThemeButton
-                    onClick={() => {
-                      setMobileOpen(false);
-                      setThemeOpen(true);
-                    }}
-                  />
+                  <ThemeButton onClick={() => { setMobileOpen(false); setThemeOpen(true); }} />
                   <button
                     onClick={() => setMobileOpen(false)}
                     className="w-10 h-10 flex items-center justify-center rounded-full m3-state-layer"
@@ -246,15 +263,21 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
               {/* Drawer links */}
               <div className="flex-1 overflow-y-auto py-3 px-3">
                 {navLinks.map((link, i) => {
-                  const isActive = (location.pathname === link.href) || (location.pathname === "/" && activeHref === link.href.replace("/", ""));
+                  const isActive =
+                    location.pathname === link.href ||
+                    (location.pathname === "/" &&
+                      activeHref === link.href.replace("/", ""));
                   return (
                     <Link
                       key={link.href}
                       to={link.href}
+                      ref={i === 0 ? firstLinkRef : undefined}
                       onClick={() => setMobileOpen(false)}
                       className="flex items-center gap-4 px-4 py-3 rounded-full mb-1 m3-title-medium transition-colors"
                       style={{
-                        background: isActive ? "hsl(var(--md-secondary-container))" : "transparent",
+                        background: isActive
+                          ? "hsl(var(--md-secondary-container))"
+                          : "transparent",
                         color: isActive
                           ? "hsl(var(--md-on-secondary-container))"
                           : "hsl(var(--md-on-surface-variant))",
@@ -272,7 +295,7 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 })}
               </div>
 
-              {/* Drawer footer CTAs */}
+              {/* Drawer footer CTA */}
               <div
                 className="p-6 flex flex-col gap-3 border-t"
                 style={{ borderColor: "hsl(var(--md-outline-variant))" }}
@@ -286,17 +309,6 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                   <Download size={16} />
                   Download v{versionName}
                 </motion.button>
-                <motion.a
-                  href="https://github.com/freroxx/toolz"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  whileTap={{ scale: 0.95 }}
-                  transition={PRESS_SPRING}
-                  className="m3-btn-outlined w-full justify-center py-3 text-sm gap-2"
-                >
-                  <Github size={16} />
-                  View Source
-                </motion.a>
               </div>
             </motion.div>
           </>

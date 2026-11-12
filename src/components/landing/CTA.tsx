@@ -12,10 +12,10 @@ const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
   const { versionName } = useLatestRelease();
 
   return (
-    <section className="py-16 md:py-24">
+    <section className="py-16 md:py-24" style={{ background: "hsl(var(--md-surface))" }}>
       <div className="container mx-auto px-4">
         <div
-          className="relative overflow-hidden rounded-[24px] border p-6 sm:p-9 md:p-12 shadow-sm"
+          className="relative overflow-hidden rounded-[48px] border p-6 sm:p-9 md:p-12 shadow-sm"
           style={{
             background: "hsl(var(--md-surface-container))",
             borderColor: "hsl(var(--md-outline-variant) / 0.5)",
@@ -35,15 +35,11 @@ const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 Android 12 and up · GPL-3.0
               </div>
 
-              <h2
-                className="m3-display-medium mt-5 font-bold text-balance text-on-surface"
-              >
+              <h2 className="m3-display-medium mt-5 font-bold text-balance text-on-surface">
                 Ready to simplify your phone?
               </h2>
 
-              <p
-                className="m3-body-large mt-4 max-w-md leading-relaxed text-on-surface-variant"
-              >
+              <p className="m3-body-large mt-4 max-w-md leading-relaxed text-on-surface-variant">
                 Download the universal APK or targeted architecture build
                 {versionName ? ` (v${versionName})` : ""}. No accounts, no subscriptions,
                 and no tracking — ever.
@@ -82,7 +78,7 @@ const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
 
             {/* ── Download count card ── */}
             <div
-              className="rounded-[20px] border p-7 md:p-9 shadow-sm"
+              className="rounded-[32px] border p-7 md:p-9 shadow-sm"
               style={{
                 background: "hsl(var(--md-surface-container-high))",
                 borderColor: "hsl(var(--md-outline-variant) / 0.5)",
@@ -99,7 +95,14 @@ const CTA = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
               </div>
 
               <div className="m3-display-small mt-6 font-bold tabular-nums text-on-surface">
-                {isLoading ? "…" : <DownloadCounter value={totalDownloads || 0} duration={2.5} />}
+                {isLoading ? (
+                  <div
+                    className="h-10 w-28 animate-pulse rounded-xl"
+                    style={{ background: "hsl(var(--md-surface-container-highest))" }}
+                  />
+                ) : (
+                  <DownloadCounter value={totalDownloads || 0} duration={2.5} />
+                )}
               </div>
 
               <p className="m3-label-medium mt-1 font-semibold uppercase tracking-[0.14em] text-on-surface-variant">

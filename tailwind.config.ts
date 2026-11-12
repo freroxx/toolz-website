@@ -17,9 +17,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Google Sans Text", "Roboto Flex", "system-ui", "sans-serif"],
-        display: ["Google Sans Display", "Roboto Flex", "sans-serif"],
-        google: ["Google Sans", "sans-serif"],
+        sans: ["Roboto Flex", "system-ui", "sans-serif"],
+        display: ["Roboto Flex", "sans-serif"],
+        google: ["Roboto Flex", "sans-serif"],
       },
       colors: {
         /* Shadcn bridge tokens */

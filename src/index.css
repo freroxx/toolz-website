@@ -186,7 +186,7 @@
   body {
     background-color: hsl(var(--md-surface));
     color: hsl(var(--md-on-surface));
-    font-family: 'Google Sans Text', 'Roboto Flex', system-ui, sans-serif;
+    font-family: 'Roboto Flex', system-ui, sans-serif;
     overflow-x: hidden;
   }
 
@@ -222,7 +222,7 @@
     border-radius: var(--md-shape-full);
     background: hsl(var(--md-primary));
     color: hsl(var(--md-on-primary));
-    font-family: 'Google Sans Text', sans-serif;
+    font-family: 'Roboto Flex', system-ui, sans-serif;
     font-size: 14px;
     font-weight: 500;
     letter-spacing: 0.1px;
@@ -260,7 +260,7 @@
     border-radius: var(--md-shape-full);
     background: hsl(var(--md-secondary-container));
     color: hsl(var(--md-on-secondary-container));
-    font-family: 'Google Sans Text', sans-serif;
+    font-family: 'Roboto Flex', system-ui, sans-serif;
     font-size: 14px;
     font-weight: 500;
     letter-spacing: 0.1px;
@@ -291,7 +291,7 @@
     border-radius: var(--md-shape-full);
     background: transparent;
     color: hsl(var(--md-primary-ink));
-    font-family: 'Google Sans Text', sans-serif;
+    font-family: 'Roboto Flex', system-ui, sans-serif;
     font-size: 14px;
     font-weight: 500;
     letter-spacing: 0.1px;
@@ -324,7 +324,7 @@
     border-radius: var(--md-shape-lg);
     background: hsl(var(--md-primary-container));
     color: hsl(var(--md-on-primary-container));
-    font-family: 'Google Sans Text', sans-serif;
+    font-family: 'Roboto Flex', system-ui, sans-serif;
     font-size: 14px;
     font-weight: 500;
     letter-spacing: 0.1px;
@@ -402,7 +402,7 @@
     border: 1px solid hsl(var(--md-outline-variant));
     background: hsl(var(--md-surface-container-low));
     color: hsl(var(--md-on-surface-variant));
-    font-family: 'Google Sans Text', sans-serif;
+    font-family: 'Roboto Flex', system-ui, sans-serif;
     font-size: 13px;
     font-weight: 500;
     letter-spacing: 0.1px;
@@ -438,105 +438,105 @@
 
   /* Display typography - strictly M3 */
   .m3-display-large {
-    font-family: 'Google Sans Display', 'Roboto Flex', sans-serif;
+    font-family: 'Roboto Flex', system-ui, sans-serif;
     font-size: clamp(48px, 8vw, 96px);
     font-weight: 700;
     line-height: 1.05;
     letter-spacing: -0.02em;
   }
   .m3-display-medium {
-    font-family: 'Google Sans Display', 'Roboto Flex', sans-serif;
+    font-family: 'Roboto Flex', system-ui, sans-serif;
     font-size: clamp(36px, 6vw, 64px);
     font-weight: 700;
     line-height: 1.1;
     letter-spacing: -0.01em;
   }
   .m3-display-small {
-    font-family: 'Google Sans Display', 'Roboto Flex', sans-serif;
+    font-family: 'Roboto Flex', system-ui, sans-serif;
     font-size: clamp(28px, 4vw, 48px);
     font-weight: 600;
     line-height: 1.15;
     letter-spacing: 0;
   }
   .m3-headline-large {
-    font-family: 'Google Sans Display', sans-serif;
+    font-family: 'Roboto Flex', system-ui, sans-serif;
     font-size: 32px;
     font-weight: 600;
     line-height: 1.2;
     letter-spacing: 0;
   }
   .m3-headline-medium {
-    font-family: 'Google Sans', sans-serif;
+    font-family: 'Roboto Flex', system-ui, sans-serif;
     font-size: 28px;
     font-weight: 600;
     line-height: 1.25;
     letter-spacing: 0;
   }
   .m3-headline-small {
-    font-family: 'Google Sans Text', 'Roboto Flex', sans-serif;
+    font-family: 'Roboto Flex', system-ui, sans-serif;
     font-size: 24px;
     font-weight: 600;
     line-height: 1.33;
     letter-spacing: 0;
   }
   .m3-title-large {
-    font-family: 'Google Sans', sans-serif;
+    font-family: 'Roboto Flex', system-ui, sans-serif;
     font-size: 22px;
     font-weight: 600;
     line-height: 1.3;
     letter-spacing: 0;
   }
   .m3-title-medium {
-    font-family: 'Google Sans Text', sans-serif;
+    font-family: 'Roboto Flex', system-ui, sans-serif;
     font-size: 16px;
     font-weight: 600;
     line-height: 1.5;
     letter-spacing: 0.01em;
   }
   .m3-title-small {
-    font-family: 'Google Sans Text', sans-serif;
+    font-family: 'Roboto Flex', system-ui, sans-serif;
     font-size: 14px;
     font-weight: 600;
     line-height: 1.4;
     letter-spacing: 0.01em;
   }
   .m3-body-large {
-    font-family: 'Google Sans Text', sans-serif;
+    font-family: 'Roboto Flex', system-ui, sans-serif;
     font-size: 18px;
     font-weight: 400;
     line-height: 1.6;
     letter-spacing: 0.02em;
   }
   .m3-body-medium {
-    font-family: 'Google Sans Text', sans-serif;
+    font-family: 'Roboto Flex', system-ui, sans-serif;
     font-size: 16px;
     font-weight: 400;
     line-height: 1.6;
     letter-spacing: 0.01em;
   }
   .m3-body-small {
-    font-family: 'Google Sans Text', sans-serif;
+    font-family: 'Roboto Flex', system-ui, sans-serif;
     font-size: 14px;
     font-weight: 400;
     line-height: 1.5;
     letter-spacing: 0.01em;
   }
   .m3-label-large {
-    font-family: 'Google Sans Text', sans-serif;
+    font-family: 'Roboto Flex', system-ui, sans-serif;
     font-size: 14px;
     font-weight: 500;
     line-height: 1.43;
     letter-spacing: 0.01em;
   }
   .m3-label-medium {
-    font-family: 'Google Sans Text', sans-serif;
+    font-family: 'Roboto Flex', system-ui, sans-serif;
     font-size: 12px;
     font-weight: 500;
     line-height: 1.33;
     letter-spacing: 0.04em;
   }
   .m3-label-small {
-    font-family: 'Google Sans Text', sans-serif;
+    font-family: 'Roboto Flex', system-ui, sans-serif;
     font-size: 11px;
     font-weight: 500;
     line-height: 1.45;
@@ -665,6 +665,17 @@
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--md-outline-variant) / 0.3) transparent;
   }
+
+  /* Device image blend mode — theme-aware */
+  .device-img { mix-blend-mode: normal; }
+  html[data-theme="light"] .device-img { mix-blend-mode: multiply; }
+
+  /* Scrollbar hide utility */
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
 }
 
 /* ─── Motion & Expressive Transitions ─── */

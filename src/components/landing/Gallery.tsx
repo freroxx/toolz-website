@@ -65,7 +65,7 @@ const Gallery = () => {
   }, [selectedIndex]);
 
   return (
-    <section id="gallery" className="scroll-mt-20 py-16 md:py-24">
+    <section id="gallery" className="scroll-mt-20 py-16 md:py-24" style={{ background: "hsl(var(--md-surface-container-low))" }}>
       <div className="container mx-auto px-4">
         <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
           <SectionHeader
@@ -146,7 +146,7 @@ const Gallery = () => {
             >
               <div
                 className="h-full rounded-full bg-primary transition-[width] duration-150"
-                style={{ width: `${Math.max(4, position * 100)}%` }}
+                style={{ width: `${Math.max(2, position * 100)}%` }}
               />
             </div>
             <motion.button
@@ -190,7 +190,8 @@ const Gallery = () => {
             aria-label="Screenshot viewer"
           >
             <button
-              className="absolute right-4 top-4 z-[120] grid h-12 w-12 place-items-center rounded-full bg-white text-black transition-transform hover:scale-105 active:scale-95 sm:right-8 sm:top-8"
+              className="absolute right-4 top-4 z-[120] grid h-12 w-12 place-items-center rounded-full transition-colors hover:scale-105 active:scale-95 sm:right-8 sm:top-8"
+              style={{ background: "hsl(var(--md-surface-container-high))", color: "hsl(var(--md-on-surface))" }}
               onClick={(e) => {
                 e.stopPropagation();
                 setSelectedIndex(null);
@@ -201,7 +202,8 @@ const Gallery = () => {
             </button>
 
             <button
-              className="absolute left-2 z-[120] grid h-12 w-12 place-items-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur-xl transition-all hover:bg-white/20 active:scale-90 sm:left-10 sm:h-16 sm:w-16"
+              className="absolute left-2 z-[120] grid h-12 w-12 place-items-center rounded-full border backdrop-blur-xl transition-all hover:brightness-110 active:scale-90 sm:left-10 sm:h-16 sm:w-16"
+              style={{ background: "hsl(var(--md-surface-container))", color: "hsl(var(--md-on-surface))", borderColor: "hsl(var(--md-outline-variant) / 0.4)" }}
               onClick={prev}
               aria-label="Previous"
             >
@@ -209,7 +211,8 @@ const Gallery = () => {
             </button>
 
             <button
-              className="absolute right-2 z-[120] grid h-12 w-12 place-items-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur-xl transition-all hover:bg-white/20 active:scale-90 sm:right-10 sm:h-16 sm:w-16"
+              className="absolute right-2 z-[120] grid h-12 w-12 place-items-center rounded-full border backdrop-blur-xl transition-all hover:brightness-110 active:scale-90 sm:right-10 sm:h-16 sm:w-16"
+              style={{ background: "hsl(var(--md-surface-container))", color: "hsl(var(--md-on-surface))", borderColor: "hsl(var(--md-outline-variant) / 0.4)" }}
               onClick={next}
               aria-label="Next"
             >

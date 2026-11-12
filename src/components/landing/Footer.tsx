@@ -1,8 +1,10 @@
 import { Github, MessageSquare, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { totalTools } from "@/lib/tools-catalog";
 import { useSkin } from "@/components/theme/skin-context";
 import SkinIcon from "@/components/theme/SkinIcon";
+import { useBouncyClick } from "@/components/expressive/useBouncyClick";
 
 const REPO = "https://github.com/freroxx/toolz";
 
@@ -36,6 +38,7 @@ const columns = [
 
 const Footer = () => {
   const { activeSkin } = useSkin();
+  const logoMotion = useBouncyClick();
 
   return (
     <footer
@@ -45,14 +48,16 @@ const Footer = () => {
       <div className="container mx-auto px-4">
         <div className="flex flex-col justify-between gap-12 md:flex-row">
           <div className="max-w-sm">
-            <Link to="/" className="flex items-center gap-3 group active:scale-95 transition-transform" aria-label="Toolz home">
-              <span
-                className="grid h-12 w-12 place-items-center overflow-hidden rounded-[16px] p-2"
-                style={{ background: "hsl(var(--md-surface-container-high))" }}
-              >
-                <SkinIcon skin={activeSkin} size={32} />
-              </span>
-              <span className="m3-headline-small text-on-surface">Toolz</span>
+            <Link to="/" aria-label="Toolz home">
+              <motion.div {...logoMotion} className="inline-flex items-center gap-3 group">
+                <span
+                  className="grid h-12 w-12 place-items-center overflow-hidden rounded-[16px] p-2"
+                  style={{ background: "hsl(var(--md-surface-container-high))" }}
+                >
+                  <SkinIcon skin={activeSkin} size={32} />
+                </span>
+                <span className="m3-headline-small text-on-surface">Toolz</span>
+              </motion.div>
             </Link>
             <p className="m3-body-small mt-5 text-on-surface-variant">
               {totalTools} tools in one Android app. Free, open source, and built
@@ -61,11 +66,7 @@ const Footer = () => {
             <div className="mt-6 flex items-center gap-2">
               {[
                 { icon: Github, href: REPO, label: "GitHub" },
-                {
-                  icon: MessageSquare,
-                  href: "https://discord.gg/aAswRUerwh",
-                  label: "Discord",
-                },
+                { icon: MessageSquare, href: "https://discord.gg/aAswRUerwh", label: "Discord" },
               ].map(({ icon: Icon, href, label }) => (
                 <a
                   key={label}
