@@ -12,6 +12,7 @@
 import type { SkinItem } from "@/lib/skin-schema";
 
 export type SkinThemeMode = "SYSTEM" | "LIGHT" | "DARK";
+export type ThemeModeChoice = "SYSTEM" | "LIGHT" | "DARK";
 export type ResolvedMode = "LIGHT" | "DARK";
 export type IconShape = "OCTAGON" | "CIRCLE";
 export type SkinSource = "site" | "included" | "community";
@@ -43,6 +44,7 @@ export interface SiteSkin {
 export const SITE_DEFAULT_SKIN_ID = "site-default";
 export const STORAGE_KEY = "toolz-site-skin";
 export const MODE_STORAGE_KEY = "toolz-site-skin-mode";
+export const THEME_MODE_PREF_KEY = "toolz-theme-mode-pref";
 export const THEME_COLOR_STORAGE_KEY = "toolz-site-skin-theme-color";
 
 const DEFAULT_PRIMARY = "#8B55C9";
@@ -583,6 +585,19 @@ export function resolveMode(skinMode: SkinThemeMode, systemDark: boolean): Resol
   return systemDark ? "DARK" : "LIGHT";
 }
 
+export function resolveModeWithPreference(
+  preference: ThemeModeChoice,
+  skinMode: SkinThemeMode,
+  systemDark: boolean
+): ResolvedMode {
+  if (preference === "LIGHT") return "LIGHT";
+  if (preference === "DARK") return "DARK";
+  // In SYSTEM mode, check if skin explicitly requests a theme or follow OS
+  if (skinMode === "LIGHT") return "LIGHT";
+  if (skinMode === "DARK") return "DARK";
+  return systemDark ? "DARK" : "LIGHT";
+}
+
 function generateSkinSvg(skin: SiteSkin): string {
   const { rim, bodyStart, bodyEnd, disc } = skin.icon;
   const useGrad = skin.iconGradient && Boolean(bodyEnd);
@@ -664,5 +679,25 @@ export function storeSkinId(id: string, mode: SkinThemeMode): void {
     window.localStorage.setItem(MODE_STORAGE_KEY, mode);
   } catch {
     /* private mode — selection still works for this session */
+  }
+}
+
+export function readStoredModePref(): ThemeModeChoice {
+  if (typeof window === "undefined") return "SYSTEM";
+  try {
+    const val = window.localStorage.getItem(THEME_MODE_PREF_KEY);
+    if (val === "LIGHT" || val === "DARK" || val === "SYSTEM") return val;
+    return "SYSTEM";
+  } catch {
+    return "SYSTEM";
+  }
+}
+
+export function storeModePref(mode: ThemeModeChoice): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(THEME_MODE_PREF_KEY, mode);
+  } catch {
+    /* private mode */
   }
 }

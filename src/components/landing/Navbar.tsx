@@ -3,7 +3,7 @@ import { Menu, X, Download } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "react-router-dom";
 import { useLatestRelease } from "@/hooks/use-latest-release";
-import ThemeButton from "@/components/theme/ThemeButton";
+import ThemeButton, { QuickModeToggle } from "@/components/theme/ThemeButton";
 import ThemeDialog from "@/components/theme/ThemeDialog";
 import { useSkin } from "@/components/theme/skin-context";
 import SkinIcon from "@/components/theme/SkinIcon";
@@ -139,9 +139,10 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
               })}
             </div>
 
-            {/* Desktop CTA — theme toggle + download only */}
-            <div className="hidden lg:flex items-center gap-3">
-              <ThemeButton onClick={() => setThemeOpen(true)} className="h-9 w-9" />
+            {/* Desktop CTA — quick theme toggle + skin studio + download */}
+            <div className="hidden lg:flex items-center gap-2.5">
+              <QuickModeToggle />
+              <ThemeButton onClick={() => setThemeOpen(true)} />
               <motion.button
                 onClick={onDownloadClick}
                 whileTap={{ scale: 0.94 }}
@@ -156,7 +157,8 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
             </div>
 
             {/* Mobile trigger */}
-            <div className="flex items-center gap-2 lg:hidden">
+            <div className="flex items-center gap-1.5 lg:hidden">
+              <QuickModeToggle />
               <ThemeButton onClick={() => setThemeOpen(true)} />
               <button
                 ref={hamburgerRef}
@@ -247,7 +249,8 @@ const Navbar = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5">
+                  <QuickModeToggle />
                   <ThemeButton onClick={() => { setMobileOpen(false); setThemeOpen(true); }} />
                   <button
                     onClick={() => setMobileOpen(false)}

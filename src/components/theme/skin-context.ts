@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import type { ResolvedMode, SiteSkin } from "@/lib/skins";
+import type { ResolvedMode, SiteSkin, ThemeModeChoice } from "@/lib/skins";
 
 export interface SkinContextValue {
   skins: SiteSkin[];
@@ -7,7 +7,10 @@ export interface SkinContextValue {
   community: SiteSkin[];
   activeSkin: SiteSkin;
   activeId: string;
+  modePreference: ThemeModeChoice;
   resolvedMode: ResolvedMode;
+  setModePreference: (mode: ThemeModeChoice) => void;
+  toggleMode: () => void;
   loading: boolean;
   degraded: boolean;
   selectSkin: (id: string) => void;

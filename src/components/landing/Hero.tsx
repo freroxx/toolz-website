@@ -1,4 +1,4 @@
-import { ArrowRight, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, Download, ChevronLeft, ChevronRight, Github } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
@@ -6,7 +6,15 @@ import { useLatestRelease } from "@/hooks/use-latest-release";
 import { FEATURED_SCREENSHOTS } from "@/lib/screenshots";
 import { PRESS_SPRING } from "@/lib/motion";
 import { StaggeredEntrance } from "@/components/expressive/StaggeredEntrance";
-import { SHAPES } from "@/components/expressive/shapes";
+
+const SCREENSHOT_TITLES = [
+  "Tasks & Focus",
+  "App Launcher",
+  "Focus Flow Analytics",
+  "Calendar & AI Scheduler",
+  "Precision Stopwatch",
+  "World Clock & Timezones",
+];
 
 const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
   const [imgIndex, setImgIndex] = useState(0);
@@ -36,11 +44,19 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
       className="relative overflow-hidden pt-24 pb-16 md:pt-32 md:pb-24"
       style={{ background: "hsl(var(--md-surface))" }}
     >
-      <div className="container mx-auto px-4">
+      {/* Soft atmospheric background halo */}
+      <div
+        className="pointer-events-none absolute left-1/2 top-1/3 -translate-x-1/2 -translate-y-1/2 h-[480px] w-[640px] rounded-full blur-[120px] opacity-25"
+        style={{
+          background: "radial-gradient(circle, hsl(var(--md-primary)) 0%, hsl(var(--md-secondary)) 50%, transparent 80%)",
+        }}
+        aria-hidden="true"
+      />
+
+      <div className="container relative z-10 mx-auto px-4">
         <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
           {/* ── Left Column: Editorial Content ── */}
           <div className="flex flex-col items-start">
-
             {/* Version & OS chip */}
             <StaggeredEntrance index={0}>
               <div
@@ -56,7 +72,7 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                   style={{ background: "hsl(var(--md-secondary))" }}
                 />
                 <span className="m3-label-medium font-semibold tracking-wide">
-                  Toolz v{versionName} · Android 12+
+                  Toolz v{versionName} · Android 12+ · GPL-3.0
                 </span>
               </div>
             </StaggeredEntrance>
@@ -66,12 +82,15 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
               <h1
                 className="font-black tracking-tight text-on-surface"
                 style={{
-                  fontSize: "clamp(2.8rem, 7vw, 5rem)",
-                  lineHeight: 1.03,
+                  fontSize: "clamp(2.8rem, 6.5vw, 4.8rem)",
+                  lineHeight: 1.04,
                 }}
               >
                 Your device,{" "}
-                <span style={{ color: "hsl(var(--md-primary))" }}>
+                <span
+                  className="font-extrabold"
+                  style={{ color: "hsl(var(--md-primary))" }}
+                >
                   fully orchestrated.
                 </span>
               </h1>
@@ -80,9 +99,9 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
             {/* Body */}
             <StaggeredEntrance index={2} className="mt-6">
               <p className="m3-body-large max-w-xl text-on-surface-variant leading-relaxed">
-                Every essential tool in one lightweight APK — unit converters,
-                encrypted vaults, sensor dashboards, media downloaders, and
-                on-device OCR. No login. No cloud. No trackers.
+                Over 50 utilities unified into a single lightweight APK: unit converters,
+                encrypted SQLCipher password vaults, device sensor dashboards, social media downloaders,
+                and on-device OCR. No login, no cloud dependencies, no ads.
               </p>
             </StaggeredEntrance>
 
@@ -113,24 +132,31 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                     <ArrowRight size={18} />
                   </Link>
                 </motion.div>
+
+                <motion.a
+                  href="https://github.com/freroxx/toolz"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileTap={{ scale: 0.94 }}
+                  whileHover={{ y: -2 }}
+                  transition={PRESS_SPRING}
+                  className="m3-btn-outlined gap-2 px-5 py-4 text-base font-semibold"
+                  aria-label="View Toolz source on GitHub"
+                >
+                  <Github size={18} />
+                  Source
+                </motion.a>
               </div>
             </StaggeredEntrance>
           </div>
 
-          {/* ── Right Column: Interactive Phone Stage ── */}
-          <StaggeredEntrance index={4} className="relative mx-auto flex w-full max-w-[380px] flex-col items-center justify-center lg:mx-0 lg:max-w-none">
-            {/* Ambient background decor */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                background:
-                  "radial-gradient(ellipse 60% 50% at 50% 50%, hsl(var(--md-primary) / 0.08), transparent)",
-              }}
-              aria-hidden="true"
-            />
-
+          {/* ── Right Column: Precision Android Hardware Stage ── */}
+          <StaggeredEntrance
+            index={4}
+            className="relative mx-auto flex w-full max-w-[340px] flex-col items-center justify-center lg:mx-0 lg:max-w-none"
+          >
             <div className="relative w-full max-w-[300px]">
-              {/* Phone Frame — pebble shape, infinite float */}
+              {/* Outer Phone Frame — authentic symmetrical hardware chassis */}
               <motion.div
                 animate={{ y: [-6, 6, -6] }}
                 transition={{
@@ -141,26 +167,39 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 }}
                 onMouseEnter={() => setPaused(true)}
                 onMouseLeave={() => setPaused(false)}
+                className="relative"
               >
+                {/* Hardware side buttons */}
                 <div
-                  className="relative mx-auto overflow-hidden border p-2.5 shadow-2xl"
+                  className="absolute -left-[4px] top-24 h-12 w-[3px] rounded-l-sm bg-neutral-700/80"
+                  aria-hidden="true"
+                />
+                <div
+                  className="absolute -right-[4px] top-20 h-9 w-[3px] rounded-r-sm bg-neutral-700/80"
+                  aria-hidden="true"
+                />
+
+                {/* Device Chassis */}
+                <div
+                  className="relative mx-auto overflow-hidden rounded-[44px] border-[3.5px] border-[#222228] p-2.5 shadow-2xl transition-all"
                   style={{
-                    borderRadius: SHAPES.pebble,
-                    background: "#0a0a0c",
-                    borderColor: "hsl(var(--md-outline-variant) / 0.6)",
+                    background: "#0c0c0e",
                     boxShadow:
-                      "0 24px 64px -12px rgba(0, 0, 0, 0.7), 0 12px 24px -8px rgba(0, 0, 0, 0.5)",
+                      "0 32px 80px -16px rgba(0, 0, 0, 0.8), 0 16px 36px -10px rgba(0, 0, 0, 0.6), 0 0 40px -10px hsl(var(--md-primary) / 0.25)",
                   }}
                 >
-                  {/* Speaker slit & camera punch hole */}
-                  <div className="flex flex-col items-center pt-1 pb-2">
-                    <div className="h-1 w-10 rounded-full bg-white/20 mb-2" />
-                    <div className="h-3 w-3 rounded-full bg-black ring-1 ring-white/15" />
+                  {/* Top Bezel: Speaker & Front Camera */}
+                  <div className="flex flex-col items-center pt-0.5 pb-2">
+                    <div className="h-1 w-11 rounded-full bg-white/20 mb-1.5" />
+                    <div className="flex h-3 w-3 items-center justify-center rounded-full bg-black ring-1 ring-white/20">
+                      <div className="h-1 w-1 rounded-full bg-blue-900/60" />
+                    </div>
                   </div>
 
+                  {/* Inner Screen */}
                   <div
-                    className="relative cursor-pointer overflow-hidden rounded-[26px] bg-black"
-                    style={{ aspectRatio: "9/19" }}
+                    className="relative cursor-pointer overflow-hidden rounded-[34px] bg-black"
+                    style={{ aspectRatio: "9/19.5" }}
                     onClick={nextImg}
                     role="button"
                     tabIndex={0}
@@ -176,63 +215,90 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                     }}
                     aria-label="Next screenshot"
                   >
+                    {/* Diagonal glass reflection highlight */}
+                    <div
+                      className="pointer-events-none absolute inset-0 z-20"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 35%, transparent 60%)",
+                      }}
+                    />
+
                     <AnimatePresence mode="wait">
                       <motion.img
                         key={FEATURED_SCREENSHOTS[imgIndex]}
                         src={FEATURED_SCREENSHOTS[imgIndex]}
-                        alt={`Toolz screenshot ${imgIndex + 1}`}
+                        alt={`Toolz ${SCREENSHOT_TITLES[imgIndex] ?? `screenshot ${imgIndex + 1}`}`}
                         className="absolute inset-0 h-full w-full object-cover"
-                        initial={{ opacity: 0, scale: 1.03 }}
+                        initial={{ opacity: 0, scale: 1.02 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.97 }}
-                        transition={{ duration: 0.28 }}
+                        exit={{ opacity: 0, scale: 0.98 }}
+                        transition={{ duration: 0.25 }}
                       />
                     </AnimatePresence>
+
+                    {/* Bottom gesture line */}
+                    <div
+                      className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 h-1 w-24 rounded-full bg-white/30 z-20"
+                      aria-hidden="true"
+                    />
                   </div>
                 </div>
               </motion.div>
 
-              {/* Navigation Arrows & Indicators */}
-              <div className="mt-4 flex items-center justify-between px-2">
+              {/* Expressive Carousel Controller capsule */}
+              <div
+                className="mt-4 flex items-center justify-between gap-2 rounded-full border px-3 py-1.5 shadow-sm"
+                style={{
+                  background: "hsl(var(--md-surface-container))",
+                  borderColor: "hsl(var(--md-outline-variant) / 0.5)",
+                }}
+              >
                 <motion.button
                   type="button"
                   onClick={prevImg}
-                  whileTap={{ scale: 0.9 }}
+                  whileTap={{ scale: 0.88 }}
                   transition={PRESS_SPRING}
-                  className="grid h-9 w-9 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high"
+                  className="grid h-8 w-8 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
                   aria-label="Previous screenshot"
                 >
-                  <ChevronLeft size={18} />
+                  <ChevronLeft size={17} />
                 </motion.button>
 
-                <div className="flex items-center gap-1.5" aria-hidden="true">
-                  {FEATURED_SCREENSHOTS.map((_, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setImgIndex(i)}
-                      className="h-1.5 rounded-full transition-all duration-300"
-                      style={{
-                        width: i === imgIndex ? 22 : 6,
-                        background:
-                          i === imgIndex
-                            ? "hsl(var(--md-primary))"
-                            : "hsl(var(--md-outline-variant) / 0.6)",
-                      }}
-                      aria-label={`Go to screenshot ${i + 1}`}
-                    />
-                  ))}
+                {/* Dynamic Screen Title & Interactive indicator dots */}
+                <div className="flex flex-col items-center">
+                  <span className="text-[12px] font-semibold text-on-surface truncate max-w-[150px]">
+                    {SCREENSHOT_TITLES[imgIndex] ?? `Screen ${imgIndex + 1}`}
+                  </span>
+                  <div className="mt-1 flex items-center gap-1.5" aria-hidden="true">
+                    {FEATURED_SCREENSHOTS.map((_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setImgIndex(i)}
+                        className="h-1.5 rounded-full transition-all duration-300"
+                        style={{
+                          width: i === imgIndex ? 18 : 5,
+                          background:
+                            i === imgIndex
+                              ? "hsl(var(--md-primary))"
+                              : "hsl(var(--md-outline-variant) / 0.6)",
+                        }}
+                        aria-label={`Go to screenshot ${i + 1}`}
+                      />
+                    ))}
+                  </div>
                 </div>
 
                 <motion.button
                   type="button"
                   onClick={nextImg}
-                  whileTap={{ scale: 0.9 }}
+                  whileTap={{ scale: 0.88 }}
                   transition={PRESS_SPRING}
-                  className="grid h-9 w-9 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high"
+                  className="grid h-8 w-8 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
                   aria-label="Next screenshot"
                 >
-                  <ChevronRight size={18} />
+                  <ChevronRight size={17} />
                 </motion.button>
               </div>
             </div>

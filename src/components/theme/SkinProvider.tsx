@@ -12,8 +12,11 @@ import {
   SITE_DEFAULT_SKIN_ID,
   applySkinTheme,
   readStoredSkinId,
-  resolveMode,
+  readStoredModePref,
+  resolveModeWithPreference,
   storeSkinId,
+  storeModePref,
+  type ThemeModeChoice,
 } from "@/lib/skins";
 
 function systemPrefersDark(): boolean {
@@ -24,6 +27,7 @@ function systemPrefersDark(): boolean {
 export const SkinProvider = ({ children }: { children: ReactNode }) => {
   const { skins, included, community, loading, degraded } = useSkins();
   const [activeId, setActiveIdState] = useState<string>(() => readStoredSkinId() ?? SITE_DEFAULT_SKIN_ID);
+  const [modePreference, setModePreferenceState] = useState<ThemeModeChoice>(() => readStoredModePref());
   const [systemDark, setSystemDark] = useState<boolean>(systemPrefersDark);
 
   useEffect(() => {
@@ -40,8 +44,8 @@ export const SkinProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const resolvedMode = useMemo(
-    () => resolveMode(activeSkin.themeMode, systemDark),
-    [activeSkin.themeMode, systemDark]
+    () => resolveModeWithPreference(modePreference, activeSkin.themeMode, systemDark),
+    [modePreference, activeSkin.themeMode, systemDark]
   );
 
   const selectSkin = useCallback((id: string) => {
@@ -50,6 +54,16 @@ export const SkinProvider = ({ children }: { children: ReactNode }) => {
     setActiveIdState(next.id);
     storeSkinId(next.id, next.themeMode);
   }, [skins]);
+
+  const setModePreference = useCallback((mode: ThemeModeChoice) => {
+    setModePreferenceState(mode);
+    storeModePref(mode);
+  }, []);
+
+  const toggleMode = useCallback(() => {
+    const next = resolvedMode === "DARK" ? "LIGHT" : "DARK";
+    setModePreference(next);
+  }, [resolvedMode, setModePreference]);
 
   // If a stored community skin was unpublished, fall back to the site default.
   useEffect(() => {
@@ -74,12 +88,15 @@ export const SkinProvider = ({ children }: { children: ReactNode }) => {
       community,
       activeSkin,
       activeId: activeSkin.id,
+      modePreference,
       resolvedMode,
+      setModePreference,
+      toggleMode,
       loading,
       degraded,
       selectSkin,
     }),
-    [skins, included, community, activeSkin, resolvedMode, loading, degraded, selectSkin]
+    [skins, included, community, activeSkin, modePreference, resolvedMode, setModePreference, toggleMode, loading, degraded, selectSkin]
   );
 
   return <SkinContext.Provider value={value}>{children}</SkinContext.Provider>;
