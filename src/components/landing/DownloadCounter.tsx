@@ -7,11 +7,15 @@ const DownloadCounter = ({ value, duration = 1.6 }: { value: number; duration?: 
   const rounded = useTransform(count, (latest) => Math.round(latest).toLocaleString());
 
   useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      count.set(value);
+      return;
+    }
     const controls = animate(count, value, { duration, ease: [0.16, 1, 0.3, 1] });
     return () => controls.stop();
   }, [value, count, duration]);
 
-  return <motion.span>{rounded}</motion.span>;
+  return <motion.span className="tabular-nums">{rounded}</motion.span>;
 };
 
 export default DownloadCounter;

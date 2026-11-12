@@ -17,7 +17,7 @@ const LazyDownloadDialog = ({ open, onOpenChange }: LazyDownloadDialogProps) => 
 
   useEffect(() => {
     if (open) setMounted(true);
-  }, [open ]);
+  }, [open]);
 
   if (!mounted) return null;
 

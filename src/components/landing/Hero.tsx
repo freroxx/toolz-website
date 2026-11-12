@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useLatestRelease } from "@/hooks/use-latest-release";
 import { FEATURED_SCREENSHOTS } from "@/lib/screenshots";
-import { totalTools } from "@/lib/tools-catalog";
+import { categories, totalTools } from "@/lib/tools-catalog";
 import { PRESS_SPRING } from "@/lib/motion";
 import { StaggeredEntrance } from "@/components/expressive/StaggeredEntrance";
 import { SHAPES } from "@/components/expressive/shapes";
@@ -17,8 +17,6 @@ const SCREENSHOT_TITLES = [
   "Precision Stopwatch",
   "World Clock & Timezones",
 ];
-
-const FACTS = ["Free", "Open source", "No ads", "No account"];
 
 const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
   const [imgIndex, setImgIndex] = useState(0);
@@ -38,6 +36,12 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
 
   const title = SCREENSHOT_TITLES[imgIndex] ?? `Screen ${imgIndex + 1}`;
 
+  const stats = [
+    { value: String(totalTools), label: "Tools" },
+    { value: String(categories.length), label: "Groups" },
+    { value: "0", label: "Ads or trackers" },
+  ];
+
   return (
     <section
       className="pt-28 pb-16 md:pt-36 md:pb-24"
@@ -52,25 +56,25 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 className="m3-label-large font-semibold uppercase tracking-[0.14em]"
                 style={{ color: "hsl(var(--md-primary-ink))" }}
               >
-                Toolz v{versionName} · Android 12+
+                Toolz v{versionName} · Android 12+ · GPL-3.0
               </p>
             </StaggeredEntrance>
 
             <StaggeredEntrance index={1} className="mt-5">
               <h1
                 className="text-balance font-extrabold tracking-tight text-on-surface"
-                style={{ fontSize: "clamp(2.6rem, 6vw, 4.5rem)", lineHeight: 1.05 }}
+                style={{ fontSize: "clamp(2.75rem, 6.2vw, 4.75rem)", lineHeight: 1.04 }}
               >
-                {totalTools} tools.
+                Every tool you need.
                 <br />
-                <span style={{ color: "hsl(var(--md-primary))" }}>One lightweight app.</span>
+                <span style={{ color: "hsl(var(--md-primary))" }}>One small app.</span>
               </h1>
             </StaggeredEntrance>
 
             <StaggeredEntrance index={2} className="mt-6">
               <p className="m3-body-large max-w-xl text-pretty text-on-surface-variant">
-                Converters, an encrypted vault, device sensors, on-device OCR and more,
-                in a single open-source APK. Everything works offline.
+                Converters, an encrypted vault, device sensors, on-device OCR and more in a single
+                open-source APK. It works offline and never asks you to sign in.
               </p>
             </StaggeredEntrance>
 
@@ -111,26 +115,25 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
               </div>
             </StaggeredEntrance>
 
-            <StaggeredEntrance index={4} className="mt-8">
-              <ul className="m3-label-large flex flex-wrap items-center gap-x-3 gap-y-1 text-on-surface-variant">
-                {FACTS.map((f, i) => (
-                  <li key={f} className="flex items-center gap-3">
-                    {i > 0 && (
-                      <span
-                        className="h-1 w-1 rounded-full"
-                        style={{ background: "hsl(var(--md-outline))" }}
-                        aria-hidden="true"
-                      />
-                    )}
-                    {f}
-                  </li>
+            <StaggeredEntrance index={4} className="mt-12 w-full">
+              <div
+                className="grid max-w-md grid-cols-3 gap-6 border-t pt-8"
+                style={{ borderColor: "hsl(var(--md-outline-variant) / 0.6)" }}
+              >
+                {stats.map(({ value, label }) => (
+                  <div key={label}>
+                    <p className="m3-headline-medium font-bold tabular-nums text-on-surface">
+                      {value}
+                    </p>
+                    <p className="m3-label-large mt-1 text-on-surface-variant">{label}</p>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </StaggeredEntrance>
           </div>
 
           {/* Product stage */}
-          <StaggeredEntrance index={5} className="mx-auto w-full max-w-[420px]">
+          <StaggeredEntrance index={5} className="mx-auto w-full max-w-[440px]">
             <div
               onMouseEnter={() => setPaused(true)}
               onMouseLeave={() => setPaused(false)}
@@ -138,19 +141,18 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
               onBlur={() => setPaused(false)}
             >
               <div
-                className="px-8 pb-0 pt-10 sm:px-12"
+                className="px-10 pb-0 pt-12 sm:px-14"
                 style={{
                   borderRadius: SHAPES.extraLarge,
-                  background: "hsl(var(--md-surface-container))",
+                  background: "hsl(var(--md-primary-container))",
                 }}
               >
-                {/* Phone */}
                 <div
                   className="relative mx-auto w-full max-w-[250px] overflow-hidden border-[6px] border-b-0 bg-black"
                   style={{
                     aspectRatio: "9/16",
                     borderColor: "#1b1b1f",
-                    borderRadius: "32px 32px 0 0",
+                    borderRadius: "34px 34px 0 0",
                   }}
                 >
                   <AnimatePresence mode="wait">
@@ -168,19 +170,21 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                 </div>
               </div>
 
-              {/* Controls */}
               <div className="mt-4 flex items-center justify-between gap-3">
                 <button
                   type="button"
                   onClick={prevImg}
                   aria-label="Previous screenshot"
-                  className="grid h-10 w-10 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
+                  className="grid h-11 w-11 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
                 >
                   <ChevronLeft size={20} />
                 </button>
 
                 <div className="flex min-w-0 flex-col items-center gap-2">
-                  <span className="m3-label-large truncate font-semibold text-on-surface">
+                  <span
+                    className="m3-label-large truncate font-semibold text-on-surface"
+                    aria-live="polite"
+                  >
                     {title}
                   </span>
                   <div className="flex items-center gap-1.5">
@@ -208,7 +212,7 @@ const Hero = ({ onDownloadClick }: { onDownloadClick: () => void }) => {
                   type="button"
                   onClick={nextImg}
                   aria-label="Next screenshot"
-                  className="grid h-10 w-10 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
+                  className="grid h-11 w-11 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
                 >
                   <ChevronRight size={20} />
                 </button>

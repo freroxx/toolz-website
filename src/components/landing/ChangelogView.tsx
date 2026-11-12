@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { motion } from "framer-motion";
-import { ExternalLink, Sparkles } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { SPRING_STANDARD } from "@/lib/motion";
 
 // ---------------------------------------------------------------------------
@@ -96,13 +96,13 @@ const renderTokens = (tokens: InlineNode[], keyPrefix: string): React.ReactNode 
     switch (token.type) {
       case "bold":
         return (
-          <strong key={key} className="font-extrabold text-on-surface">
+          <strong key={key} className="font-bold text-on-surface">
             {renderTokens(token.children, key)}
           </strong>
         );
       case "italic":
         return (
-          <em key={key} className="italic text-on-surface-variant not-italic font-semibold opacity-80">
+          <em key={key} className="font-semibold not-italic text-on-surface-variant">
             {renderUrlsOnly(token.content, key)}
           </em>
         );
@@ -214,30 +214,23 @@ const ChangelogView = ({ raw }: { raw: string }) => {
           className="space-y-3 sm:space-y-4"
         >
           {block.label && (
-            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 bg-tertiary-container rounded-full">
-              <Sparkles size={11} className="text-on-tertiary-container sm:w-[13px] sm:h-[13px]" />
-              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-[0.14em] sm:tracking-[0.16em] text-on-tertiary-container">
-                {block.label}
-              </span>
-            </div>
+            <h4 className="m3-label-large font-bold uppercase tracking-[0.12em] text-on-surface-variant">
+              {block.label}
+            </h4>
           )}
 
           {block.items.length > 0 && (
             <div className="grid gap-2.5 sm:gap-3">
               {block.items.map((item, ii) => (
-                <div
-                  key={ii}
-                  className="bg-surface-container p-4 sm:p-5 border border-outline-variant/15"
-                  style={{ borderRadius: "22px 10px 22px 10px" }}
-                >
-                  <div className="text-xs sm:text-sm font-extrabold text-primary-ink mb-2 sm:mb-2.5">
+                <div key={ii} className="rounded-[20px] bg-surface-container p-4 sm:p-5">
+                  <div className="m3-label-large mb-2 font-bold text-primary-ink">
                     {item.label}
                   </div>
                   <ul className="space-y-1.5 sm:space-y-2">
                     {item.parts.map((part, pi) => (
                       <li key={pi} className="flex gap-2 sm:gap-2.5 text-[13px] sm:text-sm text-on-surface-variant leading-snug">
-                        <span className="text-tertiary mt-1 shrink-0">
-                          <span className="block w-1.5 h-1.5 rounded-full bg-tertiary" />
+                        <span className="mt-1.5 shrink-0">
+                          <span className="block h-1.5 w-1.5 rounded-full bg-primary" />
                         </span>
                         <span>{renderInline(part, `${bi}-${ii}-${pi}`)}</span>
                       </li>

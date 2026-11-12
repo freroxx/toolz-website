@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Search, X } from "lucide-react";
+import { ChevronRight, Search, X } from "lucide-react";
 import { categories, totalTools } from "@/lib/tools-catalog";
 import SectionHeader from "@/components/landing/SectionHeader";
 import { ExpressiveFilterChip } from "@/components/expressive/ExpressiveFilterChip";
@@ -43,12 +43,12 @@ const ToolCatalog = () => {
     );
   }, [q]);
 
-  const handleChipRowKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "ArrowRight") {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
       e.preventDefault();
       step(1);
     }
-    if (e.key === "ArrowLeft") {
+    if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
       e.preventDefault();
       step(-1);
     }
@@ -68,7 +68,7 @@ const ToolCatalog = () => {
         />
 
         {/* Search bar */}
-        <div className="mb-6 flex items-center gap-3 rounded-full border border-outline-variant/50 bg-surface-container-high py-1 pl-5 pr-2 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/30">
+        <div className="mb-8 flex items-center gap-3 rounded-full border border-outline-variant/50 bg-surface-container-high py-1 pl-5 pr-2 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/30">
           <Search size={20} className="shrink-0 text-on-surface-variant" />
           <input
             value={query}
@@ -91,11 +91,10 @@ const ToolCatalog = () => {
 
         {q ? (
           <div
-            className="border p-5 md:p-8"
+            className="p-6 md:p-9"
             style={{
               borderRadius: SHAPES.extraLarge,
               background: "hsl(var(--md-surface-container))",
-              borderColor: "hsl(var(--md-outline-variant) / 0.5)",
             }}
             role="region"
             aria-label="Search results"
@@ -132,13 +131,13 @@ const ToolCatalog = () => {
             )}
           </div>
         ) : (
-          <div className="flex flex-col gap-5">
-            {/* Group chips */}
+          <div className="grid gap-6 lg:grid-cols-[260px_1fr] lg:gap-8">
+            {/* Mobile: horizontal chips */}
             <div
-              className="scrollbar-none flex gap-2 overflow-x-auto pb-1"
+              className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:hidden"
               role="tablist"
               aria-label="Tool groups"
-              onKeyDown={handleChipRowKeyDown}
+              onKeyDown={handleKeyDown}
             >
               {categories.map((c) => {
                 const Icon = c.icon;
@@ -156,13 +155,47 @@ const ToolCatalog = () => {
               })}
             </div>
 
+            {/* Desktop: vertical group list */}
+            <div
+              className="hidden flex-col gap-1 lg:flex"
+              role="tablist"
+              aria-orientation="vertical"
+              aria-label="Tool groups"
+              onKeyDown={handleKeyDown}
+            >
+              {categories.map((c) => {
+                const Icon = c.icon;
+                const selected = c.id === activeId;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={selected}
+                    tabIndex={selected ? 0 : -1}
+                    onClick={() => setActiveId(c.id)}
+                    className="m3-label-large flex items-center gap-3 rounded-full px-5 py-3 text-left font-semibold transition-colors"
+                    style={{
+                      background: selected ? "hsl(var(--md-secondary-container))" : "transparent",
+                      color: selected
+                        ? "hsl(var(--md-on-secondary-container))"
+                        : "hsl(var(--md-on-surface-variant))",
+                    }}
+                  >
+                    <Icon size={18} />
+                    <span className="min-w-0 flex-1 truncate">{c.name}</span>
+                    <span className="tabular-nums opacity-70">{c.tools.length}</span>
+                  </button>
+                );
+              })}
+            </div>
+
             {/* Detail panel */}
             <div
-              className="overflow-hidden border"
+              className="min-h-[360px] overflow-hidden"
               style={{
                 borderRadius: SHAPES.extraLarge,
                 background: "hsl(var(--md-surface-container))",
-                borderColor: "hsl(var(--md-outline-variant) / 0.5)",
               }}
               role="tabpanel"
             >
@@ -183,28 +216,12 @@ const ToolCatalog = () => {
                       <active.icon className="h-5 w-5" style={{ color: colors.icon }} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="m3-title-large text-on-surface">{active.name}</h3>
+                      <h3 className="m3-title-large font-bold text-on-surface">{active.name}</h3>
                       <p className="m3-body-medium mt-1 text-on-surface-variant">{active.intro}</p>
-                    </div>
-                    <div className="flex shrink-0 gap-1">
-                      <button
-                        onClick={() => step(-1)}
-                        aria-label="Previous group"
-                        className="grid h-10 w-10 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high"
-                      >
-                        <ChevronLeft size={20} />
-                      </button>
-                      <button
-                        onClick={() => step(1)}
-                        aria-label="Next group"
-                        className="grid h-10 w-10 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high"
-                      >
-                        <ChevronRight size={20} />
-                      </button>
                     </div>
                   </div>
 
-                  <ul className="mt-6 grid gap-x-10 sm:grid-cols-2">
+                  <ul className="mt-7 grid gap-x-10 sm:grid-cols-2">
                     {active.tools.map((tool) => (
                       <li
                         key={tool.name}
@@ -217,25 +234,20 @@ const ToolCatalog = () => {
                     ))}
                   </ul>
 
-                  <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-                    <p className="m3-label-medium tabular-nums text-on-surface-variant">
-                      Group {activeIndex + 1} of {categories.length}
-                    </p>
-                    <a
-                      href="/spec"
-                      className="m3-label-large inline-flex items-center gap-1 text-primary-ink hover:underline"
-                    >
-                      Check your device specs
-                      <ChevronRight size={14} />
-                    </a>
-                  </div>
+                  <a
+                    href="/spec"
+                    className="m3-label-large mt-6 inline-flex items-center gap-1 font-semibold text-primary-ink hover:underline"
+                  >
+                    Check your device specs
+                    <ChevronRight size={14} />
+                  </a>
                 </motion.div>
               </AnimatePresence>
             </div>
           </div>
         )}
 
-        <p className="m3-body-small mt-6 text-on-surface-variant">
+        <p className="m3-body-small mt-8 text-on-surface-variant">
           Also included: homescreen widgets and Quick Settings tiles for flashlight, notes, steps, music and more.
         </p>
       </div>

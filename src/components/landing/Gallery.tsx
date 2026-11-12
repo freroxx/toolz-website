@@ -144,10 +144,10 @@ const Gallery = () => {
                 aria-label={`Open ${title} screenshot (${i + 1} of ${total})`}
               >
                 <span
-                  className="block overflow-hidden rounded-[28px] border bg-black transition-shadow group-hover:shadow-lg group-focus-visible:ring-2 group-focus-visible:ring-primary"
+                  className="block overflow-hidden rounded-[32px] border-[5px] bg-black transition-transform duration-200 group-hover:-translate-y-1 group-focus-visible:ring-2 group-focus-visible:ring-primary group-focus-visible:ring-offset-2"
                   style={{
                     aspectRatio: "9/19.5",
-                    borderColor: "hsl(var(--md-outline-variant) / 0.6)",
+                    borderColor: "#1b1b1f",
                   }}
                 >
                   <img
