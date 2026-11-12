@@ -47,8 +47,6 @@ interface CatalogResponse {
   devices: SpecPayload[];
 }
 
-type SortKey = "relevance" | "az" | "za";
-
 const FALLBACK_IMG = "https://fdn2.gsmarena.com/vv/bigpic/smartphone.jpg";
 const MAX_COMPARE = 3;
 
@@ -72,13 +70,24 @@ const BRANDS = [
   "Tecno",
 ] as const;
 
-const SUGGESTIONS = ["Galaxy S24", "Pixel 9", "iPhone 16", "Xiaomi 14", "OnePlus 12"];
-
 const BRAND_PATTERN =
   /^(samsung|apple|google|xiaomi|redmi|poco|oneplus|nothing|motorola|oppo|vivo|realme|honor|huawei|sony|asus|infinix|tecno|nokia|lenovo|lg)/i;
 
 // Devices rendered per page in the catalog grid.
 const PAGE_SIZE = 30;
+
+/* ── Design tokens used across the page ───────────────────────────────── */
+// One focus treatment, one button base, four button variants.
+const FOCUS =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface";
+const BTN = cn(
+  "inline-flex shrink-0 items-center justify-center gap-2 rounded-full text-[14px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40",
+  FOCUS
+);
+const BTN_FILLED = cn(BTN, "bg-primary text-on-primary hover:bg-primary/90");
+const BTN_TONAL = cn(BTN, "bg-secondary-container text-on-secondary-container hover:bg-secondary-container/80");
+const BTN_OUTLINED = cn(BTN, "border border-outline-variant text-primary-ink hover:bg-primary/10");
+const BTN_TEXT = cn(BTN, "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface");
 
 function getBrand(deviceName: string): string {
   const m = deviceName.trim().match(BRAND_PATTERN);
@@ -184,7 +193,7 @@ const DeviceImage = ({
   </div>
 );
 
-const BrandChip = ({
+const FilterChip = ({
   label,
   active,
   count,
@@ -199,16 +208,17 @@ const BrandChip = ({
     onClick={onClick}
     aria-pressed={active}
     className={cn(
-      "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-4 text-[13px] font-medium transition-colors",
+      "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-4 text-[14px] font-medium transition-colors",
+      FOCUS,
       active
         ? "border-transparent bg-secondary-container text-on-secondary-container"
-        : "border-outline-variant/70 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+        : "border-outline-variant text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
     )}
   >
     {active && <Check size={14} strokeWidth={2.5} />}
     {label}
     {typeof count === "number" && (
-      <span className="text-[11px] tabular-nums opacity-60">{count}</span>
+      <span className="text-[12px] tabular-nums opacity-60">{count}</span>
     )}
   </button>
 );
@@ -222,9 +232,32 @@ const FactRow = ({
   value: string;
   muted?: boolean;
 }) => (
-  <div className="flex items-baseline justify-between gap-4 py-2.5">
-    <dt className={cn("text-[13px]", muted ? "opacity-70" : "text-on-surface-variant")}>{label}</dt>
-    <dd className="min-w-0 truncate text-right text-[13px] font-medium">{value}</dd>
+  <div className="flex items-baseline justify-between gap-4 py-2.5 text-[14px]">
+    <dt className={muted ? "opacity-70" : "text-on-surface-variant"}>{label}</dt>
+    <dd className="min-w-0 truncate text-right font-medium">{value}</dd>
+  </div>
+);
+
+const StateCard = ({
+  icon,
+  title,
+  text,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  text: string;
+  children?: React.ReactNode;
+}) => (
+  <div className="rounded-[28px] bg-surface-container px-6 py-20 text-center">
+    <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-secondary-container text-on-secondary-container">
+      {icon}
+    </span>
+    <h2 className="mt-5 font-display text-2xl font-bold">{title}</h2>
+    <p className="mx-auto mt-2 max-w-sm text-[14px] leading-relaxed text-on-surface-variant">
+      {text}
+    </p>
+    {children && <div className="mt-6 flex flex-wrap justify-center gap-2">{children}</div>}
   </div>
 );
 
@@ -253,16 +286,16 @@ const SpecDetailsDialog = ({
         <div className="grid lg:grid-cols-[340px_minmax(0,1fr)]">
           {/* Summary */}
           <aside className="bg-surface-container p-6 lg:sticky lg:top-0 lg:self-start">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-primary-ink">
+            <p className="pr-10 text-[14px] text-on-surface-variant lg:pr-0">
               {getBrand(device.matched_device)}
             </p>
-            <h2 className="mt-1 pr-10 font-display text-2xl font-bold leading-tight tracking-tight text-on-surface lg:pr-0">
+            <h2 className="mt-0.5 pr-10 font-display text-2xl font-bold leading-tight tracking-tight lg:pr-0">
               {device.matched_device}
             </h2>
 
             <DeviceImage device={device} className="mt-5 aspect-[4/3]" />
 
-            <dl className="mt-4 divide-y divide-outline-variant/30 text-on-surface">
+            <dl className="mt-4 divide-y divide-outline-variant/30">
               <FactRow label="Display" value={getDisplaySummary(device)} />
               <FactRow label="Chipset" value={getChipSummary(device)} />
               <FactRow label="Battery" value={getBatterySummary(device)} />
@@ -277,12 +310,7 @@ const SpecDetailsDialog = ({
                     ? `Compare is full (${MAX_COMPARE} devices)`
                     : undefined
                 }
-                className={cn(
-                  "inline-flex h-12 items-center justify-center gap-2 rounded-full px-6 text-[14px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40",
-                  compareSelected
-                    ? "bg-secondary-container text-on-secondary-container"
-                    : "bg-primary text-on-primary hover:bg-primary/90"
-                )}
+                className={cn(compareSelected ? BTN_TONAL : BTN_FILLED, "h-12 px-6")}
               >
                 {compareSelected ? <Check size={16} strokeWidth={2.5} /> : <Plus size={16} />}
                 {compareSelected ? "Added to compare" : "Add to compare"}
@@ -291,7 +319,7 @@ const SpecDetailsDialog = ({
                 href={device.source_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-outline-variant px-6 text-[14px] font-semibold text-primary-ink transition-colors hover:bg-primary/10"
+                className={cn(BTN_OUTLINED, "h-12 px-6")}
               >
                 View on GSMArena
                 <ExternalLink size={14} />
@@ -310,9 +338,11 @@ const SpecDetailsDialog = ({
                   <button
                     key={section}
                     onClick={() => jumpTo(i)}
-                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-outline-variant/70 px-3.5 text-[12px] font-medium text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
+                    className={cn(
+                      "inline-flex h-9 shrink-0 items-center rounded-full border border-outline-variant px-4 text-[14px] font-medium text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface",
+                      FOCUS
+                    )}
                   >
-                    <SectionIcon section={section} size={13} />
                     {section}
                   </button>
                 ))}
@@ -330,18 +360,16 @@ const SpecDetailsDialog = ({
                     <span className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary-container text-on-secondary-container">
                       <SectionIcon section={section} />
                     </span>
-                    <h3 className="font-display text-base font-bold text-on-surface">{section}</h3>
+                    <h3 className="font-display text-[18px] font-bold">{section}</h3>
                   </div>
                   <dl className="mt-3">
                     {Object.entries(data).map(([key, value]) => (
                       <div
                         key={key}
-                        className="grid gap-1 border-t border-outline-variant/30 py-3 sm:grid-cols-[160px_1fr] sm:gap-6"
+                        className="grid gap-1 border-t border-outline-variant/30 py-3 text-[14px] sm:grid-cols-[160px_1fr] sm:gap-6"
                       >
-                        <dt className="text-[13px] text-on-surface-variant">{key}</dt>
-                        <dd className="text-[13px] font-medium leading-relaxed text-on-surface">
-                          {value}
-                        </dd>
+                        <dt className="text-on-surface-variant">{key}</dt>
+                        <dd className="font-medium leading-relaxed">{value}</dd>
                       </div>
                     ))}
                   </dl>
@@ -358,23 +386,18 @@ const SpecDetailsDialog = ({
 /* ── Catalog card ─────────────────────────────────────────────────────── */
 const SpecCard = ({
   device,
-  index,
   compareSelected,
   compareDisabled,
   onOpen,
   onToggleCompare,
 }: {
   device: SpecPayload;
-  index: number;
   compareSelected: boolean;
   compareDisabled: boolean;
   onOpen: () => void;
   onToggleCompare: () => void;
 }) => (
-  <motion.article
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.22, delay: Math.min(index, 8) * 0.03 }}
+  <article
     className={cn(
       "relative flex flex-col rounded-[28px] transition-colors",
       compareSelected
@@ -385,25 +408,22 @@ const SpecCard = ({
     <button
       onClick={onOpen}
       aria-label={`Open ${device.matched_device} specifications`}
-      className="flex flex-1 flex-col rounded-[28px] p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className={cn("flex flex-1 flex-col rounded-[28px] p-4 text-left", FOCUS)}
     >
       <DeviceImage device={device} className="aspect-[4/3] w-full" />
 
-      <p
-        className={cn(
-          "mt-4 text-[11px] font-semibold uppercase tracking-[0.12em]",
-          compareSelected ? "opacity-70" : "text-primary-ink"
-        )}
-      >
-        {getBrand(device.matched_device)}
-      </p>
-      <h3 className="mt-1 line-clamp-2 font-display text-lg font-bold leading-snug">
-        {device.matched_device}
-      </h3>
+      <div className="mt-4 px-1">
+        <p className={cn("text-[14px]", compareSelected ? "opacity-70" : "text-on-surface-variant")}>
+          {getBrand(device.matched_device)}
+        </p>
+        <h3 className="mt-0.5 line-clamp-2 font-display text-[18px] font-bold leading-snug">
+          {device.matched_device}
+        </h3>
+      </div>
 
       <dl
         className={cn(
-          "mt-3 w-full divide-y",
+          "mt-3 w-full divide-y px-1",
           compareSelected ? "divide-on-primary-container/15" : "divide-outline-variant/30"
         )}
       >
@@ -430,7 +450,8 @@ const SpecCard = ({
             : "Add to compare"
       }
       className={cn(
-        "absolute right-7 top-7 flex h-10 w-10 items-center justify-center rounded-full shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40",
+        "absolute right-6 top-6 flex h-10 w-10 items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-40",
+        FOCUS,
         compareSelected
           ? "bg-primary text-on-primary"
           : "bg-surface-container-high text-on-surface hover:bg-secondary-container hover:text-on-secondary-container"
@@ -438,7 +459,7 @@ const SpecCard = ({
     >
       {compareSelected ? <Check size={17} strokeWidth={2.5} /> : <ArrowLeftRight size={16} />}
     </button>
-  </motion.article>
+  </article>
 );
 
 /* ── Compare helpers ──────────────────────────────────────────────────── */
@@ -509,8 +530,8 @@ const CompareDialog = ({
 
       <div className="flex flex-wrap items-center gap-3 px-6 py-5 pr-16">
         <div>
-          <h2 className="font-display text-xl font-bold text-on-surface">Compare devices</h2>
-          <p className="text-[13px] text-on-surface-variant">
+          <h2 className="font-display text-2xl font-bold">Compare devices</h2>
+          <p className="mt-0.5 text-[14px] text-on-surface-variant">
             {diffCount} spec{diffCount === 1 ? "" : "s"} differ
           </p>
         </div>
@@ -519,19 +540,17 @@ const CompareDialog = ({
             onClick={() => setDiffOnly(!diffOnly)}
             aria-pressed={diffOnly}
             className={cn(
-              "inline-flex h-9 items-center gap-1.5 rounded-full border px-4 text-[13px] font-medium transition-colors",
+              "inline-flex h-9 items-center gap-1.5 rounded-full border px-4 text-[14px] font-medium transition-colors",
+              FOCUS,
               diffOnly
                 ? "border-transparent bg-secondary-container text-on-secondary-container"
-                : "border-outline-variant/70 text-on-surface-variant hover:bg-surface-container-high"
+                : "border-outline-variant text-on-surface-variant hover:bg-surface-container-high"
             )}
           >
             {diffOnly && <Check size={14} strokeWidth={2.5} />}
             Differences only
           </button>
-          <button
-            onClick={onClear}
-            className="inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-[13px] font-medium text-on-surface-variant transition-colors hover:bg-error/10 hover:text-error"
-          >
+          <button onClick={onClear} className={cn(BTN_TEXT, "h-9 px-4 hover:!bg-error/10 hover:!text-error")}>
             <Trash2 size={14} />
             Clear
           </button>
@@ -554,15 +573,15 @@ const CompareDialog = ({
                 <button
                   onClick={() => onRemove(d)}
                   aria-label={`Remove ${d.matched_device}`}
-                  className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-surface-container-high text-on-surface-variant transition-colors hover:bg-error/15 hover:text-error"
+                  className={cn(
+                    "absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-surface-container-high text-on-surface-variant transition-colors hover:bg-error/15 hover:text-error",
+                    FOCUS
+                  )}
                 >
                   <X size={14} />
                 </button>
                 <DeviceImage device={d} className="mx-auto aspect-[4/3] w-full max-w-[140px] !p-3" />
-                <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-primary-ink">
-                  {getBrand(d.matched_device)}
-                </p>
-                <p className="line-clamp-2 text-[13px] font-semibold leading-snug text-on-surface">
+                <p className="mt-2 line-clamp-2 text-[14px] font-medium leading-snug">
                   {d.matched_device}
                 </p>
               </div>
@@ -570,35 +589,32 @@ const CompareDialog = ({
           </div>
 
           {visibleGroups.length === 0 ? (
-            <div className="mt-6 rounded-[24px] bg-surface-container p-8 text-center text-sm text-on-surface-variant">
+            <div className="mt-6 rounded-[24px] bg-surface-container p-8 text-center text-[14px] text-on-surface-variant">
               These devices match on every listed spec.
             </div>
           ) : (
             visibleGroups.map((g) => (
               <section key={g.section} className="mt-5">
-                <div className="mb-1 flex items-center gap-2.5 px-1">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary-container text-on-secondary-container">
-                    <SectionIcon section={g.section} size={15} />
+                <div className="mb-1 flex items-center gap-3 px-1">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary-container text-on-secondary-container">
+                    <SectionIcon section={g.section} />
                   </span>
-                  <h3 className="font-display text-[15px] font-bold text-on-surface">{g.section}</h3>
+                  <h3 className="font-display text-[18px] font-bold">{g.section}</h3>
                 </div>
                 {g.rows.map((r) => (
                   <div
                     key={`${g.section}-${r.key}`}
                     className={cn(
-                      "grid gap-3 rounded-[14px] px-1 py-3",
+                      "grid gap-3 rounded-[14px] px-1 py-3 text-[14px]",
                       r.differs && "bg-primary-container/40"
                     )}
                     style={{ gridTemplateColumns: template }}
                   >
-                    <div className="px-2 text-[12px] text-on-surface-variant">{r.key}</div>
+                    <div className="px-2 text-on-surface-variant">{r.key}</div>
                     {r.values.map((v, i) => (
                       <div
                         key={i}
-                        className={cn(
-                          "px-2 text-[13px] leading-relaxed text-on-surface",
-                          r.differs && "font-medium"
-                        )}
+                        className={cn("px-2 leading-relaxed", r.differs && "font-medium")}
                       >
                         {v}
                       </div>
@@ -623,13 +639,11 @@ const SpecPage = () => {
   );
   const [debouncedSearch, setDebouncedSearch] = useState(search);
   const [filter, setFilter] = useState<string>("All");
-  const [sort, setSort] = useState<SortKey>("relevance");
   // Selected devices are stored as objects so they survive new searches.
   const [compareList, setCompareList] = useState<SpecPayload[]>([]);
   const [compareOpen, setCompareOpen] = useState(false);
   const [diffOnly, setDiffOnly] = useState(false);
   const [details, setDetails] = useState<SpecPayload | null>(null);
-  const [preview, setPreview] = useState<SpecPayload[]>([]);
   // Paged rendering: mounting 700+ cards at once is what caused the lag.
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -683,11 +697,6 @@ const SpecPage = () => {
 
   const devices = useMemo(() => data?.devices ?? [], [data]);
 
-  // Hero preview: the first four devices ever loaded, kept stable across searches.
-  useEffect(() => {
-    if (devices.length) setPreview((p) => (p.length ? p : devices.slice(0, 4)));
-  }, [devices]);
-
   const brandCounts = useMemo(() => {
     const counts = new Map<string, number>();
     devices.forEach((d) => {
@@ -702,19 +711,14 @@ const SpecPage = () => {
   }, [devices]);
 
   const filteredDevices = useMemo(() => {
-    const base =
-      filter === "All"
-        ? devices
-        : devices.filter((dev) => brandMatchesFilter(getBrand(dev.matched_device), filter));
-    if (sort === "relevance") return base;
-    const sorted = [...base].sort((a, b) => a.matched_device.localeCompare(b.matched_device));
-    return sort === "za" ? sorted.reverse() : sorted;
-  }, [devices, filter, sort]);
+    if (filter === "All") return devices;
+    return devices.filter((dev) => brandMatchesFilter(getBrand(dev.matched_device), filter));
+  }, [devices, filter]);
 
   // Reset paging whenever the result set changes.
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [debouncedSearch, filter, sort, data]);
+  }, [debouncedSearch, filter, data]);
 
   const visibleDevices = useMemo(
     () => filteredDevices.slice(0, visibleCount),
@@ -751,13 +755,6 @@ const SpecPage = () => {
     );
   };
 
-  const applySearch = (term: string) => {
-    setSearch(term);
-    setDebouncedSearch(term);
-    setFilter("All");
-    document.getElementById("results")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
   const resultsLabel = isLoading
     ? "Loading…"
     : filteredDevices.length > PAGE_SIZE
@@ -771,7 +768,7 @@ const SpecPage = () => {
         <header className="flex h-16 items-center justify-between gap-4">
           <button
             onClick={() => navigate("/")}
-            className="flex items-center gap-3 text-left"
+            className={cn("flex items-center gap-3 rounded-full text-left", FOCUS)}
             aria-label="Back to Toolz home"
           >
             <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-[22%] bg-surface-container-high p-1.5">
@@ -785,10 +782,7 @@ const SpecPage = () => {
 
           <nav className="flex items-center gap-1">
             <QuickModeToggle />
-            <button
-              onClick={() => navigate("/")}
-              className="inline-flex h-10 items-center gap-2 rounded-full px-4 text-[13px] font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
-            >
+            <button onClick={() => navigate("/")} className={cn(BTN_TEXT, "h-10 px-4")}>
               <ArrowLeft size={16} />
               <span className="hidden sm:inline">Back to site</span>
             </button>
@@ -796,7 +790,7 @@ const SpecPage = () => {
               href="/api/info"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-secondary-container px-5 text-[13px] font-semibold text-on-secondary-container transition-colors hover:bg-secondary-container/80"
+              className={cn(BTN_TONAL, "h-10 px-5")}
             >
               API
               <ArrowUpRight size={15} />
@@ -805,80 +799,34 @@ const SpecPage = () => {
         </header>
 
         {/* Hero */}
-        <section className="grid items-center gap-12 pb-12 pt-10 sm:pt-14 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16">
-          <div>
-            <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-primary-ink">
-              Spec catalog
-            </p>
-            <h1
-              className="mt-3 max-w-3xl text-balance font-display font-extrabold tracking-tight"
-              style={{ fontSize: "clamp(2.5rem, 6vw, 4.25rem)", lineHeight: 1.04 }}
-            >
-              Find any phone.
-              <br />
-              <span className="text-primary">Read every spec.</span>
-            </h1>
-            <p className="mt-5 max-w-xl text-pretty text-[16px] leading-relaxed text-on-surface-variant">
-              Search real device hardware, open a complete datasheet, or line up three phones to see
-              exactly what changes between them.
-              {typeof data?.totalInRedis === "number" && (
-                <>
-                  {" "}
-                  <span className="font-medium text-on-surface">
-                    {data.totalInRedis.toLocaleString()} devices
-                  </span>{" "}
-                  indexed.
-                </>
-              )}
-            </p>
-
-            <div className="mt-8 flex flex-wrap items-center gap-2">
-              <span className="mr-1 text-[13px] text-on-surface-variant">Popular</span>
-              {SUGGESTIONS.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => applySearch(s)}
-                  className="inline-flex h-9 items-center rounded-full border border-outline-variant/70 px-4 text-[13px] font-medium text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Catalog preview */}
-          <div
-            className="hidden rounded-[40px] bg-primary-container p-6 lg:block"
-            aria-label="Catalog preview"
+        <section className="pb-10 pt-12 sm:pt-16">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-primary-ink">
+            Spec catalog
+          </p>
+          <h1
+            className="mt-3 max-w-3xl text-balance font-display font-extrabold tracking-tight"
+            style={{ fontSize: "clamp(2.5rem, 6vw, 4.25rem)", lineHeight: 1.04 }}
           >
-            <div className="grid grid-cols-2 gap-3 pb-6 [&>*:nth-child(even)]:translate-y-6">
-              {preview.length
-                ? preview.map((d) => (
-                    <button
-                      key={d.matched_device}
-                      onClick={() => setDetails(d)}
-                      aria-label={`Open ${d.matched_device} specifications`}
-                      className="flex aspect-[4/5] items-center justify-center rounded-[26px] bg-white p-5 transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                    >
-                      <img
-                        src={d.image || FALLBACK_IMG}
-                        alt=""
-                        className="max-h-full max-w-full object-contain"
-                        onError={handleImgError}
-                      />
-                    </button>
-                  ))
-                : Array.from({ length: 4 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="aspect-[4/5] animate-pulse rounded-[26px] bg-white/60"
-                    />
-                  ))}
-            </div>
-          </div>
+            Find any phone.
+            <br />
+            <span className="text-primary">Read every spec.</span>
+          </h1>
+          <p className="mt-5 max-w-xl text-pretty text-[16px] leading-relaxed text-on-surface-variant">
+            Search real device hardware, open a complete datasheet, or line up three phones to see
+            exactly what changes between them.
+            {typeof data?.totalInRedis === "number" && (
+              <>
+                {" "}
+                <span className="font-medium text-on-surface">
+                  {data.totalInRedis.toLocaleString()} devices
+                </span>{" "}
+                indexed.
+              </>
+            )}
+          </p>
         </section>
 
-        {/* Toolbar */}
+        {/* Catalog */}
         <section id="catalog">
           <div className="sticky top-0 z-30 -mx-4 border-b border-outline-variant/40 bg-surface px-4 pb-3 pt-3 sm:-mx-6 sm:px-6">
             <div className="relative">
@@ -896,7 +844,7 @@ const SpecPage = () => {
                 autoComplete="off"
                 spellCheck={false}
                 aria-label="Search phone models"
-                className="h-14 w-full rounded-full bg-surface-container-high pl-14 pr-28 text-[15px] text-on-surface outline-none transition-shadow placeholder:text-on-surface-variant/70 focus:ring-2 focus:ring-primary/60 [&::-webkit-search-cancel-button]:hidden"
+                className="h-14 w-full rounded-full bg-surface-container-high pl-14 pr-28 text-[16px] text-on-surface outline-none transition-shadow placeholder:text-on-surface-variant/70 focus:ring-2 focus:ring-primary [&::-webkit-search-cancel-button]:hidden"
               />
               <div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
                 {isFetching && (
@@ -909,21 +857,24 @@ const SpecPage = () => {
                       searchRef.current?.focus();
                     }}
                     aria-label="Clear search"
-                    className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-highest hover:text-on-surface"
+                    className={cn(
+                      "flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-highest hover:text-on-surface",
+                      FOCUS
+                    )}
                   >
-                    <X size={17} />
+                    <X size={18} />
                   </button>
                 ) : (
-                  <kbd className="hidden rounded-md border border-outline-variant/70 px-2 py-0.5 text-[11px] font-medium text-on-surface-variant sm:block">
+                  <kbd className="hidden rounded-md border border-outline-variant px-2 py-0.5 text-[12px] font-medium text-on-surface-variant sm:block">
                     /
                   </kbd>
                 )}
               </div>
             </div>
 
-            <div className="mt-3 flex min-w-0 gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="mt-3 flex min-w-0 gap-2 overflow-x-auto px-0.5 py-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {BRANDS.map((brand) => (
-                <BrandChip
+                <FilterChip
                   key={brand}
                   label={brand}
                   active={filter === brand}
@@ -934,51 +885,30 @@ const SpecPage = () => {
             </div>
           </div>
 
-          {/* Result meta + sort */}
-          <div
-            id="results"
-            className="flex scroll-mt-36 flex-wrap items-center gap-x-2 gap-y-3 px-1 pb-5 pt-6 text-[13px] text-on-surface-variant"
+          {/* Result meta */}
+          <p
+            className="flex flex-wrap items-center gap-x-2 px-1 pb-5 pt-6 text-[14px] text-on-surface-variant"
+            aria-live="polite"
           >
-            <p className="flex flex-wrap items-center gap-x-2" aria-live="polite">
-              <span className="font-medium text-on-surface">{resultsLabel}</span>
-              {filter !== "All" && <span>· {filter}</span>}
-              {debouncedSearch && <span>· “{debouncedSearch}”</span>}
-              {data?.autoEnriched && <span>· New match cached</span>}
-            </p>
-
-            <label className="ml-auto inline-flex items-center gap-2">
-              <span className="sr-only sm:not-sr-only">Sort</span>
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value as SortKey)}
-                className="h-9 cursor-pointer rounded-full border border-outline-variant/70 bg-transparent px-4 text-[13px] font-medium text-on-surface outline-none transition-colors hover:bg-surface-container-high focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                <option value="relevance">Relevance</option>
-                <option value="az">Name A–Z</option>
-                <option value="za">Name Z–A</option>
-              </select>
-            </label>
-          </div>
+            <span className="font-medium text-on-surface">{resultsLabel}</span>
+            {filter !== "All" && <span>· {filter}</span>}
+            {debouncedSearch && <span>· “{debouncedSearch}”</span>}
+            {data?.autoEnriched && <span>· New match cached</span>}
+          </p>
 
           {/* Grid */}
-          <div className="min-h-[400px] pb-12">
+          <div className="min-h-[400px] pb-16">
             {isError && !data ? (
-              <div className="rounded-[28px] bg-surface-container px-6 py-20 text-center">
-                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-error/15 text-error">
-                  <WifiOff size={24} />
-                </span>
-                <h2 className="mt-5 font-display text-2xl font-bold">Couldn't load the catalog</h2>
-                <p className="mx-auto mt-2 max-w-sm text-[14px] leading-relaxed text-on-surface-variant">
-                  Check your connection and try again.
-                </p>
-                <button
-                  onClick={() => refetch()}
-                  className="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 text-[14px] font-semibold text-on-primary transition-colors hover:bg-primary/90"
-                >
+              <StateCard
+                icon={<WifiOff size={24} />}
+                title="Couldn't load the catalog"
+                text="Check your connection and try again."
+              >
+                <button onClick={() => refetch()} className={cn(BTN_FILLED, "h-12 px-6")}>
                   <RefreshCw size={15} />
                   Try again
                 </button>
-              </div>
+              </StateCard>
             ) : isLoading && !data ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 6 }).map((_, i) => (
@@ -991,11 +921,10 @@ const SpecPage = () => {
             ) : filteredDevices.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {visibleDevices.map((dev, i) => (
+                  {visibleDevices.map((dev) => (
                     <SpecCard
                       key={dev.matched_device}
                       device={dev}
-                      index={i}
                       compareSelected={compareIds.includes(dev.matched_device)}
                       compareDisabled={compareFull && !compareIds.includes(dev.matched_device)}
                       onOpen={() => setDetails(dev)}
@@ -1009,7 +938,7 @@ const SpecPage = () => {
                       onClick={() =>
                         setVisibleCount((c) => Math.min(c + PAGE_SIZE, filteredDevices.length))
                       }
-                      className="h-12 rounded-full border border-outline-variant px-7 text-[14px] font-semibold text-primary-ink transition-colors hover:bg-primary/10"
+                      className={cn(BTN_OUTLINED, "h-12 px-7")}
                     >
                       Show {Math.min(PAGE_SIZE, filteredDevices.length - visibleDevices.length)} more
                     </button>
@@ -1017,54 +946,32 @@ const SpecPage = () => {
                 )}
               </>
             ) : (
-              <div className="rounded-[28px] bg-surface-container px-6 py-20 text-center">
-                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-secondary-container text-on-secondary-container">
-                  <Search size={24} />
-                </span>
-                <h2 className="mt-5 font-display text-2xl font-bold">No devices found</h2>
-                <p className="mx-auto mt-2 max-w-sm text-[14px] leading-relaxed text-on-surface-variant">
-                  Try a different model name
-                  {filter !== "All" ? ` or clear the ${filter} filter` : ""}.
-                </p>
-                <div className="mt-6 flex flex-wrap justify-center gap-2">
-                  {search && (
-                    <button
-                      onClick={() => setSearch("")}
-                      className="h-11 rounded-full border border-outline-variant px-6 text-[14px] font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-high"
-                    >
-                      Clear search
-                    </button>
-                  )}
-                  {filter !== "All" && (
-                    <button
-                      onClick={() => setFilter("All")}
-                      className="h-11 rounded-full bg-primary px-6 text-[14px] font-semibold text-on-primary transition-colors hover:bg-primary/90"
-                    >
-                      Show all brands
-                    </button>
-                  )}
-                </div>
-                <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
-                  <span className="text-[13px] text-on-surface-variant">Try</span>
-                  {SUGGESTIONS.slice(0, 3).map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => applySearch(s)}
-                      className="inline-flex h-9 items-center rounded-full border border-outline-variant/70 px-4 text-[13px] font-medium text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <StateCard
+                icon={<Search size={24} />}
+                title="No devices found"
+                text={`Try a different model name${
+                  filter !== "All" ? ` or clear the ${filter} filter` : ""
+                }.`}
+              >
+                {search && (
+                  <button onClick={() => setSearch("")} className={cn(BTN_OUTLINED, "h-12 px-6")}>
+                    Clear search
+                  </button>
+                )}
+                {filter !== "All" && (
+                  <button onClick={() => setFilter("All")} className={cn(BTN_FILLED, "h-12 px-6")}>
+                    Show all brands
+                  </button>
+                )}
+              </StateCard>
             )}
           </div>
         </section>
 
         {/* Footer */}
-        <footer className="mb-28 flex flex-col justify-between gap-4 border-t border-outline-variant/40 pt-8 text-[13px] text-on-surface-variant sm:flex-row sm:items-center">
-          <p>© 2026 Toolz Project · Spec images and data © GSMArena, shown for reference.</p>
-          <nav className="flex flex-wrap items-center gap-x-5 gap-y-2">
+        <footer className="mb-28 flex flex-col justify-between gap-4 border-t border-outline-variant/40 pt-8 text-[14px] text-on-surface-variant sm:flex-row sm:items-center">
+          <p>© 2026 Toolz Project · Data and images © GSMArena</p>
+          <nav className="flex flex-wrap items-center gap-x-6 gap-y-2">
             <a href="/" className="transition-colors hover:text-on-surface">
               Home
             </a>
@@ -1082,15 +989,6 @@ const SpecPage = () => {
             >
               API
             </a>
-            <a
-              href="https://www.gsmarena.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 transition-colors hover:text-on-surface"
-            >
-              GSMArena
-              <ExternalLink size={11} />
-            </a>
           </nav>
         </footer>
       </div>
@@ -1099,13 +997,13 @@ const SpecPage = () => {
       <AnimatePresence>
         {compareList.length > 0 && (
           <motion.div
-            initial={{ y: 32, opacity: 0 }}
+            initial={{ y: 24, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 32, opacity: 0 }}
+            exit={{ y: 24, opacity: 0 }}
             transition={{ type: "spring", damping: 28, stiffness: 340 }}
             className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-[60] sm:inset-x-auto sm:bottom-6 sm:left-1/2 sm:-translate-x-1/2"
           >
-            <div className="flex items-center gap-3 rounded-full bg-inverse-surface p-2 pl-3 text-inverse-on-surface shadow-xl">
+            <div className="flex items-center gap-3 rounded-full border border-outline-variant/50 bg-surface-container-highest p-2 pl-3 shadow-lg">
               <div className="flex items-center">
                 {compareList.map((d, i) => (
                   <button
@@ -1113,7 +1011,10 @@ const SpecPage = () => {
                     onClick={() => toggleCompare(d)}
                     aria-label={`Remove ${d.matched_device} from compare`}
                     title={`Remove ${d.matched_device}`}
-                    className="relative -ml-2 h-10 w-10 overflow-hidden rounded-full border-2 border-inverse-surface bg-white first:ml-0"
+                    className={cn(
+                      "relative -ml-2 h-10 w-10 overflow-hidden rounded-full border-2 border-surface-container-highest bg-white first:ml-0",
+                      FOCUS
+                    )}
                     style={{ zIndex: 10 - i }}
                   >
                     <img
@@ -1126,14 +1027,10 @@ const SpecPage = () => {
                 ))}
               </div>
 
-              <span className="text-[13px] font-medium tabular-nums">
+              <span className="text-[14px] font-medium tabular-nums">
                 {compareList.length}/{MAX_COMPARE}
-                <span className="ml-1.5 hidden opacity-70 sm:inline">
-                  {compareFull
-                    ? "Full"
-                    : compareList.length < 2
-                      ? "Pick one more"
-                      : "selected"}
+                <span className="ml-1.5 hidden font-normal text-on-surface-variant sm:inline">
+                  {compareFull ? "Full" : compareList.length < 2 ? "Pick one more" : "selected"}
                 </span>
               </span>
 
@@ -1141,14 +1038,17 @@ const SpecPage = () => {
                 <button
                   onClick={() => setCompareList([])}
                   aria-label="Clear compare"
-                  className="flex h-10 w-10 items-center justify-center rounded-full opacity-80 transition-colors hover:bg-white/10 hover:opacity-100"
+                  className={cn(
+                    "flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-error/10 hover:text-error",
+                    FOCUS
+                  )}
                 >
                   <Trash2 size={16} />
                 </button>
                 <button
                   onClick={() => compareList.length >= 2 && setCompareOpen(true)}
                   disabled={compareList.length < 2}
-                  className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-[13px] font-semibold text-on-primary transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
+                  className={cn(BTN_FILLED, "h-10 px-5")}
                 >
                   <ArrowLeftRight size={15} />
                   Compare
